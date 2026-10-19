@@ -1,456 +1,574 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgendaFácil - Sistema de Agendamento</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    
-    <!-- Firebase SDK (v9+ Compat mode para simplicidade no browser) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgendaFácil - Sistema de Agendamento</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .step-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .step-card:hover { transform: translateY(-2px); }
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+
+  <!-- Firebase Scripts (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- CONFIGURAÇÃO DO FIREBASE COM CREDENCIAIS REAIS DO PROJETO -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
-            authDomain: "agendafacil-20e04.firebaseapp.com",
-            projectId: "agendafacil-20e04",
-            storageBucket: "agendafacil-20e04.firebasestorage.app",
-            messagingSenderId: "236064027235",
-            appId: "1:236064027235:web:dd6869f55206fc496c3e56",
-            measurementId: "G-9WNTJND5X1"
-        };
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-    </script>
-
-    <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('client')">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
-                    <i class="fa-solid fa-calendar-check text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold text-slate-900 leading-none">AgendaFácil</h1>
-                    <span class="text-xs text-slate-500" id="merchant-tagline">Agendamento Online</span>
-                </div>
-            </div>
-
-            <!-- Navegação de Visões -->
-            <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-                <button id="btn-view-client" onclick="switchView('client')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-white text-slate-800 shadow-sm">
-                    <i class="fa-solid fa-user-check mr-1.5"></i>Visão Cliente
-                </button>
-                <button id="btn-view-admin" onclick="switchView('admin')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all">
-                    <i class="fa-solid fa-store mr-1.5"></i>Painel Lojista
-                </button>
-            </div>
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('client')">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+          <i class="fa-solid fa-calendar-check text-lg"></i>
         </div>
-    </header>
+        <div>
+          <h1 class="font-bold text-slate-900 text-lg leading-tight">AgendaFácil</h1>
+          <p class="text-xs text-slate-500 font-medium">Plataforma Integrada</p>
+        </div>
+      </div>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Troca de Modos / Login -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        <button onclick="switchView('client')" id="btn-view-client" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
+          <i class="fa-solid fa-user text-xs mr-1.5"></i> Visão Cliente
+        </button>
+        <button onclick="switchView('admin')" id="btn-view-admin" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+          <i class="fa-solid fa-store text-xs mr-1.5"></i> Painel Lojista
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <!-- ================= VISÃO DO CLIENTE ================= -->
-        <section id="view-client" class="space-y-8">
-            <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
-                <div class="max-w-2xl">
-                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium mb-3">
-                        <i class="fa-regular fa-clock mr-1"></i> Agendamento Rápido & Sem Complicação
-                    </span>
-                    <h2 class="text-2xl sm:text-3xl font-bold mb-2" id="client-shop-name">Selecione o seu Serviço</h2>
-                    <p class="text-indigo-100 text-sm">Escolha o serviço desejado, a melhor data e horário para o seu atendimento.</p>
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================== -->
+    <!-- VISÃO DO CLIENTE (EXPERIÊNCIA FLUÍDA)      -->
+    <!-- ========================================== -->
+    <div id="client-view" class="space-y-6">
+      
+      <!-- Cabeçalho do Estabelecimento -->
+      <div class="bg-gradient-to-r from-indigo-900 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+        <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <span class="inline-block px-3 py-1 bg-indigo-800/80 rounded-full text-xs font-semibold text-indigo-200 mb-2 border border-indigo-700/50">
+              Agendamento Simples & Rápido
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="store-display-name">Estabelecimento Exemplo</h2>
+            <p class="text-indigo-200 text-sm mt-1 flex items-center gap-2">
+              <i class="fa-solid fa-location-dot"></i> Atendimento com hora marcada
+            </p>
+          </div>
+          <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
+            <i class="fa-regular fa-clock text-2xl text-indigo-200"></i>
+            <div class="text-xs">
+              <p class="font-semibold text-white">Funcionamento</p>
+              <p class="text-indigo-200">Seg a Sáb: 08h às 19h</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPAS DO AGENDAMENTO DA VISÃO DO CLIENTE -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Passos 1 & 2: Seleção de Serviço e Profissional/Data -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Passo 1: Escolha do Serviço -->
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">1</span>
+              Escolha o Serviço
+            </h3>
+
+            <!-- Lista de Serviços Dinâmica -->
+            <div id="client-services-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Renderizado via Javascript -->
+              <div class="text-center py-8 text-slate-400 col-span-2">
+                <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                <p class="text-sm">A carregar serviços disponíveis...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passo 2: Data e Horário -->
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
+              Escolha a Data e Horário
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Selecione o Dia</label>
+                <input type="date" id="booking-date" onchange="renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Horários Disponíveis</label>
+                <div id="time-slots-container" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                  <!-- Horários renderizados dinamicamente -->
+                  <p class="text-xs text-slate-400 col-span-3 py-2 text-center">Selecione uma data para ver os horários.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Resumo & Confirmação (Passo 3) -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 sticky top-24 space-y-4">
+            <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">3</span>
+              Resumo do Agendamento
+            </h3>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between py-1 border-b border-slate-50">
+                <span class="text-slate-500">Serviço:</span>
+                <span id="summary-service" class="font-semibold text-slate-800">Nenhum selecionado</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-50">
+                <span class="text-slate-500">Data:</span>
+                <span id="summary-date" class="font-semibold text-slate-800">--/--/----</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-50">
+                <span class="text-slate-500">Horário:</span>
+                <span id="summary-time" class="font-semibold text-slate-800">--:--</span>
+              </div>
+              <div class="flex justify-between py-2 text-base font-bold text-indigo-600 border-t border-slate-100">
+                <span>Total:</span>
+                <span id="summary-price">R$ 0,00</span>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Passo 1: Escolha do Serviço -->
-                <div class="lg:col-span-2 space-y-4">
-                    <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">1</span>
-                        Serviços Disponíveis
-                    </h3>
-                    <div id="services-list-client" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Carregado via JavaScript -->
-                    </div>
-                </div>
-
-                <!-- Passo 2: Formulário e Agendamento -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit space-y-5">
-                    <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">2</span>
-                        Finalizar Agendamento
-                    </h3>
-
-                    <form id="booking-form" onsubmit="handleBooking(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Serviço Selecionado</label>
-                            <input type="text" id="selected-service-name" readonly placeholder="Selecione um serviço ao lado" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Seu Nome Completo *</label>
-                            <input type="text" id="client-name" required placeholder="Ex: Maria Silva" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Telefone / WhatsApp *</label>
-                            <input type="tel" id="client-phone" required placeholder="(00) 90000-0000" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Data *</label>
-                                <input type="date" id="booking-date" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Horário *</label>
-                                <select id="booking-time" required class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="">Selecione...</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="15:00">15:00</option>
-                                    <option value="16:00">16:00</option>
-                                    <option value="17:00">17:00</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-check-circle"></i> Confirmar Agendamento
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-
-        <!-- ================= PAINEL DO LOJISTA ================= -->
-        <section id="view-admin" class="hidden space-y-6">
-
-            <!-- Estado Não Autenticado: Login / Registro -->
-            <div id="admin-auth-container" class="max-w-md mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                <div class="text-center">
-                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
-                        <i class="fa-solid fa-user-lock"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900" id="auth-title">Acesse sua Conta Lojista</h3>
-                    <p class="text-xs text-slate-500 mt-1">Gerencie seus serviços, preços e agendamentos com segurança.</p>
-                </div>
-
-                <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">E-mail Comercial *</label>
-                        <input type="email" id="auth-email" required placeholder="seu@estabelecimento.com" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Palavra-passe / Senha *</label>
-                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-
-                    <button type="submit" id="btn-auth-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition-all">
-                        Iniciar Sessão
-                    </button>
-                </form>
-
-                <div class="text-center pt-2 border-t border-slate-100">
-                    <button type="button" onclick="toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 font-semibold hover:underline">
-                        Não tem uma conta? Cadastre o seu estabelecimento
-                    </button>
-                </div>
+            <!-- Dados do Cliente -->
+            <div class="space-y-3 pt-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu Nome Completo</label>
+                <input type="text" id="client-name" placeholder="Ex: Maria Silva" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu WhatsApp</label>
+                <input type="tel" id="client-phone" placeholder="(00) 00000-0000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
             </div>
 
-            <!-- Estado Autenticado: Gestão Completa -->
-            <div id="admin-dashboard-container" class="hidden space-y-8">
-                <!-- Cabeçalho do Lojista -->
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div>
-                        <span class="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                            <i class="fa-solid fa-shield-halved mr-1"></i> Sessão Protegida na Nuvem
-                        </span>
-                        <h2 class="text-xl font-bold text-slate-900 mt-2" id="user-display-email">Lojista Autenticado</h2>
-                        <p class="text-xs text-slate-500">Seus dados e agendamentos estão sincronizados e visíveis apenas para si.</p>
-                    </div>
-                    <button onclick="handleLogout()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5">
-                        <i class="fa-solid fa-right-from-bracket"></i> Terminar Sessão
-                    </button>
-                </div>
+            <button onclick="confirmBooking()" class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2 text-sm">
+              <i class="fa-solid fa-check-circle"></i> Confirmar Agendamento
+            </button>
+          </div>
+        </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Gerenciar Serviços -->
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-plus-circle text-indigo-600"></i> Adicionar Serviço
-                        </h3>
-                        <form id="add-service-form" onsubmit="handleAddService(event)" class="space-y-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Nome do Serviço</label>
-                                <input type="text" id="service-name" required placeholder="Ex: Corte Masculino" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-700 mb-1">Preço (R$)</label>
-                                    <input type="number" id="service-price" step="0.01" required placeholder="35,00" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-700 mb-1">Duração (min)</label>
-                                    <input type="number" id="service-duration" required placeholder="30" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                            </div>
-                            <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-all">
-                                Salvar Serviço
-                            </button>
-                        </form>
-                    </div>
+      </div>
 
-                    <!-- Lista de Agendamentos da Loja -->
-                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <h3 class="text-base font-bold text-slate-900 flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-list-check text-indigo-600"></i> Agendamentos Recebidos
-                            </span>
-                            <span id="appointments-count" class="text-xs font-normal text-slate-500">0 agendamentos</span>
-                        </h3>
+    </div>
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs text-slate-600">
-                                <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                                    <tr>
-                                        <th class="p-3">Cliente</th>
-                                        <th class="p-3">Serviço</th>
-                                        <th class="p-3">Data/Hora</th>
-                                        <th class="p-3">Telefone</th>
-                                        <th class="p-3 text-right">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-appointments-list" class="divide-y divide-slate-100">
-                                    <!-- Carregado do Firebase -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <!-- ========================================== -->
+    <!-- PAINEL DO LOJISTA (ADMINISTRATIVO)         -->
+    <!-- ========================================== -->
+    <div id="admin-view" class="hidden space-y-6">
+
+      <!-- TELA DE LOGIN / REGISTO (Se não logado) -->
+      <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 my-8">
+        <div class="text-center mb-6">
+          <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-lock text-xl"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900" id="auth-title">Acesso Restrito ao Lojista</h2>
+          <p class="text-xs text-slate-500 mt-1">Entre com as suas credenciais para gerir o seu negócio.</p>
+        </div>
+
+        <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">E-mail Profissional</label>
+            <input type="email" id="auth-email" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Palavra-passe</label>
+            <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <button type="submit" id="btn-auth-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition">
+            Iniciar Sessão
+          </button>
+        </form>
+
+        <div class="mt-4 text-center">
+          <button onclick="toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 hover:underline font-medium">
+            Ainda não tem conta? Cadastre o seu estabelecimento
+          </button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD DO LOJISTA (Visível após Login) -->
+      <div id="admin-dashboard" class="hidden space-y-6">
+        
+        <!-- Header do Lojista Logado -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Painel do Estabelecimento</h2>
+            <p class="text-xs text-slate-500" id="merchant-email-display">Conectado como: ...</p>
+          </div>
+          <button onclick="logoutMerchant()" class="px-3 py-1.5 text-xs text-rose-600 border border-rose-200 hover:bg-rose-50 rounded-lg transition">
+            <i class="fa-solid fa-right-from-bracket mr-1"></i> Terminar Sessão
+          </button>
+        </div>
+
+        <!-- Abas do Painel -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Formulário para Cadastrar Novo Serviço -->
+          <div class="md:col-span-1 bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
+            <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Cadastrar Serviço</h3>
+            
+            <form onsubmit="saveService(event)" class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Serviço</label>
+                <input type="text" id="service-name" placeholder="Ex: Corte de Cabelo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Preço (R$)</label>
+                <input type="number" step="0.01" id="service-price" placeholder="45.00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Duração (minutos)</label>
+                <input type="number" id="service-duration" placeholder="30" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition">
+                + Guardar Serviço
+              </button>
+            </form>
+          </div>
+
+          <!-- Tabela de Serviços e Agendamentos -->
+          <div class="md:col-span-2 space-y-6">
+            
+            <!-- Lista de Serviços Cadastrados -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <h3 class="font-bold text-slate-900 mb-3">Meus Serviços Cadastrados</h3>
+              <div id="admin-services-list" class="space-y-2">
+                <!-- Renderizado via Javascript -->
+              </div>
             </div>
 
-        </section>
-    </main>
+            <!-- Lista de Agendamentos Recebidos -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <h3 class="font-bold text-slate-900 mb-3">Agendamentos Recebidos</h3>
+              <div id="admin-bookings-list" class="space-y-2">
+                <!-- Renderizado via Javascript -->
+              </div>
+            </div>
 
-    <!-- LOGIC JS DO APLICATIVO -->
-    <script>
-        let isSignUp = false;
-        let currentUser = null;
-        let selectedService = null;
+          </div>
 
-        // Alternar Visão (Cliente vs Admin)
-        function switchView(view) {
-            const clientView = document.getElementById('view-client');
-            const adminView = document.getElementById('view-admin');
-            const btnClient = document.getElementById('btn-view-client');
-            const btnAdmin = document.getElementById('btn-view-admin');
+        </div>
 
-            if (view === 'client') {
-                clientView.classList.remove('hidden');
-                adminView.classList.add('hidden');
-                btnClient.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-white text-slate-800 shadow-sm';
-                btnAdmin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
-            } else {
-                clientView.classList.add('hidden');
-                adminView.classList.remove('hidden');
-                btnAdmin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-white text-slate-800 shadow-sm';
-                btnClient.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
-            }
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT PRINCIPAL & FIREBASE -->
+  <script>
+    // 1. CONFIGURAÇÃO REAL DO FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
+      authDomain: "agendafacil-20e04.firebaseapp.com",
+      projectId: "agendafacil-20e04",
+      storageBucket: "agendafacil-20e04.firebasestorage.app",
+      messagingSenderId: "236064027235",
+      appId: "1:236064027235:web:dd6869f55206fc496c3e56",
+      measurementId: "G-9WNTJND5X1"
+    };
+
+    // Inicialização do Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Estado Global da Aplicação
+    let currentUser = null;
+    let isRegisterMode = false;
+    let selectedService = null;
+    let selectedTime = null;
+
+    // Observador de Estado de Autenticação
+    auth.onAuthStateChanged((user) => {
+      currentUser = user;
+      if (user) {
+        document.getElementById('admin-auth-screen').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('merchant-email-display').innerText = `Conectado como: ${user.email}`;
+        loadAdminData();
+      } else {
+        document.getElementById('admin-auth-screen').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+      }
+      loadClientServices();
+    });
+
+    // Alternar Entre Telas (Cliente vs Lojista)
+    function switchView(view) {
+      const clientView = document.getElementById('client-view');
+      const adminView = document.getElementById('admin-view');
+      const btnClient = document.getElementById('btn-view-client');
+      const btnAdmin = document.getElementById('btn-view-admin');
+
+      if (view === 'client') {
+        clientView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+        btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition";
+        btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition";
+        loadClientServices();
+      } else {
+        clientView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition";
+        btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition";
+      }
+    }
+
+    // Alternar entre modo Login / Registo
+    function toggleAuthMode() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta de Lojista" : "Acesso Restrito ao Lojista";
+      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Cadastrar Estabelecimento" : "Iniciar Sessão";
+      document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? "Já possui uma conta? Faça login" : "Ainda não tem conta? Cadastre o seu estabelecimento";
+    }
+
+    // Processar Login ou Registo
+    async function handleAuth(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      try {
+        if (isRegisterMode) {
+          await auth.createUserWithEmailAndPassword(email, password);
+          alert("Conta de lojista criada com sucesso!");
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
         }
+      } catch (error) {
+        alert("Erro no acesso: " + error.message);
+      }
+    }
 
-        // Alternar Modo Auth (Login / Cadastro)
-        function toggleAuthMode() {
-            isSignUp = !isSignUp;
-            document.getElementById('auth-title').innerText = isSignUp ? 'Cadastrar Novo Lojista' : 'Acesse sua Conta Lojista';
-            document.getElementById('btn-auth-submit').innerText = isSignUp ? 'Criar Conta' : 'Iniciar Sessão';
-            document.getElementById('btn-toggle-auth').innerText = isSignUp ? 'Já tem conta? Faça login' : 'Não tem uma conta? Cadastre o seu estabelecimento';
-        }
+    function logoutMerchant() {
+      auth.signOut();
+    }
 
-        // Monitorar Estado de Autenticação do Firebase
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            const authContainer = document.getElementById('admin-auth-container');
-            const dashboardContainer = document.getElementById('admin-dashboard-container');
+    // Guardar Novo Serviço (Com isolamento de UID do lojista)
+    async function saveService(event) {
+      event.preventDefault();
+      if (!currentUser) return;
 
-            if (user) {
-                authContainer.classList.add('hidden');
-                dashboardContainer.classList.remove('hidden');
-                document.getElementById('user-display-email').innerText = user.email;
-                loadAdminAppointments();
-            } else {
-                authContainer.classList.remove('hidden');
-                dashboardContainer.classList.add('hidden');
-            }
-            loadClientServices();
+      const name = document.getElementById('service-name').value;
+      const price = parseFloat(document.getElementById('service-price').value);
+      const duration = parseInt(document.getElementById('service-duration').value);
+
+      try {
+        await db.collection('services').add({
+          merchantId: currentUser.uid,
+          name: name,
+          price: price,
+          duration: duration,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Autenticar (Login/Registro)
-        async function handleAuth(e) {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
+        document.getElementById('service-name').value = '';
+        document.getElementById('service-price').value = '';
+        document.getElementById('service-duration').value = '';
+        
+        loadAdminData();
+        alert("Serviço adicionado com sucesso!");
+      } catch (error) {
+        alert("Erro ao salvar serviço: " + error.message);
+      }
+    }
 
-            try {
-                if (isSignUp) {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                    alert('Conta criada com sucesso!');
-                } else {
-                    await auth.signInWithEmailAndPassword(email, password);
-                }
-            } catch (error) {
-                alert('Erro de autenticação: ' + error.message);
-            }
-        }
+    // Carregar Dados no Painel do Admin
+    async function loadAdminData() {
+      if (!currentUser) return;
 
-        // Encerrar Sessão
-        function handleLogout() {
-            auth.signOut();
-        }
+      // 1. Carregar Serviços
+      const servicesSnapshot = await db.collection('services')
+        .where('merchantId', '==', currentUser.uid)
+        .get();
 
-        // Carregar Serviços Públicos do Lojista
-        function loadClientServices() {
-            const list = document.getElementById('services-list-client');
-            list.innerHTML = '';
+      const servicesContainer = document.getElementById('admin-services-list');
+      servicesContainer.innerHTML = '';
 
-            db.collection('services').get().then((snapshot) => {
-                if (snapshot.empty) {
-                    list.innerHTML = '<p class="text-xs text-slate-400 col-span-2">Nenhum serviço disponível no momento.</p>';
-                    return;
-                }
-                snapshot.forEach((doc) => {
-                    const s = doc.data();
-                    list.innerHTML += `
-                        <div onclick="selectService('${s.name}')" class="p-4 bg-white border border-slate-200 hover:border-indigo-500 rounded-xl cursor-pointer transition-all shadow-sm">
-                            <h4 class="font-bold text-slate-900 text-sm">${s.name}</h4>
-                            <div class="flex items-center justify-between mt-2 text-xs text-slate-500">
-                                <span><i class="fa-regular fa-clock mr-1"></i>${s.duration} min</span>
-                                <span class="font-bold text-indigo-600 text-sm">R$ ${parseFloat(s.price).toFixed(2)}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-        }
+      if (servicesSnapshot.empty) {
+        servicesContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado ainda.</p>';
+      } else {
+        servicesSnapshot.forEach(doc => {
+          const data = doc.data();
+          servicesContainer.innerHTML += `
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div>
+                <p class="font-semibold text-sm text-slate-800">${data.name}</p>
+                <p class="text-xs text-slate-500">${data.duration} min • R$ ${data.price.toFixed(2)}</p>
+              </div>
+              <button onclick="deleteService('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium">
+                Apagar
+              </button>
+            </div>
+          `;
+        });
+      }
 
-        // Selecionar Serviço na Visão do Cliente
-        function selectService(name) {
-            selectedService = name;
-            document.getElementById('selected-service-name').value = name;
-        }
+      // 2. Carregar Agendamentos
+      const bookingsSnapshot = await db.collection('bookings')
+        .where('merchantId', '==', currentUser.uid)
+        .get();
 
-        // Criar Agendamento pelo Cliente
-        async function handleBooking(e) {
-            e.preventDefault();
-            if (!selectedService) {
-                alert('Por favor, selecione um serviço primeiro.');
-                return;
-            }
+      const bookingsContainer = document.getElementById('admin-bookings-list');
+      bookingsContainer.innerHTML = '';
 
-            const booking = {
-                service: selectedService,
-                clientName: document.getElementById('client-name').value,
-                clientPhone: document.getElementById('client-phone').value,
-                date: document.getElementById('booking-date').value,
-                time: document.getElementById('booking-time').value,
-                createdAt: new Date().toISOString()
-            };
+      if (bookingsSnapshot.empty) {
+        bookingsContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum agendamento recebido.</p>';
+      } else {
+        bookingsSnapshot.forEach(doc => {
+          const data = doc.data();
+          bookingsContainer.innerHTML += `
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm text-slate-900">${data.clientName}</span>
+                <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-semibold">${data.date} às ${data.time}</span>
+              </div>
+              <p class="text-xs text-slate-600">Serviço: <strong>${data.serviceName}</strong></p>
+              <p class="text-xs text-slate-500">Contato: ${data.clientPhone}</p>
+            </div>
+          `;
+        });
+      }
+    }
 
-            try {
-                await db.collection('appointments').add(booking);
-                alert('Agendamento realizado com sucesso!');
-                document.getElementById('booking-form').reset();
-                document.getElementById('selected-service-name').value = '';
-                selectedService = null;
-            } catch (error) {
-                alert('Erro ao agendar: ' + error.message);
-            }
-        }
+    async function deleteService(serviceId) {
+      if (confirm("Tem certeza que deseja remover este serviço?")) {
+        await db.collection('services').doc(serviceId).delete();
+        loadAdminData();
+      }
+    }
 
-        // Adicionar Serviço pelo Lojista
-        async function handleAddService(e) {
-            e.preventDefault();
-            if (!currentUser) return;
+    // Carregar Serviços para a Visão do Cliente
+    async function loadClientServices() {
+      const servicesContainer = document.getElementById('client-services-list');
+      const snapshot = await db.collection('services').get();
 
-            const service = {
-                userId: currentUser.uid,
-                name: document.getElementById('service-name').value,
-                price: parseFloat(document.getElementById('service-price').value),
-                duration: parseInt(document.getElementById('service-duration').value)
-            };
+      servicesContainer.innerHTML = '';
 
-            try {
-                await db.collection('services').add(service);
-                alert('Serviço adicionado com sucesso!');
-                document.getElementById('add-service-form').reset();
-                loadClientServices();
-            } catch (error) {
-                alert('Erro ao salvar serviço: ' + error.message);
-            }
-        }
+      if (snapshot.empty) {
+        servicesContainer.innerHTML = '<p class="text-sm text-slate-400 col-span-2 py-4">Nenhum serviço disponível no momento.</p>';
+        return;
+      }
 
-        // Carregar Agendamentos no Painel do Lojista
-        function loadAdminAppointments() {
-            const list = document.getElementById('admin-appointments-list');
-            list.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const serviceData = JSON.stringify({
+          id: doc.id,
+          name: data.name,
+          price: data.price,
+          merchantId: data.merchantId
+        }).replace(/"/g, '&quot;');
 
-            db.collection('appointments').onSnapshot((snapshot) => {
-                list.innerHTML = '';
-                document.getElementById('appointments-count').innerText = `${snapshot.size} agendamentos`;
+        servicesContainer.innerHTML += `
+          <div onclick="selectService(${serviceData})" class="step-card p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-500 cursor-pointer transition flex justify-between items-center shadow-sm">
+            <div>
+              <h4 class="font-semibold text-slate-800 text-sm">${data.name}</h4>
+              <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${data.duration} min</p>
+            </div>
+            <span class="font-bold text-indigo-600 text-sm">R$ ${data.price.toFixed(2)}</span>
+          </div>
+        `;
+      });
+    }
 
-                snapshot.forEach((doc) => {
-                    const a = doc.data();
-                    list.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition-all">
-                            <td class="p-3 font-semibold text-slate-800">${a.clientName}</td>
-                            <td class="p-3">${a.service}</td>
-                            <td class="p-3">${a.date} às ${a.time}</td>
-                            <td class="p-3">${a.clientPhone}</td>
-                            <td class="p-3 text-right">
-                                <button onclick="deleteAppointment('${doc.id}')" class="text-rose-500 hover:text-rose-700">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            });
-        }
+    function selectService(service) {
+      selectedService = service;
+      document.getElementById('summary-service').innerText = service.name;
+      document.getElementById('summary-price').innerText = `R$ ${service.price.toFixed(2)}`;
+    }
 
-        // Eliminar Agendamento
-        async function deleteAppointment(id) {
-            if (confirm('Deseja realmente cancelar este agendamento?')) {
-                await db.collection('appointments').doc(id).delete();
-            }
-        }
-    </script>
+    function renderTimeSlots() {
+      const dateVal = document.getElementById('booking-date').value;
+      document.getElementById('summary-date').innerText = dateVal || '--/--/----';
+
+      const slotsContainer = document.getElementById('time-slots-container');
+      const times = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+      
+      slotsContainer.innerHTML = '';
+      times.forEach(time => {
+        slotsContainer.innerHTML += `
+          <button onclick="selectTime('${time}')" class="py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-600 transition">
+            ${time}
+          </button>
+        `;
+      });
+    }
+
+    function selectTime(time) {
+      selectedTime = time;
+      document.getElementById('summary-time').innerText = time;
+    }
+
+    // Confirmar Agendamento pelo Cliente
+    async function confirmBooking() {
+      const name = document.getElementById('client-name').value;
+      const phone = document.getElementById('client-phone').value;
+      const date = document.getElementById('booking-date').value;
+
+      if (!selectedService || !selectedTime || !name || !phone || !date) {
+        alert("Por favor, preencha todos os dados (Serviço, Data, Horário, Nome e WhatsApp).");
+        return;
+      }
+
+      try {
+        await db.collection('bookings').add({
+          merchantId: selectedService.merchantId,
+          serviceName: selectedService.name,
+          price: selectedService.price,
+          date: date,
+          time: selectedTime,
+          clientName: name,
+          clientPhone: phone,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("🎉 Agendamento realizado com sucesso!");
+        
+        // Limpar seleção
+        document.getElementById('client-name').value = '';
+        document.getElementById('client-phone').value = '';
+        document.getElementById('summary-service').innerText = 'Nenhum selecionado';
+        document.getElementById('summary-date').innerText = '--/--/----';
+        document.getElementById('summary-time').innerText = '--:--';
+        document.getElementById('summary-price').innerText = 'R$ 0,00';
+      } catch (error) {
+        alert("Erro ao confirmar agendamento: " + error.message);
+      }
+    }
+  </script>
 </body>
 </html>
