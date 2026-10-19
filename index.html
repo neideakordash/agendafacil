@@ -1,9 +1,9 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AgendaFácil - Sistema de Agendamento Completo</title>
+  <title>AgendaFácil - Sistema de Agendamento com Upload</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -67,7 +67,7 @@
       <div class="bg-gradient-to-r from-indigo-900 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
         <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <div id="header-logo-preview" class="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shadow-inner">
+            <div id="header-logo-preview" class="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shadow-inner flex-shrink-0">
               <i class="fa-solid fa-store text-3xl text-indigo-200"></i>
             </div>
             <div>
@@ -247,18 +247,18 @@
             </button>
           </div>
 
-          <!-- Configurar Nome, Logo e WhatsApp da Loja -->
+          <!-- Configurar Nome, Logotipo (Upload) e WhatsApp da Loja -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Estabelecimento</label>
               <input type="text" id="store-name-input" placeholder="Ex: Studio Beauty" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">URL do Logotipo (Imagem)</label>
-              <input type="url" id="store-logo-input" placeholder="https://exemplo.com/logo.png" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+              <label class="block text-xs font-medium text-slate-600 mb-1">Logotipo (Fazer Upload)</label>
+              <input type="file" id="store-logo-file" accept="image/*" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp da Loja (com DDI/DDD)</label>
+              <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp da Loja (DDI+DDD+Número)</label>
               <input type="text" id="store-whatsapp-input" placeholder="5511999999999" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
             </div>
           </div>
@@ -291,8 +291,8 @@
                   </div>
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Foto do Serviço</label>
-                  <input type="url" id="service-photo" placeholder="https://exemplo.com/servico.jpg" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Foto do Serviço (Fazer Upload)</label>
+                  <input type="file" id="service-photo-file" accept="image/*" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                 </div>
                 <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition">
                   + Guardar Serviço
@@ -313,8 +313,8 @@
                   <input type="text" id="pro-role" placeholder="Ex: Especialista em Barba" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Foto do Profissional</label>
-                  <input type="url" id="pro-photo" placeholder="https://exemplo.com/perfil.jpg" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Foto do Profissional (Fazer Upload)</label>
+                  <input type="file" id="pro-photo-file" accept="image/*" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                 </div>
                 <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition">
                   + Guardar Profissional
@@ -450,17 +450,33 @@
       auth.signOut();
     }
 
-    // Configurações da Loja
+    // Função utilitária para converter arquivo em Base64
+    function convertFileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    // Configurações da Loja com Upload
     async function saveStoreSettings() {
       if (!currentUser) return;
       const name = document.getElementById('store-name-input').value;
-      const logo = document.getElementById('store-logo-input').value;
       const whatsapp = document.getElementById('store-whatsapp-input').value;
+      const logoFile = document.getElementById('store-logo-file').files[0];
 
       try {
+        let logoData = storeConfig.logo || "";
+        if (logoFile) {
+          logoData = await convertFileToBase64(logoFile);
+        }
+
         await db.collection('settings').doc(currentUser.uid).set({
-          name, logo, whatsapp
+          name, logo: logoData, whatsapp
         }, { merge: true });
+
         alert("Configurações salvas com sucesso!");
         loadStoreDataPublic();
       } catch (error) {
@@ -470,7 +486,6 @@
 
     async function loadStoreDataPublic() {
       try {
-        // Se houver usuário logado, carrega o dele, senão carrega o primeiro disponível
         let merchantId = currentUser ? currentUser.uid : null;
         if (!merchantId) {
           const snapshot = await db.collection('settings').limit(1).get();
@@ -492,14 +507,13 @@
           document.getElementById('store-whatsapp-input').value = storeConfig.whatsapp;
         }
         if (storeConfig.logo) {
-          if(document.getElementById('store-logo-input')) document.getElementById('store-logo-input').value = storeConfig.logo;
-          document.getElementById('header-logo-preview').innerHTML = `<img src="${storeConfig.logo}" class="w-full h-full object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<i class=\'fa-solid fa-store text-3xl text-indigo-200\'></i>';">`;
+          document.getElementById('header-logo-preview').innerHTML = `<img src="${storeConfig.logo}" class="w-full h-full object-cover">`;
           document.getElementById('nav-logo-container').innerHTML = `<img src="${storeConfig.logo}" class="w-full h-full object-cover">`;
         }
       } catch (e) { console.log(e); }
     }
 
-    // Salvar Serviços
+    // Salvar Serviços com Upload de Imagem
     async function saveService(event) {
       event.preventDefault();
       if (!currentUser) return;
@@ -507,43 +521,53 @@
       const name = document.getElementById('service-name').value;
       const price = parseFloat(document.getElementById('service-price').value);
       const duration = parseInt(document.getElementById('service-duration').value);
-      const photo = document.getElementById('service-photo').value;
+      const photoFile = document.getElementById('service-photo-file').files[0];
 
       try {
+        let photoData = "";
+        if (photoFile) {
+          photoData = await convertFileToBase64(photoFile);
+        }
+
         await db.collection('services').add({
           merchantId: currentUser.uid,
-          name, price, duration, photo,
+          name, price, duration, photo: photoData,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         document.getElementById('service-name').value = '';
         document.getElementById('service-price').value = '';
         document.getElementById('service-duration').value = '';
-        document.getElementById('service-photo').value = '';
+        document.getElementById('service-photo-file').value = '';
         loadAdminData();
         alert("Serviço adicionado com sucesso!");
       } catch (error) { alert("Erro: " + error.message); }
     }
 
-    // Salvar Profissionais
+    // Salvar Profissionais com Upload de Imagem
     async function saveProfessional(event) {
       event.preventDefault();
       if (!currentUser) return;
 
       const name = document.getElementById('pro-name').value;
       const role = document.getElementById('pro-role').value;
-      const photo = document.getElementById('pro-photo').value;
+      const photoFile = document.getElementById('pro-photo-file').files[0];
 
       try {
+        let photoData = "";
+        if (photoFile) {
+          photoData = await convertFileToBase64(photoFile);
+        }
+
         await db.collection('professionals').add({
           merchantId: currentUser.uid,
-          name, role, photo,
+          name, role, photo: photoData,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         document.getElementById('pro-name').value = '';
         document.getElementById('pro-role').value = '';
-        document.getElementById('pro-photo').value = '';
+        document.getElementById('pro-photo-file').value = '';
         loadAdminData();
         alert("Profissional adicionado com sucesso!");
       } catch (error) { alert("Erro: " + error.message); }
@@ -570,7 +594,7 @@
                 <p class="text-slate-500">${d.duration} min • R$ ${d.price.toFixed(2)}</p>
               </div>
             </div>
-            <button onclick="deleteDocItem('services', '${doc.id}')" class="text-rose-500 hover:text-rose-700">Apagar</button>
+            <button onclick="deleteDocItem('services', '${doc.id}')" class="text-rose-500 hover:text-rose-700 font-medium">Apagar</button>
           </div>`;
       });
 
@@ -591,7 +615,7 @@
                 <p class="text-slate-500">${d.role}</p>
               </div>
             </div>
-            <button onclick="deleteDocItem('professionals', '${doc.id}')" class="text-rose-500 hover:text-rose-700">Apagar</button>
+            <button onclick="deleteDocItem('professionals', '${doc.id}')" class="text-rose-500 hover:text-rose-700 font-medium">Apagar</button>
           </div>`;
       });
 
@@ -755,14 +779,12 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Gerar redirecionamento automático para o WhatsApp da Loja
         const storeWhatsApp = storeConfig.whatsapp || "5511999999999";
         const msg = encodeURIComponent(`Olá! Gostaria de confirmar meu agendamento:\n\n👤 Nome: ${name}\n✂️ Serviço: ${selectedService.name}\n👨‍💼 Profissional: ${selectedProfessional.name}\n📅 Data: ${date} às ${selectedTime}\n💰 Valor: R$ ${selectedService.price.toFixed(2)}`);
 
         alert("🎉 Agendamento guardado! Vamos abrir o WhatsApp para concluir o envio.");
         window.open(`https://wa.me/${storeWhatsApp}?text=${msg}`, '_blank');
 
-        // Limpar formulário
         document.getElementById('client-name').value = '';
         document.getElementById('client-phone').value = '';
         document.getElementById('summary-service').innerText = 'Nenhum';
