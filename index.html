@@ -43,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Troca de Modos / Login -->
+      <!-- Troca de Modos -->
       <div class="flex items-center gap-2 sm:gap-4">
         <button onclick="switchView('client')" id="btn-view-client" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
           <i class="fa-solid fa-user text-xs mr-1.5"></i> Visão Cliente
@@ -64,22 +64,30 @@
     <div id="client-view" class="space-y-6">
       
       <!-- Cabeçalho do Estabelecimento -->
-      <div class="bg-gradient-to-r from-indigo-900 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+      <div id="store-banner" class="bg-gradient-to-r from-indigo-900 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden bg-cover bg-center">
         <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span class="inline-block px-3 py-1 bg-indigo-800/80 rounded-full text-xs font-semibold text-indigo-200 mb-2 border border-indigo-700/50">
-              Agendamento Simples & Rápido
-            </span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="store-display-name">Estabelecimento Exemplo</h2>
-            <p class="text-indigo-200 text-sm mt-1 flex items-center gap-2">
-              <i class="fa-solid fa-location-dot"></i> Atendimento com hora marcada
-            </p>
+          <div class="flex items-center gap-4">
+            <img id="store-logo-img" src="https://via.placeholder.com/80" class="w-20 h-20 rounded-2xl border-2 border-white/20 object-cover shadow-md hidden" alt="Logo">
+            <div>
+              <span class="inline-block px-3 py-1 bg-indigo-800/80 rounded-full text-xs font-semibold text-indigo-200 mb-2 border border-indigo-700/50">
+                Agendamento Simples & Rápido
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="store-display-name">Estabelecimento Exemplo</h2>
+              <p class="text-indigo-200 text-sm mt-1 flex items-center gap-2">
+                <i class="fa-solid fa-location-dot"></i> Atendimento com hora marcada
+              </p>
+            </div>
           </div>
-          <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
-            <i class="fa-regular fa-clock text-2xl text-indigo-200"></i>
-            <div class="text-xs">
-              <p class="font-semibold text-white">Funcionamento</p>
-              <p class="text-indigo-200" id="client-working-hours">08:00 às 18:00</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <a id="client-social-link" href="#" target="_blank" class="hidden items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-4 py-3 rounded-xl border border-white/10 text-xs font-semibold shadow-md transition">
+              <i class="fa-brands fa-instagram text-lg"></i> Nosso Instagram
+            </a>
+            <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
+              <i class="fa-regular fa-clock text-2xl text-indigo-200"></i>
+              <div class="text-xs">
+                <p class="font-semibold text-white">Funcionamento</p>
+                <p class="text-indigo-200" id="client-working-hours">08:00 às 18:00</p>
+              </div>
             </div>
           </div>
         </div>
@@ -88,7 +96,7 @@
       <!-- ETAPAS DO AGENDAMENTO -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Passos 1 & 2 -->
+        <!-- Coluna Esquerda: Passos 1 & 2 -->
         <div class="lg:col-span-2 space-y-6">
           
           <!-- Passo 1: Escolha do Serviço -->
@@ -100,36 +108,45 @@
             <div id="client-services-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div class="text-center py-8 text-slate-400 col-span-2">
                 <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                <p class="text-sm">A carregar serviços disponíveis...</p>
+                <p class="text-sm">A carregar serviços...</p>
               </div>
             </div>
           </div>
 
-          <!-- Passo 2: Data e Horário -->
-          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
-            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <!-- Passo 2: Seleção de Profissional, Data e Horário -->
+          <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-5">
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
-              Escolha a Data e Horário
+              Escolha o Profissional, Data e Horário
             </h3>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Seleção do Profissional -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-2">Selecione o Profissional</label>
+              <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <p class="text-xs text-slate-400 col-span-3 py-2">Carregando profissionais...</p>
+              </div>
+            </div>
+
+            <!-- Data e Horários -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Selecione o Dia</label>
-                <!-- O valor 'min' é preenchido dinamicamente com a data atual -->
                 <input type="date" id="booking-date" onchange="renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm outline-none transition">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Horários Disponíveis</label>
                 <div id="time-slots-container" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
-                  <p class="text-xs text-slate-400 col-span-3 py-2 text-center">Selecione uma data válida para ver os horários.</p>
+                  <p class="text-xs text-slate-400 col-span-3 py-2 text-center">Selecione uma data para ver os horários.</p>
                 </div>
               </div>
             </div>
+
           </div>
 
         </div>
 
-        <!-- Resumo & Confirmação (Passo 3) -->
+        <!-- Coluna Direita: Resumo & Confirmação -->
         <div class="lg:col-span-1">
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 sticky top-24 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
@@ -141,6 +158,10 @@
               <div class="flex justify-between py-1 border-b border-slate-50">
                 <span class="text-slate-500">Serviço:</span>
                 <span id="summary-service" class="font-semibold text-slate-800">Nenhum selecionado</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-50">
+                <span class="text-slate-500">Profissional:</span>
+                <span id="summary-staff" class="font-semibold text-slate-800">Nenhum selecionado</span>
               </div>
               <div class="flex justify-between py-1 border-b border-slate-50">
                 <span class="text-slate-500">Data:</span>
@@ -183,7 +204,7 @@
     <!-- ========================================== -->
     <div id="admin-view" class="hidden space-y-6">
 
-      <!-- AUTH SCREEN -->
+      <!-- TELA DE LOGIN / CADASTRO -->
       <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 my-8">
         <div class="text-center mb-6">
           <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -215,10 +236,10 @@
         </div>
       </div>
 
-      <!-- DASHBOARD -->
+      <!-- DASHBOARD DO LOJISTA -->
       <div id="admin-dashboard" class="hidden space-y-6">
         
-        <!-- Header do Lojista -->
+        <!-- Header Lojista Logado -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 gap-4">
           <div>
             <h2 class="text-xl font-bold text-slate-900">Painel do Estabelecimento</h2>
@@ -236,413 +257,30 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <!-- Formulários (Serviço + Horários) -->
+          <!-- Formulários do Lojista -->
           <div class="md:col-span-1 space-y-6">
             
-            <!-- Configurar Horário de Funcionamento -->
+            <!-- Configuração do Estabelecimento & Redes Sociais -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
-              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Horário de Funcionamento</h3>
-              <form onsubmit="saveWorkingHours(event)" class="space-y-3">
-                <div class="grid grid-cols-2 gap-2">
+              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Perfil do Estabelecimento</h3>
+              <form onsubmit="saveStoreSettings(event)" class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Estabelecimento</label>
+                  <input type="text" id="store-name-input" placeholder="Ex: Salão da Maria" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Link do Instagram / Rede Social</label>
+                  <input type="url" id="store-social-input" placeholder="https://instagram.com/seusalao" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Logo / Foto</label>
+                  <input type="url" id="store-logo-input" placeholder="https://link-da-imagem.com/logo.jpg" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1">
                   <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Abertura</label>
-                    <input type="time" id="open-time" value="08:00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="time" id="open-time" value="08:00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Fecho</label>
-                    <input type="time" id="close-time" value="18:00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                  </div>
-                </div>
-                <button type="submit" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs rounded-lg transition">
-                  Atualizar Horários
-                </button>
-              </form>
-            </div>
-
-            <!-- Cadastrar Serviço -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
-              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Cadastrar Serviço</h3>
-              <form onsubmit="saveService(event)" class="space-y-3">
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Serviço</label>
-                  <input type="text" id="service-name" placeholder="Ex: Corte de Cabelo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Preço (R$)</label>
-                  <input type="number" step="0.01" id="service-price" placeholder="45.00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Duração (minutos)</label>
-                  <input type="number" id="service-duration" placeholder="30" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition">
-                  + Guardar Serviço
-                </button>
-              </form>
-            </div>
-
-          </div>
-
-          <!-- Listas (Serviços + Agendamentos) -->
-          <div class="md:col-span-2 space-y-6">
-            
-            <div class="bg-white p-5 rounded-2xl border border-slate-200">
-              <h3 class="font-bold text-slate-900 mb-3">Meus Serviços Cadastrados</h3>
-              <div id="admin-services-list" class="space-y-2"></div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200">
-              <h3 class="font-bold text-slate-900 mb-3">Agendamentos Recebidos</h3>
-              <div id="admin-bookings-list" class="space-y-2"></div>
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </main>
-
-  <script>
-    // Configuração do Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
-      authDomain: "agendafacil-20e04.firebaseapp.com",
-      projectId: "agendafacil-20e04",
-      storageBucket: "agendafacil-20e04.firebasestorage.app",
-      messagingSenderId: "236064027235",
-      appId: "1:236064027235:web:dd6869f55206fc496c3e56",
-      measurementId: "G-9WNTJND5X1"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    let currentUser = null;
-    let isRegisterMode = false;
-    let selectedService = null;
-    let selectedTime = null;
-    let openHour = "08:00";
-    let closeHour = "18:00";
-
-    // Bloquear datas passadas no calendário
-    document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('booking-date').setAttribute('min', today);
-    });
-
-    auth.onAuthStateChanged((user) => {
-      currentUser = user;
-      if (user) {
-        document.getElementById('admin-auth-screen').classList.add('hidden');
-        document.getElementById('admin-dashboard').classList.remove('hidden');
-        document.getElementById('merchant-email-display').innerText = `Conectado como: ${user.email}`;
-        loadAdminData();
-      } else {
-        document.getElementById('admin-auth-screen').classList.remove('hidden');
-        document.getElementById('admin-dashboard').classList.add('hidden');
-      }
-      loadClientServices();
-    });
-
-    function switchView(view) {
-      const clientView = document.getElementById('client-view');
-      const adminView = document.getElementById('admin-view');
-      const btnClient = document.getElementById('btn-view-client');
-      const btnAdmin = document.getElementById('btn-view-admin');
-
-      if (view === 'client') {
-        clientView.classList.remove('hidden');
-        adminView.classList.add('hidden');
-        btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition";
-        btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition";
-        loadClientServices();
-      } else {
-        clientView.classList.add('hidden');
-        adminView.classList.remove('hidden');
-        btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition";
-        btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition";
-      }
-    }
-
-    function toggleAuthMode() {
-      isRegisterMode = !isRegisterMode;
-      document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta de Lojista" : "Acesso Restrito ao Lojista";
-      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Cadastrar Estabelecimento" : "Iniciar Sessão";
-      document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? "Já possui uma conta? Faça login" : "Ainda não tem conta? Cadastre o seu estabelecimento";
-    }
-
-    async function handleAuth(event) {
-      event.preventDefault();
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-
-      try {
-        if (isRegisterMode) {
-          await auth.createUserWithEmailAndPassword(email, password);
-          alert("Conta de lojista criada com sucesso!");
-        } else {
-          await auth.signInWithEmailAndPassword(email, password);
-        }
-      } catch (error) {
-        alert("Erro: " + error.message);
-      }
-    }
-
-    function logoutMerchant() {
-      auth.signOut();
-    }
-
-    // Excluir Conta do Lojista
-    async function deleteAccount() {
-      if (confirm("⚠️ Tem certeza que deseja EXCLUIR sua conta? Todos os seus serviços cadastrados serão removidos permanentemente.")) {
-        try {
-          // Remover serviços do lojista
-          const services = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
-          services.forEach(doc => doc.ref.delete());
-
-          // Excluir conta de utilizador
-          await currentUser.delete();
-          alert("Sua conta foi excluída com sucesso.");
-        } catch (error) {
-          alert("Erro ao excluir conta: " + error.message + " (Pode ser necessário fazer login novamente antes de excluir).");
-        }
-      }
-    }
-
-    // Salvar Horários de Funcionamento
-    async function saveWorkingHours(event) {
-      event.preventDefault();
-      if (!currentUser) return;
-
-      openHour = document.getElementById('open-time').value;
-      closeHour = document.getElementById('close-time').value;
-
-      await db.collection('settings').doc(currentUser.uid).set({
-        open: openHour,
-        close: closeHour
-      });
-
-      alert("Horário de funcionamento atualizado!");
-      document.getElementById('client-working-hours').innerText = `${openHour} às ${closeHour}`;
-    }
-
-    async function saveService(event) {
-      event.preventDefault();
-      if (!currentUser) return;
-
-      const name = document.getElementById('service-name').value;
-      const price = parseFloat(document.getElementById('service-price').value);
-      const duration = parseInt(document.getElementById('service-duration').value);
-
-      try {
-        await db.collection('services').add({
-          merchantId: currentUser.uid,
-          name: name,
-          price: price,
-          duration: duration,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        document.getElementById('service-name').value = '';
-        document.getElementById('service-price').value = '';
-        document.getElementById('service-duration').value = '';
-        
-        loadAdminData();
-        alert("Serviço adicionado!");
-      } catch (error) {
-        alert("Erro ao salvar serviço: " + error.message);
-      }
-    }
-
-    async function loadAdminData() {
-      if (!currentUser) return;
-
-      // Carregar horários gravados
-      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
-      if (settingsDoc.exists) {
-        const data = settingsDoc.data();
-        openHour = data.open || "08:00";
-        closeHour = data.close || "18:00";
-        document.getElementById('open-time').value = openHour;
-        document.getElementById('close-time').value = closeHour;
-        document.getElementById('client-working-hours').innerText = `${openHour} às ${closeHour}`;
-      }
-
-      // Carregar Serviços
-      const servicesSnapshot = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
-      const servicesContainer = document.getElementById('admin-services-list');
-      servicesContainer.innerHTML = '';
-
-      if (servicesSnapshot.empty) {
-        servicesContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado.</p>';
-      } else {
-        servicesSnapshot.forEach(doc => {
-          const data = doc.data();
-          servicesContainer.innerHTML += `
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div>
-                <p class="font-semibold text-sm text-slate-800">${data.name}</p>
-                <p class="text-xs text-slate-500">${data.duration} min • R$ ${data.price.toFixed(2)}</p>
-              </div>
-              <button onclick="deleteService('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Apagar</button>
-            </div>
-          `;
-        });
-      }
-
-      // Carregar Agendamentos
-      const bookingsSnapshot = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
-      const bookingsContainer = document.getElementById('admin-bookings-list');
-      bookingsContainer.innerHTML = '';
-
-      if (bookingsSnapshot.empty) {
-        bookingsContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum agendamento recebido.</p>';
-      } else {
-        bookingsSnapshot.forEach(doc => {
-          const data = doc.data();
-          bookingsContainer.innerHTML += `
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-sm text-slate-900">${data.clientName}</span>
-                <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-semibold">${data.date} às ${data.time}</span>
-              </div>
-              <p class="text-xs text-slate-600">Serviço: <strong>${data.serviceName}</strong></p>
-              <p class="text-xs text-slate-500">Contato: ${data.clientPhone}</p>
-            </div>
-          `;
-        });
-      }
-    }
-
-    async function deleteService(serviceId) {
-      if (confirm("Deseja apagar este serviço?")) {
-        await db.collection('services').doc(serviceId).delete();
-        loadAdminData();
-      }
-    }
-
-    async function loadClientServices() {
-      const servicesContainer = document.getElementById('client-services-list');
-      const snapshot = await db.collection('services').get();
-
-      servicesContainer.innerHTML = '';
-      if (snapshot.empty) {
-        servicesContainer.innerHTML = '<p class="text-sm text-slate-400 col-span-2 py-4">Nenhum serviço disponível.</p>';
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const serviceData = JSON.stringify({
-          id: doc.id,
-          name: data.name,
-          price: data.price,
-          merchantId: data.merchantId
-        }).replace(/"/g, '&quot;');
-
-        servicesContainer.innerHTML += `
-          <div onclick="selectService(${serviceData})" class="step-card p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-500 cursor-pointer transition flex justify-between items-center shadow-sm">
-            <div>
-              <h4 class="font-semibold text-slate-800 text-sm">${data.name}</h4>
-              <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${data.duration} min</p>
-            </div>
-            <span class="font-bold text-indigo-600 text-sm">R$ ${data.price.toFixed(2)}</span>
-          </div>
-        `;
-      });
-    }
-
-    function selectService(service) {
-      selectedService = service;
-      document.getElementById('summary-service').innerText = service.name;
-      document.getElementById('summary-price').innerText = `R$ ${service.price.toFixed(2)}`;
-    }
-
-    // Renderização Inteligente de Horários (Sem Retroativos)
-    function renderTimeSlots() {
-      const dateVal = document.getElementById('booking-date').value;
-      document.getElementById('summary-date').innerText = dateVal || '--/--/----';
-
-      if (!dateVal) return;
-
-      const slotsContainer = document.getElementById('time-slots-container');
-      slotsContainer.innerHTML = '';
-
-      const now = new Date();
-      const selectedDate = new Date(dateVal + 'T00:00:00');
-      const isToday = now.toDateString() === selectedDate.toDateString();
-
-      // Gerar horários dinâmicos com base no funcionamento do estabelecimento
-      const startHour = parseInt(openHour.split(':')[0]);
-      const endHour = parseInt(closeHour.split(':')[0]);
-
-      let availableSlotsCount = 0;
-
-      for (let h = startHour; h < endHour; h++) {
-        const timeString = `${h.toString().padStart(2, '0')}:00`;
-        
-        // Se for o dia de hoje, desativar horas passadas
-        if (isToday && h <= now.getHours()) {
-          continue; // Pula o horário retroativo
-        }
-
-        availableSlotsCount++;
-        slotsContainer.innerHTML += `
-          <button onclick="selectTime('${timeString}')" class="py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-600 transition">
-            ${timeString}
-          </button>
-        `;
-      }
-
-      if (availableSlotsCount === 0) {
-        slotsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2 text-center">Nenhum horário disponível para este dia.</p>';
-      }
-    }
-
-    function selectTime(time) {
-      selectedTime = time;
-      document.getElementById('summary-time').innerText = time;
-    }
-
-    async function confirmBooking() {
-      const name = document.getElementById('client-name').value;
-      const phone = document.getElementById('client-phone').value;
-      const date = document.getElementById('booking-date').value;
-
-      if (!selectedService || !selectedTime || !name || !phone || !date) {
-        alert("Por favor, preencha todos os campos.");
-        return;
-      }
-
-      try {
-        await db.collection('bookings').add({
-          merchantId: selectedService.merchantId,
-          serviceName: selectedService.name,
-          price: selectedService.price,
-          date: date,
-          time: selectedTime,
-          clientName: name,
-          clientPhone: phone,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        alert("🎉 Agendamento realizado com sucesso!");
-        
-        document.getElementById('client-name').value = '';
-        document.getElementById('client-phone').value = '';
-        document.getElementById('summary-service').innerText = 'Nenhum selecionado';
-        document.getElementById('summary-date').innerText = '--/--/----';
-        document.getElementById('summary-time').innerText = '--:--';
-        document.getElementById('summary-price').innerText = 'R$ 0,00';
-      } catch (error) {
-        alert("Erro ao confirmar: " + error.message);
-      }
-    }
-  </script>
-</body>
-</html>
+                    <input type="time" id="close-time" value="18:00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-
