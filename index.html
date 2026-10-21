@@ -463,4 +463,186 @@
       if (!currentUser) return;
 
       // Carregar horários gravados
-      const settingsDoc = await db.collection('
+      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        openHour = data.open || "08:00";
+        closeHour = data.close || "18:00";
+        document.getElementById('open-time').value = openHour;
+        document.getElementById('close-time').value = closeHour;
+        document.getElementById('client-working-hours').innerText = `${openHour} às ${closeHour}`;
+      }
+
+      // Carregar Serviços
+      const servicesSnapshot = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      const servicesContainer = document.getElementById('admin-services-list');
+      servicesContainer.innerHTML = '';
+
+      if (servicesSnapshot.empty) {
+        servicesContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado.</p>';
+      } else {
+        servicesSnapshot.forEach(doc => {
+          const data = doc.data();
+          servicesContainer.innerHTML += `
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div>
+                <p class="font-semibold text-sm text-slate-800">${data.name}</p>
+                <p class="text-xs text-slate-500">${data.duration} min • R$ ${data.price.toFixed(2)}</p>
+              </div>
+              <button onclick="deleteService('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Apagar</button>
+            </div>
+          `;
+        });
+      }
+
+      // Carregar Agendamentos
+      const bookingsSnapshot = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
+      const bookingsContainer = document.getElementById('admin-bookings-list');
+      bookingsContainer.innerHTML = '';
+
+      if (bookingsSnapshot.empty) {
+        bookingsContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum agendamento recebido.</p>';
+      } else {
+        bookingsSnapshot.forEach(doc => {
+          const data = doc.data();
+          bookingsContainer.innerHTML += `
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-sm text-slate-900">${data.clientName}</span>
+                <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-semibold">${data.date} às ${data.time}</span>
+              </div>
+              <p class="text-xs text-slate-600">Serviço: <strong>${data.serviceName}</strong></p>
+              <p class="text-xs text-slate-500">Contato: ${data.clientPhone}</p>
+            </div>
+          `;
+        });
+      }
+    }
+
+    async function deleteService(serviceId) {
+      if (confirm("Deseja apagar este serviço?")) {
+        await db.collection('services').doc(serviceId).delete();
+        loadAdminData();
+      }
+    }
+
+    async function loadClientServices() {
+      const servicesContainer = document.getElementById('client-services-list');
+      const snapshot = await db.collection('services').get();
+
+      servicesContainer.innerHTML = '';
+      if (snapshot.empty) {
+        servicesContainer.innerHTML = '<p class="text-sm text-slate-400 col-span-2 py-4">Nenhum serviço disponível.</p>';
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const serviceData = JSON.stringify({
+          id: doc.id,
+          name: data.name,
+          price: data.price,
+          merchantId: data.merchantId
+        }).replace(/"/g, '&quot;');
+
+        servicesContainer.innerHTML += `
+          <div onclick="selectService(${serviceData})" class="step-card p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-500 cursor-pointer transition flex justify-between items-center shadow-sm">
+            <div>
+              <h4 class="font-semibold text-slate-800 text-sm">${data.name}</h4>
+              <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${data.duration} min</p>
+            </div>
+            <span class="font-bold text-indigo-600 text-sm">R$ ${data.price.toFixed(2)}</span>
+          </div>
+        `;
+      });
+    }
+
+    function selectService(service) {
+      selectedService = service;
+      document.getElementById('summary-service').innerText = service.name;
+      document.getElementById('summary-price').innerText = `R$ ${service.price.toFixed(2)}`;
+    }
+
+    // Renderização Inteligente de Horários (Sem Retroativos)
+    function renderTimeSlots() {
+      const dateVal = document.getElementById('booking-date').value;
+      document.getElementById('summary-date').innerText = dateVal || '--/--/----';
+
+      if (!dateVal) return;
+
+      const slotsContainer = document.getElementById('time-slots-container');
+      slotsContainer.innerHTML = '';
+
+      const now = new Date();
+      const selectedDate = new Date(dateVal + 'T00:00:00');
+      const isToday = now.toDateString() === selectedDate.toDateString();
+
+      // Gerar horários dinâmicos com base no funcionamento do estabelecimento
+      const startHour = parseInt(openHour.split(':')[0]);
+      const endHour = parseInt(closeHour.split(':')[0]);
+
+      let availableSlotsCount = 0;
+
+      for (let h = startHour; h < endHour; h++) {
+        const timeString = `${h.toString().padStart(2, '0')}:00`;
+        
+        // Se for o dia de hoje, desativar horas passadas
+        if (isToday && h <= now.getHours()) {
+          continue; // Pula o horário retroativo
+        }
+
+        availableSlotsCount++;
+        slotsContainer.innerHTML += `
+          <button onclick="selectTime('${timeString}')" class="py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-600 transition">
+            ${timeString}
+          </button>
+        `;
+      }
+
+      if (availableSlotsCount === 0) {
+        slotsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2 text-center">Nenhum horário disponível para este dia.</p>';
+      }
+    }
+
+    function selectTime(time) {
+      selectedTime = time;
+      document.getElementById('summary-time').innerText = time;
+    }
+
+    async function confirmBooking() {
+      const name = document.getElementById('client-name').value;
+      const phone = document.getElementById('client-phone').value;
+      const date = document.getElementById('booking-date').value;
+
+      if (!selectedService || !selectedTime || !name || !phone || !date) {
+        alert("Por favor, preencha todos os campos.");
+        return;
+      }
+
+      try {
+        await db.collection('bookings').add({
+          merchantId: selectedService.merchantId,
+          serviceName: selectedService.name,
+          price: selectedService.price,
+          date: date,
+          time: selectedTime,
+          clientName: name,
+          clientPhone: phone,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("🎉 Agendamento realizado com sucesso!");
+        
+        document.getElementById('client-name').value = '';
+        document.getElementById('client-phone').value = '';
+        document.getElementById('summary-service').innerText = 'Nenhum selecionado';
+        document.getElementById('summary-date').innerText = '--/--/----';
+        document.getElementById('summary-time').innerText = '--:--';
+        document.getElementById('summary-price').innerText = 'R$ 0,00';
+      } catch (error) {
+        alert("Erro ao confirmar: " + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
