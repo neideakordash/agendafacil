@@ -48,7 +48,7 @@
       <!-- Alternar Visão (Botões Clicáveis) -->
       <div class="flex items-center gap-2 sm:gap-4">
         <button id="btn-view-client" type="button" onclick="window.switchView('client')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer">
-          <i class="fa-solid fa-user text-xs mr-1.5"></i> USUÁRIO
+          <i class="fa-solid fa-user text-xs mr-1.5"></i> Cliente
         </button>
         <button id="btn-view-admin" type="button" onclick="window.switchView('admin')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer">
           <i class="fa-solid fa-store text-xs mr-1.5"></i> Painel Lojista
@@ -61,7 +61,7 @@
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
     <!-- ========================================== -->
-    <!-- USUÁRIO                      -->
+    <!-- Cliente                     -->
     <!-- ========================================== -->
     <div id="client-view" class="space-y-6">
       
@@ -401,6 +401,38 @@
     </div>
 
   </main>
+
+    <!-- Código para corrigir a navegação entre Cliente e Lojista -->
+  <script>
+    window.switchView = function(view) {
+      // Localiza as duas telas principais do seu app
+      const clientView = document.getElementById('client-view');
+      // Verifique se o ID abaixo é o mesmo que você deu para a área do lojista (ex: admin-view, store-view)
+      const adminView = document.getElementById('admin-view') || document.getElementById('admin-dashboard');
+      
+      const btnClient = document.getElementById('btn-view-client');
+      const btnAdmin = document.getElementById('btn-view-admin');
+
+      if (view === 'admin') {
+        // Esconde o cliente e mostra o lojista
+        if (clientView) clientView.classList.add('hidden');
+        if (adminView) adminView.classList.remove('hidden');
+
+        // Altera o visual do botão Lojista para "Ativo"
+        if (btnAdmin) btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer";
+        if (btnClient) btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer";
+      } else {
+        // Mostra o cliente e esconde o lojista
+        if (clientView) clientView.classList.remove('hidden');
+        if (adminView) adminView.classList.add('hidden');
+
+        // Altera o visual do botão Cliente/Usuário para "Ativo"
+        if (btnClient) btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer";
+        if (btnAdmin) btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer";
+      }
+    };
+  </script>
+
 
   <script>
     const firebaseConfig = {
