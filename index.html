@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v2 -->
+<!-- v4 -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -44,7 +44,7 @@
         </div>
       </div>
 
-      <!-- Alternar Visão (Botões Clicáveis) -->
+      <!-- Alternar Visão -->
       <div class="flex items-center gap-2 sm:gap-4">
         <button id="btn-view-client" onclick="switchView('client')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer">
           <i class="fa-solid fa-user text-xs mr-1.5"></i> Visão Cliente
@@ -97,7 +97,7 @@
       <!-- ETAPAS DO AGENDAMENTO -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Coluna Principal (Passos 1 e 2) -->
+        <!-- Coluna Principal -->
         <div class="lg:col-span-2 space-y-6">
           
           <!-- Passo 1: Escolha do Serviço -->
@@ -114,11 +114,11 @@
             </div>
           </div>
 
-          <!-- Passo 2: Profissional, Data e Horário -->
+          <!-- Passo 2: Profissional, Cabelo, Data e Horário -->
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-5">
             <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
-              Escolha o Profissional, Data e Horário
+              Detalhes do Agendamento
             </h3>
 
             <!-- Seleção de Profissionais -->
@@ -126,6 +126,33 @@
               <label class="block text-xs font-semibold text-slate-600 mb-2">Profissional de Preferência</label>
               <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <p class="text-xs text-slate-400 col-span-3 py-2">Carregando profissionais...</p>
+              </div>
+            </div>
+
+            <!-- ESPECIFICAÇÃO DE CABELO (TAMANHO & TIPO) -->
+            <div class="pt-3 border-t border-slate-100">
+              <label class="block text-xs font-semibold text-slate-600 mb-2"><i class="fa-solid fa-scissors mr-1 text-indigo-500"></i> Especificações do Cabelo (Opcional)</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-1">Comprimento / Tamanho</label>
+                  <select id="hair-length" onchange="updateHairSpecs()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="Não informado">Selecione o tamanho...</option>
+                    <option value="Curto (Acima dos ombros)">Curto (Acima dos ombros)</option>
+                    <option value="Médio (Na altura dos ombros)">Médio (Na altura dos ombros)</option>
+                    <option value="Longo (Abaixo dos ombros)">Longo (Abaixo dos ombros)</option>
+                    <option value="Extra Longo (Cintura)">Extra Longo (Cintura)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-1">Tipo de Cabelo</label>
+                  <select id="hair-type" onchange="updateHairSpecs()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="Não informado">Selecione o tipo...</option>
+                    <option value="Liso">Liso</option>
+                    <option value="Ondulado">Ondulado</option>
+                    <option value="Cacheado">Cacheado</option>
+                    <option value="Crespo / Afromix">Crespo / Afromix</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -147,7 +174,7 @@
 
         </div>
 
-        <!-- Coluna Lateral (Passo 3: Confirmação) -->
+        <!-- Coluna Lateral (Confirmação) -->
         <div class="lg:col-span-1">
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 sticky top-24 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
@@ -165,6 +192,10 @@
                 <span id="summary-staff" class="font-semibold text-slate-800">Qualquer um</span>
               </div>
               <div class="flex justify-between py-1 border-b border-slate-50">
+                <span class="text-slate-500">Cabelo:</span>
+                <span id="summary-hair" class="font-semibold text-slate-800 text-xs text-right">Não informado</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-50">
                 <span class="text-slate-500">Data:</span>
                 <span id="summary-date" class="font-semibold text-slate-800">--/--/----</span>
               </div>
@@ -173,12 +204,11 @@
                 <span id="summary-time" class="font-semibold text-slate-800">--:--</span>
               </div>
               <div class="flex justify-between py-2 text-base font-bold text-indigo-600 border-t border-slate-100">
-                <span>Total:</span>
-                <span id="summary-price">R$ 0,00</span>
+                <span>Total Estimado:</span>
+                <span id="summary-price">Sob Consulta</span>
               </div>
             </div>
 
-            <!-- Dados do Cliente -->
             <div class="space-y-3 pt-2">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Seu Nome Completo</label>
@@ -191,7 +221,7 @@
             </div>
 
             <button onclick="confirmBooking()" class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2 text-sm cursor-pointer">
-              <i class="fa-solid fa-check-circle"></i> Confirmar Agendamento
+              <i class="fa-brands fa-whatsapp text-lg"></i> Confirmar & Enviar WhatsApp
             </button>
           </div>
         </div>
@@ -205,14 +235,14 @@
     <!-- ========================================== -->
     <div id="admin-view" class="hidden space-y-6">
 
-      <!-- AUTH SCREEN (LOGIN / CADASTRO) -->
+      <!-- AUTH SCREEN -->
       <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 my-8">
         <div class="text-center mb-6">
           <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <i class="fa-solid fa-store text-xl"></i>
           </div>
           <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista</h2>
-          <p class="text-xs text-slate-500 mt-1">Acesse a conta do seu estabelecimento para administrar os agendamentos.</p>
+          <p class="text-xs text-slate-500 mt-1">Acesse a conta do seu estabelecimento para gerenciar os agendamentos.</p>
         </div>
 
         <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
@@ -240,7 +270,6 @@
       <!-- DASHBOARD DO LOJISTA -->
       <div id="admin-dashboard" class="hidden space-y-6">
         
-        <!-- Status Bar -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 gap-4">
           <div>
             <h2 class="text-xl font-bold text-slate-900">Painel do Estabelecimento</h2>
@@ -258,23 +287,26 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <!-- Formulários do Lojista -->
           <div class="md:col-span-1 space-y-6">
             
             <!-- Perfil -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
-              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Perfil do Estabelecimento</h3>
+              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Perfil e WhatsApp do Salão</h3>
               <form onsubmit="saveStoreSettings(event)" class="space-y-3">
                 <div>
                   <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Estabelecimento</label>
                   <input type="text" id="store-name-input" placeholder="Ex: Studio Bella Vita" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Link do Instagram / WhatsApp</label>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp do Lojista (com DDD)</label>
+                  <input type="text" id="store-whatsapp-input" placeholder="Ex: 5511999999999" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Link do Instagram / Redes Sociais</label>
                   <input type="url" id="store-social-input" placeholder="https://instagram.com/seu_salao" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Foto / Logo (Link)</label>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Logo / Foto</label>
                   <input type="url" id="store-logo-input" placeholder="https://site.com/logo.jpg" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-2 pt-1">
@@ -303,10 +335,10 @@
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-600 mb-1">Especialidade / Cargo</label>
-                  <input type="text" id="staff-role" placeholder="Ex: Barbeiro / Colorista" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <input type="text" id="staff-role" placeholder="Ex: Colorista" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Foto do Profissional</label>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">URL da Foto</label>
                   <input type="url" id="staff-photo" placeholder="https://site.com/foto.jpg" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition cursor-pointer">
@@ -321,15 +353,15 @@
               <form onsubmit="saveService(event)" class="space-y-3">
                 <div>
                   <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Serviço</label>
-                  <input type="text" id="service-name" placeholder="Ex: Corte Degradê" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <input type="text" id="service-name" placeholder="Ex: Mechas / Coloração" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Preço (R$)</label>
-                  <input type="number" step="0.01" id="service-price" placeholder="50.00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Preço (R$) <span class="text-slate-400 font-normal">(Opcional / Deixe em branco se variar)</span></label>
+                  <input type="number" step="0.01" id="service-price" placeholder="Deixe em branco para Sob Consulta" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Duração (Minutos)</label>
-                  <input type="number" id="service-duration" placeholder="40" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Duração Estimada (Minutos)</label>
+                  <input type="number" id="service-duration" placeholder="60" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-600 mb-1">URL da Foto do Serviço</label>
@@ -370,7 +402,6 @@
   </main>
 
   <script>
-    // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
       authDomain: "agendafacil-20e04.firebaseapp.com",
@@ -392,8 +423,8 @@
     let selectedTime = null;
     let openHour = "08:00";
     let closeHour = "18:00";
+    let merchantWhatsapp = "5511999999999";
 
-    // Função Principal de Troca de Telas (Garantida)
     window.switchView = function(view) {
       const clientView = document.getElementById('client-view');
       const adminView = document.getElementById('admin-view');
@@ -417,7 +448,8 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toISOString().split('T')[0];
-      document.getElementById('booking-date').setAttribute('min', today);
+      const dateInput = document.getElementById('booking-date');
+      if(dateInput) dateInput.setAttribute('min', today);
     });
 
     auth.onAuthStateChanged((user) => {
@@ -485,6 +517,7 @@
       if (!currentUser) return;
 
       const name = document.getElementById('store-name-input').value;
+      const whatsapp = document.getElementById('store-whatsapp-input').value;
       const social = document.getElementById('store-social-input').value;
       const logo = document.getElementById('store-logo-input').value;
       openHour = document.getElementById('open-time').value;
@@ -492,6 +525,7 @@
 
       await db.collection('settings').doc(currentUser.uid).set({
         storeName: name,
+        whatsapp: whatsapp,
         socialLink: social,
         logoUrl: logo,
         open: openHour,
@@ -530,7 +564,8 @@
       if (!currentUser) return;
 
       const name = document.getElementById('service-name').value;
-      const price = parseFloat(document.getElementById('service-price').value);
+      const rawPrice = document.getElementById('service-price').value;
+      const price = rawPrice ? parseFloat(rawPrice) : 0;
       const duration = parseInt(document.getElementById('service-duration').value);
       const photo = document.getElementById('service-photo').value || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
 
@@ -560,6 +595,10 @@
         if (data.storeName) {
           document.getElementById('store-name-input').value = data.storeName;
           document.getElementById('store-display-name').innerText = data.storeName;
+        }
+        if (data.whatsapp) {
+          document.getElementById('store-whatsapp-input').value = data.whatsapp;
+          merchantWhatsapp = data.whatsapp;
         }
         if (data.socialLink) {
           document.getElementById('store-social-input').value = data.socialLink;
@@ -614,13 +653,14 @@
       } else {
         servicesSnapshot.forEach(doc => {
           const data = doc.data();
+          const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
           servicesContainer.innerHTML += `
             <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
               <div class="flex items-center gap-3">
                 <img src="${data.photo}" class="w-10 h-10 rounded-lg object-cover">
                 <div>
                   <p class="font-semibold text-sm text-slate-800">${data.name}</p>
-                  <p class="text-xs text-slate-500">${data.duration} min • R$ ${data.price.toFixed(2)}</p>
+                  <p class="text-xs text-slate-500">${data.duration} min • ${priceDisplay}</p>
                 </div>
               </div>
               <button onclick="deleteService('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium cursor-pointer">Excluir</button>
@@ -644,7 +684,8 @@
                 <span class="font-bold text-sm text-slate-900">${data.clientName}</span>
                 <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-semibold">${data.date} às ${data.time}</span>
               </div>
-              <p class="text-xs text-slate-600">Serviço: <strong>${data.serviceName}</strong> com <strong>${data.staffName || 'Qualquer profissional'}</strong></p>
+              <p class="text-xs text-slate-600">Serviço: <strong>${data.serviceName}</strong> com <strong>${data.staffName || 'Qualquer um'}</strong></p>
+              <p class="text-xs text-indigo-600 font-medium">Cabelo: ${data.hairSpecs || 'Não informado'}</p>
               <p class="text-xs text-slate-500">Contato: ${data.clientPhone}</p>
             </div>
           `;
@@ -678,6 +719,7 @@
 
       snapshot.forEach(doc => {
         const data = doc.data();
+        const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
         const serviceData = JSON.stringify({
           id: doc.id,
           name: data.name,
@@ -694,7 +736,7 @@
                 <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${data.duration} min</p>
               </div>
             </div>
-            <span class="font-bold text-indigo-600 text-sm">R$ ${data.price.toFixed(2)}</span>
+            <span class="font-bold text-indigo-600 text-xs sm:text-sm">${priceDisplay}</span>
           </div>
         `;
       });
@@ -722,10 +764,25 @@
       });
     }
 
+    window.updateHairSpecs = function() {
+      const length = document.getElementById('hair-length').value;
+      const type = document.getElementById('hair-type').value;
+      
+      let summaryText = '';
+      if (length !== 'Não informado' || type !== 'Não informado') {
+        summaryText = `${length !== 'Não informado' ? length : ''} ${type !== 'Não informado' ? '(' + type + ')' : ''}`;
+      } else {
+        summaryText = 'Não informado';
+      }
+
+      document.getElementById('summary-hair').innerText = summaryText;
+    };
+
     window.selectService = function(service) {
       selectedService = service;
       document.getElementById('summary-service').innerText = service.name;
-      document.getElementById('summary-price').innerText = `R$ ${service.price.toFixed(2)}`;
+      const priceText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
+      document.getElementById('summary-price').innerText = priceText;
     };
 
     window.selectStaff = function(staffName) {
@@ -780,17 +837,22 @@
       const name = document.getElementById('client-name').value;
       const phone = document.getElementById('client-phone').value;
       const date = document.getElementById('booking-date').value;
+      const hairLength = document.getElementById('hair-length').value;
+      const hairType = document.getElementById('hair-type').value;
 
       if (!selectedService || !selectedTime || !name || !phone || !date) {
         alert("Por favor, preencha todos os campos do agendamento (Serviço, Data, Horário, Nome e WhatsApp).");
         return;
       }
 
+      const hairSpecs = `Tam: ${hairLength} | Tipo: ${hairType}`;
+
       try {
         await db.collection('bookings').add({
           merchantId: selectedService.merchantId,
           serviceName: selectedService.name,
           staffName: selectedStaff || 'Qualquer Profissional',
+          hairSpecs: hairSpecs,
           price: selectedService.price,
           date: date,
           time: selectedTime,
@@ -799,15 +861,27 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        alert("🎉 Agendamento realizado com sucesso!");
+        const settingsDoc = await db.collection('settings').doc(selectedService.merchantId).get();
+        if (settingsDoc.exists && settingsDoc.data().whatsapp) {
+          merchantWhatsapp = settingsDoc.data().whatsapp;
+        }
+
+        const valorTexto = selectedService.price > 0 ? `R$ ${selectedService.price.toFixed(2)}` : 'Sob Consulta (a avaliar)';
+
+        const mensagem = `Olá! Gostaria de confirmar meu agendamento:%0A%0A*Cliente:* ${name}%0A*Telefone:* ${phone}%0A*Serviço:* ${selectedService.name}%0A*Cabelo:* ${hairSpecs}%0A*Profissional:* ${selectedStaff || 'Qualquer Profissional'}%0A*Data:* ${date}%0A*Horário:* ${selectedTime}%0A*Valor:* ${valorTexto}`;
+        
+        window.open(`https://wa.me/${merchantWhatsapp}?text=${mensagem}`, '_blank');
+
+        alert("🎉 Agendamento enviado!");
         
         document.getElementById('client-name').value = '';
         document.getElementById('client-phone').value = '';
         document.getElementById('summary-service').innerText = 'Nenhum selecionado';
         document.getElementById('summary-staff').innerText = 'Qualquer um';
+        document.getElementById('summary-hair').innerText = 'Não informado';
         document.getElementById('summary-date').innerText = '--/--/----';
         document.getElementById('summary-time').innerText = '--:--';
-        document.getElementById('summary-price').innerText = 'R$ 0,00';
+        document.getElementById('summary-price').innerText = 'Sob Consulta';
       } catch (error) {
         alert("Erro ao confirmar agendamento: " + error.message);
       }
