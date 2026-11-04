@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- v12 - Envio para WhatsApp do Profissional + Gestão no Painel do Lojista -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -15,12 +14,11 @@
 
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .step-card { transition: all 0.25s ease-in-out; }
-    .step-card:hover { transform: translateY(-2px); }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .card-selectable { transition: all 0.2s ease-in-out; border: 2px solid #e2e8f0; }
+    .card-selectable:hover { border-color: #818cf8; transform: translateY(-2px); }
+    .card-selectable.selected { border-color: #4f46e5 !important; background-color: #f5f3ff !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15); }
+    .slot-btn.selected { background-color: #4f46e5 !important; color: white !important; border-color: #4f46e5 !important; }
+    .slot-btn.disabled { background-color: #f1f5f9 !important; color: #94a3b8 !important; border-color: #e2e8f0 !important; text-decoration: line-through; cursor: not-allowed; }
   </style>
 
   <!-- Firebase Scripts (Compat v9) -->
@@ -32,7 +30,7 @@
 
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <!-- CABEÇALHO -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3 cursor-pointer" onclick="window.switchView('client')">
@@ -45,44 +43,41 @@
         </div>
       </div>
 
-      <!-- Alternar Visão (Botões Clicáveis) -->
       <div class="flex items-center gap-2 sm:gap-4">
-        <button id="btn-view-client" type="button" onclick="window.switchView('client')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer">
+        <button id="btn-view-client" type="button" onclick="window.switchView('client')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
           <i class="fa-solid fa-user text-xs mr-1.5"></i> Cliente
         </button>
-        <button id="btn-view-admin" type="button" onclick="window.switchView('admin')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer">
+        <button id="btn-view-admin" type="button" onclick="window.switchView('admin')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
           <i class="fa-solid fa-store text-xs mr-1.5"></i> Painel Lojista
         </button>
       </div>
     </div>
   </header>
 
-  <!-- CONTEÚDO PRINCIPAL -->
+  <!-- ÁREA PRINCIPAL -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-    <!-- ========================================== -->
-    <!-- VISÃO CLIENTE                              -->
-    <!-- ========================================== -->
+    <!-- ==================== VISÃO CLIENTE ==================== -->
     <div id="client-view" class="space-y-6">
       
-      <!-- Banner / Cabeçalho do Salão -->
-      <div id="store-banner" class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden bg-cover bg-center">
+      <!-- Banner do Salão -->
+      <div id="store-banner" class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
         <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <img id="store-logo-img" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-white/20 object-cover shadow-md hidden" alt="Logo">
+            <img id="store-logo-img" src="" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-white/20 object-cover shadow-md hidden" alt="Logo">
             <div>
               <span class="inline-block px-3 py-1 bg-indigo-800/80 rounded-full text-xs font-semibold text-indigo-200 mb-2 border border-indigo-700/50">
                 Agendamento Online
               </span>
-              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="store-display-name">Seu Estabelecimento</h2>
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="store-display-name">Carregando Estabelecimento...</h2>
               <p class="text-indigo-200 text-sm mt-1 flex items-center gap-2">
                 <i class="fa-solid fa-location-dot"></i> Atendimento com hora marcada
               </p>
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-3">
-            <a id="client-social-link" href="#" target="_blank" class="hidden items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md transition">
-              <i class="fa-brands fa-instagram text-base"></i> Nosso Instagram
+            <a id="client-social-link" href="#" target="_blank" class="hidden items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md transition">
+              <i class="fa-brands fa-instagram text-base"></i> Instagram
             </a>
             <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10">
               <i class="fa-regular fa-clock text-xl text-indigo-200"></i>
@@ -95,34 +90,33 @@
         </div>
       </div>
 
-      <!-- ETAPAS DO AGENDAMENTO -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Coluna Principal -->
+        <!-- Coluna de Seleções -->
         <div class="lg:col-span-2 space-y-6">
           
-          <!-- Passo 1: Escolha do Serviço -->
+          <!-- Passo 1: Serviços -->
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">1</span>
               Escolha o Serviço
             </h3>
             <div id="client-services-list" class="space-y-4">
-              <div class="text-center py-8 text-slate-400">
+              <div class="text-center py-6 text-slate-400">
                 <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                <p class="text-sm">A carregar serviços disponíveis...</p>
+                <p class="text-xs">Carregando serviços disponíveis...</p>
               </div>
             </div>
           </div>
 
-          <!-- Passo 2: Profissional, Cabelo, Data e Horário -->
+          <!-- Passo 2: Profissional, Cabelo e Data/Horário -->
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-5">
             <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span class="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
               Detalhes do Agendamento
             </h3>
 
-            <!-- Seleção de Profissionais -->
+            <!-- Profissional -->
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-2">Profissional de Preferência</label>
               <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -130,14 +124,16 @@
               </div>
             </div>
 
-            <!-- Especificações do Cabelo -->
+            <!-- Especificações Opcionais do Cabelo -->
             <div class="pt-3 border-t border-slate-100">
-              <label class="block text-xs font-semibold text-slate-600 mb-2"><i class="fa-solid fa-scissors mr-1 text-indigo-500"></i> Especificações do Cabelo (Opcional)</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-2">
+                <i class="fa-solid fa-scissors mr-1 text-indigo-500"></i> Especificações do Cabelo (Opcional)
+              </label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-[11px] text-slate-500 mb-1">Comprimento / Tamanho</label>
+                  <label class="block text-[11px] text-slate-500 mb-1">Comprimento</label>
                   <select id="hair-length" onchange="window.updateHairSpecs()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="Não informado">Selecione o tamanho...</option>
+                    <option value="Não informado">Selecione...</option>
                     <option value="Curto (Acima dos ombros)">Curto (Acima dos ombros)</option>
                     <option value="Médio (Na altura dos ombros)">Médio (Na altura dos ombros)</option>
                     <option value="Longo (Abaixo dos ombros)">Longo (Abaixo dos ombros)</option>
@@ -147,35 +143,34 @@
                 <div>
                   <label class="block text-[11px] text-slate-500 mb-1">Tipo de Cabelo</label>
                   <select id="hair-type" onchange="window.updateHairSpecs()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="Não informado">Selecione o tipo...</option>
+                    <option value="Não informado">Selecione...</option>
                     <option value="Liso">Liso</option>
                     <option value="Ondulado">Ondulado</option>
                     <option value="Cacheado">Cacheado</option>
-                    <option value="Crespo / Afromix">Crespo / Afromix</option>
+                    <option value="Crespo / Afro">Crespo / Afro</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            <!-- Data & Slots de Horários -->
+            <!-- Data & Slots -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Selecione o Dia</label>
-                <input type="date" id="booking-date" onchange="window.renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm outline-none transition">
+                <input type="date" id="booking-date" onchange="window.renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm outline-none transition">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Horários Disponíveis</label>
                 <div id="time-slots-container" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
-                  <p class="text-xs text-slate-400 col-span-3 py-2 text-center">Escolha uma data para exibir os horários.</p>
+                  <p class="text-xs text-slate-400 col-span-3 py-2 text-center">Escolha uma data para exibir horários.</p>
                 </div>
               </div>
             </div>
 
           </div>
-
         </div>
 
-        <!-- Coluna Lateral (Confirmação) -->
+        <!-- Coluna de Resumo -->
         <div class="lg:col-span-1">
           <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 sticky top-24 space-y-4">
             <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
@@ -186,7 +181,7 @@
             <div class="space-y-3 text-sm">
               <div class="flex justify-between py-1 border-b border-slate-50">
                 <span class="text-slate-500">Serviço:</span>
-                <span id="summary-service" class="font-semibold text-slate-800">Nenhum selecionado</span>
+                <span id="summary-service" class="font-semibold text-slate-800">Nenhum</span>
               </div>
               <div class="flex justify-between py-1 border-b border-slate-50">
                 <span class="text-slate-500">Profissional:</span>
@@ -205,23 +200,23 @@
                 <span id="summary-time" class="font-semibold text-slate-800">--:--</span>
               </div>
               <div class="flex justify-between py-2 text-base font-bold text-indigo-600 border-t border-slate-100">
-                <span>Total Estimado:</span>
+                <span>Total:</span>
                 <span id="summary-price">Sob Consulta</span>
               </div>
             </div>
 
             <div class="space-y-3 pt-2">
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu Nome Completo</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu Nome Completo *</label>
                 <input type="text" id="client-name" placeholder="Ex: Maria Silva" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu WhatsApp</label>
-                <input type="tel" id="client-phone" placeholder="(00) 00000-0000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu WhatsApp (com DDD) *</label>
+                <input type="tel" id="client-phone" placeholder="Ex: (88) 99999-9999" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               </div>
             </div>
 
-            <button onclick="window.confirmBooking()" class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2 text-sm cursor-pointer">
+            <button onclick="window.confirmBooking()" class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-100 transition flex items-center justify-center gap-2 text-sm cursor-pointer">
               <i class="fa-brands fa-whatsapp text-lg"></i> Confirmar & Enviar WhatsApp
             </button>
           </div>
@@ -231,24 +226,22 @@
 
     </div>
 
-    <!-- ========================================== -->
-    <!-- PAINEL DO LOJISTA                          -->
-    <!-- ========================================== -->
+    <!-- ==================== PAINEL DO LOJISTA ==================== -->
     <div id="admin-view" class="hidden space-y-6">
 
-      <!-- AUTH SCREEN -->
+      <!-- Login / Cadastro -->
       <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 my-8">
         <div class="text-center mb-6">
           <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <i class="fa-solid fa-store text-xl"></i>
           </div>
           <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista</h2>
-          <p class="text-xs text-slate-500 mt-1">Acesse a conta do seu estabelecimento para gerenciar os agendamentos.</p>
+          <p class="text-xs text-slate-500 mt-1">Gerencie serviços, equipe e veja os agendamentos recebidos.</p>
         </div>
 
         <form id="auth-form" onsubmit="window.handleAuth(event)" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">E-mail Profissional</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">E-mail</label>
             <input type="email" id="auth-email" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
           </div>
           <div>
@@ -256,59 +249,53 @@
             <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
           </div>
 
-          <button type="submit" id="btn-auth-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition shadow-md shadow-indigo-100 cursor-pointer">
+          <button type="submit" id="btn-auth-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition shadow-md shadow-indigo-100">
             Entrar no Painel
           </button>
         </form>
 
         <div class="mt-4 text-center">
-          <button type="button" onclick="window.toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 hover:underline font-medium cursor-pointer">
-            Não tem uma conta? Cadastre o seu estabelecimento
+          <button type="button" onclick="window.toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 hover:underline font-medium">
+            Não tem uma conta? Cadastre seu salão
           </button>
         </div>
       </div>
 
-      <!-- DASHBOARD DO LOJISTA -->
+      <!-- Dashboard Autenticado -->
       <div id="admin-dashboard" class="hidden space-y-6">
         
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 gap-4">
           <div>
-            <h2 class="text-xl font-bold text-slate-900">Painel do Estabelecimento</h2>
+            <h2 class="text-xl font-bold text-slate-900">Configurações & Painel</h2>
             <p class="text-xs text-slate-500" id="merchant-email-display">Conectado como: ...</p>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition cursor-pointer">
+            <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition">
               <i class="fa-solid fa-right-from-bracket mr-1"></i> Sair
-            </button>
-            <button onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs text-rose-600 border border-rose-200 hover:bg-rose-50 rounded-lg transition font-medium cursor-pointer">
-              <i class="fa-solid fa-trash-can mr-1"></i> Excluir Conta
             </button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           
+          <!-- Formulários -->
           <div class="md:col-span-1 space-y-6">
             
-            <!-- Perfil -->
+            <!-- Dados do Salão -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
-              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Perfil e Redes Sociais do Salão</h3>
+              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Perfil do Estabelecimento</h3>
               <form onsubmit="window.saveStoreSettings(event)" class="space-y-3">
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Estabelecimento</label>
-                  <input type="text" id="store-name-input" placeholder="Ex: Studio Bella Vita" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Salão</label>
+                  <input type="text" id="store-name-input" placeholder="Ex: Studio Bella" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp de Contato / Suporte (com DDD)</label>
-                  <input type="text" id="store-whatsapp-input" placeholder="Ex: 5511999999999" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp Principal (com DDD)</label>
+                  <input type="text" id="store-whatsapp-input" placeholder="Ex: 88999998888" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Link do Instagram / Redes Sociais</label>
-                  <input type="url" id="store-social-input" placeholder="https://instagram.com/seu_salao" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Foto da Logo (Upload de Imagem)</label>
-                  <input type="file" id="store-logo-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Link do Instagram</label>
+                  <input type="url" id="store-social-input" placeholder="https://instagram.com/seusalao" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-2 pt-1">
                   <div>
@@ -320,63 +307,57 @@
                     <input type="time" id="close-time" value="18:00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                   </div>
                 </div>
-                <button type="submit" id="btn-save-store" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs rounded-lg transition cursor-pointer">
+                <button type="submit" id="btn-save-store" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs rounded-lg transition">
                   Salvar Perfil
                 </button>
               </form>
             </div>
 
-            <!-- Profissional -->
+            <!-- Cadastrar Profissional -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
               <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Cadastrar Profissional</h3>
               <form onsubmit="window.saveStaff(event)" class="space-y-3">
                 <div>
                   <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Profissional</label>
-                  <input type="text" id="staff-name" placeholder="Ex: Lucas Barbosa" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <input type="text" id="staff-name" placeholder="Ex: Amanda Silva" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Especialidade / Cargo</label>
-                  <input type="text" id="staff-role" placeholder="Ex: Colorista" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Especialidade</label>
+                  <input type="text" id="staff-role" placeholder="Ex: Cabeleireira / Manicure" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp Direto do Profissional (com DDD)</label>
-                  <input type="text" id="staff-whatsapp" placeholder="Ex: 5511988887777" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp Próprio (com DDD)</label>
+                  <input type="text" id="staff-whatsapp" placeholder="Ex: 88998877665" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Foto do Profissional (Upload)</label>
-                  <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
-                </div>
-                <button type="submit" id="btn-save-staff" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition cursor-pointer">
+                <button type="submit" id="btn-save-staff" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition">
                   + Cadastrar Profissional
                 </button>
               </form>
             </div>
 
-            <!-- Serviço -->
+            <!-- Cadastrar Serviço -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
               <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Cadastrar Serviço</h3>
               <form onsubmit="window.saveService(event)" class="space-y-3">
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Categoria (Ex: Unhas, Cabelo, Sobrancelha)</label>
-                  <input type="text" id="service-category" placeholder="Ex: Manicure e Pedicure" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Categoria (Cabelo, Unhas, etc.)</label>
+                  <input type="text" id="service-category" placeholder="Ex: Cabelo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Serviço</label>
-                  <input type="text" id="service-name" placeholder="Ex: Pé e Mão" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Nome do Procedimento</label>
+                  <input type="text" id="service-name" placeholder="Ex: Escova Modelada" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Preço (R$) <span class="text-slate-400 font-normal">(Opcional)</span></label>
-                  <input type="number" step="0.01" id="service-price" placeholder="Deixe em branco para Sob Consulta" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Preço (R$)</label>
+                    <input type="number" step="0.01" id="service-price" placeholder="Ex: 50.00" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Duração (Min)</label>
+                    <input type="number" id="service-duration" value="60" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Duração Estimada (Minutos)</label>
-                  <input type="number" id="service-duration" placeholder="60" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-600 mb-1">Foto do Serviço (Upload)</label>
-                  <input type="file" id="service-photo-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
-                </div>
-                <button type="submit" id="btn-save-service" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition cursor-pointer">
+                <button type="submit" id="btn-save-service" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition">
                   + Cadastrar Serviço
                 </button>
               </form>
@@ -384,21 +365,21 @@
 
           </div>
 
-          <!-- Listas -->
+          <!-- Listagens do Painel -->
           <div class="md:col-span-2 space-y-6">
             <div class="bg-white p-5 rounded-2xl border border-slate-200">
-              <h3 class="font-bold text-slate-900 mb-3">Profissionais Cadastrados</h3>
+              <h3 class="font-bold text-slate-900 mb-3">Agendamentos Recebidos</h3>
+              <div id="admin-bookings-list" class="space-y-2"></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200">
+              <h3 class="font-bold text-slate-900 mb-3">Profissionais</h3>
               <div id="admin-staff-list" class="space-y-2"></div>
             </div>
 
             <div class="bg-white p-5 rounded-2xl border border-slate-200">
-              <h3 class="font-bold text-slate-900 mb-3">Serviços Disponíveis</h3>
+              <h3 class="font-bold text-slate-900 mb-3">Serviços</h3>
               <div id="admin-services-list" class="space-y-2"></div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200">
-              <h3 class="font-bold text-slate-900 mb-3">Agendamentos Recebidos</h3>
-              <div id="admin-bookings-list" class="space-y-2"></div>
             </div>
           </div>
 
@@ -424,16 +405,20 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
     let currentUser = null;
+    let currentStoreId = null;
     let isRegisterMode = false;
     let selectedService = null;
     let selectedStaffObj = null;
     let selectedTime = null;
     let openHour = "08:00";
     let closeHour = "18:00";
-    let merchantWhatsapp = "5511999999999";
+    let merchantWhatsapp = "";
+
+    // Pega o ID do salão pela URL (?salao=ID) se existir
+    const urlParams = new URLSearchParams(window.location.search);
+    const salaoQuery = urlParams.get('salao');
 
     window.switchView = function(view) {
       const clientView = document.getElementById('client-view');
@@ -442,38 +427,32 @@
       const btnAdmin = document.getElementById('btn-view-admin');
 
       if (view === 'admin') {
-        if (clientView) clientView.classList.add('hidden');
-        if (adminView) adminView.classList.remove('hidden');
-
-        if (btnAdmin) btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer";
-        if (btnClient) btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer";
+        clientView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition";
+        btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition";
       } else {
-        if (clientView) clientView.classList.remove('hidden');
-        if (adminView) adminView.classList.add('hidden');
-
-        if (btnClient) btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition cursor-pointer";
-        if (btnAdmin) btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer";
-        loadClientServices();
-        loadClientStaff();
+        clientView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+        btnClient.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 transition";
+        btnAdmin.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition";
+        initClientView();
       }
     };
-
-    async function uploadImageFile(file, path) {
-      if (!file) return null;
-      const ref = storage.ref().child(`${path}/${Date.now()}_${file.name}`);
-      const snapshot = await ref.put(file);
-      return await snapshot.ref.getDownloadURL();
-    }
 
     document.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toISOString().split('T')[0];
       const dateInput = document.getElementById('booking-date');
-      if(dateInput) dateInput.setAttribute('min', today);
+      if (dateInput) {
+        dateInput.setAttribute('min', today);
+        dateInput.value = today;
+      }
     });
 
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       if (user) {
+        currentStoreId = user.uid;
         document.getElementById('admin-auth-screen').classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('merchant-email-display').innerText = `Conectado como: ${user.email}`;
@@ -482,307 +461,54 @@
         document.getElementById('admin-auth-screen').classList.remove('hidden');
         document.getElementById('admin-dashboard').classList.add('hidden');
       }
-      loadClientServices();
-      loadClientStaff();
+      initClientView();
     });
 
-    window.toggleAuthMode = function() {
-      isRegisterMode = !isRegisterMode;
-      document.getElementById('auth-title').innerText = isRegisterMode ? "Cadastrar Lojista" : "Painel do Lojista";
-      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta de Lojista" : "Entrar no Painel";
-      document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? "Já tem uma conta? Faça login" : "Não tem uma conta? Cadastre o seu estabelecimento";
-    };
-
-    window.handleAuth = async function(event) {
-      event.preventDefault();
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-
-      try {
-        if (isRegisterMode) {
-          await auth.createUserWithEmailAndPassword(email, password);
-          alert("Conta de lojista cadastrada com sucesso!");
-        } else {
-          await auth.signInWithEmailAndPassword(email, password);
-        }
-      } catch (error) {
-        alert("Erro na autenticação: " + error.message);
-      }
-    };
-
-    window.logoutMerchant = function() {
-      auth.signOut();
-    };
-
-    window.deleteAccount = async function() {
-      if (confirm("⚠️ Tem certeza que deseja EXCLUIR sua conta? Todos os dados serão removidos permanentemente.")) {
-        try {
-          const services = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
-          services.forEach(doc => doc.ref.delete());
-
-          const staff = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
-          staff.forEach(doc => doc.ref.delete());
-
-          await currentUser.delete();
-          alert("Sua conta foi excluída com sucesso.");
-        } catch (error) {
-          alert("Erro ao excluir conta: " + error.message);
+    // Determina o salão ativo para a visão do cliente
+    async function initClientView() {
+      if (salaoQuery) {
+        currentStoreId = salaoQuery;
+      } else if (!currentStoreId) {
+        // Fallback: pega o primeiro salão cadastrado se nenhum ID for passado
+        const firstStore = await db.collection('settings').limit(1).get();
+        if (!firstStore.empty) {
+          currentStoreId = firstStore.docs[0].id;
         }
       }
-    };
 
-    window.saveStoreSettings = async function(event) {
-      event.preventDefault();
-      if (!currentUser) return;
-
-      const btn = document.getElementById('btn-save-store');
-      btn.innerText = "Salvando...";
-
-      try {
-        const name = document.getElementById('store-name-input').value;
-        const whatsapp = document.getElementById('store-whatsapp-input').value;
-        const social = document.getElementById('store-social-input').value;
-        const logoFile = document.getElementById('store-logo-file').files[0];
-        
-        let logoUrl = null;
-        if (logoFile) {
-          logoUrl = await uploadImageFile(logoFile, 'store_logos');
-        }
-
-        openHour = document.getElementById('open-time').value;
-        closeHour = document.getElementById('close-time').value;
-
-        const updateData = {
-          storeName: name,
-          whatsapp: whatsapp,
-          socialLink: social,
-          open: openHour,
-          close: closeHour
-        };
-        if (logoUrl) updateData.logoUrl = logoUrl;
-
-        await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
-
-        alert("Perfil atualizado!");
-        loadAdminData();
-      } catch (e) {
-        alert("Erro ao salvar perfil: " + e.message);
-      } finally {
-        btn.innerText = "Salvar Perfil";
-      }
-    };
-
-    window.saveStaff = async function(event) {
-      event.preventDefault();
-      if (!currentUser) return;
-
-      const btn = document.getElementById('btn-save-staff');
-      btn.innerText = "Enviando foto...";
-
-      try {
-        const name = document.getElementById('staff-name').value;
-        const role = document.getElementById('staff-role').value;
-        const whatsapp = document.getElementById('staff-whatsapp').value;
-        const photoFile = document.getElementById('staff-photo-file').files[0];
-
-        let photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
-        if (photoFile) {
-          photo = await uploadImageFile(photoFile, 'staff_photos');
-        }
-
-        await db.collection('staff').add({
-          merchantId: currentUser.uid,
-          name: name,
-          role: role,
-          whatsapp: whatsapp,
-          photo: photo,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        document.getElementById('staff-name').value = '';
-        document.getElementById('staff-role').value = '';
-        document.getElementById('staff-whatsapp').value = '';
-        document.getElementById('staff-photo-file').value = '';
-        loadAdminData();
-        alert("Profissional cadastrado!");
-      } catch (e) {
-        alert("Erro ao cadastrar profissional: " + e.message);
-      } finally {
-        btn.innerText = "+ Cadastrar Profissional";
-      }
-    };
-
-    window.saveService = async function(event) {
-      event.preventDefault();
-      if (!currentUser) return;
-
-      const btn = document.getElementById('btn-save-service');
-      btn.innerText = "Enviando foto...";
-
-      try {
-        const category = document.getElementById('service-category').value.trim() || "Geral";
-        const name = document.getElementById('service-name').value;
-        const rawPrice = document.getElementById('service-price').value;
-        const price = rawPrice ? parseFloat(rawPrice) : 0;
-        const duration = parseInt(document.getElementById('service-duration').value);
-        const photoFile = document.getElementById('service-photo-file').files[0];
-
-        let photo = "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
-        if (photoFile) {
-          photo = await uploadImageFile(photoFile, 'service_photos');
-        }
-
-        await db.collection('services').add({
-          merchantId: currentUser.uid,
-          category: category,
-          name: name,
-          price: price,
-          duration: duration,
-          photo: photo,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        document.getElementById('service-category').value = '';
-        document.getElementById('service-name').value = '';
-        document.getElementById('service-price').value = '';
-        document.getElementById('service-duration').value = '';
-        document.getElementById('service-photo-file').value = '';
-        loadAdminData();
-        alert("Serviço cadastrado!");
-      } catch (e) {
-        alert("Erro ao cadastrar serviço: " + e.message);
-      } finally {
-        btn.innerText = "+ Cadastrar Serviço";
-      }
-    };
-
-    async function loadAdminData() {
-      if (!currentUser) return;
-
-      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
-      if (settingsDoc.exists) {
-        const data = settingsDoc.data();
-        if (data.storeName) {
-          document.getElementById('store-name-input').value = data.storeName;
-          document.getElementById('store-display-name').innerText = data.storeName;
-        }
-        if (data.whatsapp) {
-          document.getElementById('store-whatsapp-input').value = data.whatsapp;
-          merchantWhatsapp = data.whatsapp;
-        }
-        if (data.socialLink) {
-          document.getElementById('store-social-input').value = data.socialLink;
-          const socialBtn = document.getElementById('client-social-link');
-          socialBtn.href = data.socialLink;
-          socialBtn.classList.remove('hidden');
-          socialBtn.classList.add('flex');
-        }
-        if (data.logoUrl) {
-          const logoImg = document.getElementById('store-logo-img');
-          logoImg.src = data.logoUrl;
-          logoImg.classList.remove('hidden');
-        }
-        openHour = data.open || "08:00";
-        closeHour = data.close || "18:00";
-        document.getElementById('open-time').value = openHour;
-        document.getElementById('close-time').value = closeHour;
-        document.getElementById('client-working-hours').innerText = `${openHour} às ${closeHour}`;
-      }
-
-      // Profissionais
-      const staffSnapshot = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
-      const staffContainer = document.getElementById('admin-staff-list');
-      staffContainer.innerHTML = '';
-      if (staffSnapshot.empty) {
-        staffContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum profissional cadastrado.</p>';
-      } else {
-        staffSnapshot.forEach(doc => {
-          const data = doc.data();
-          staffContainer.innerHTML += `
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div class="flex items-center gap-3">
-                <img src="${data.photo}" class="w-10 h-10 rounded-full object-cover">
-                <div>
-                  <p class="font-semibold text-sm text-slate-800">${data.name}</p>
-                  <p class="text-xs text-slate-500">${data.role} • <i class="fa-brands fa-whatsapp text-emerald-600"></i> ${data.whatsapp}</p>
-                </div>
-              </div>
-              <button onclick="window.deleteStaff('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium cursor-pointer">Excluir</button>
-            </div>
-          `;
-        });
-      }
-
-      // Serviços
-      const servicesSnapshot = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
-      const servicesContainer = document.getElementById('admin-services-list');
-      servicesContainer.innerHTML = '';
-      if (servicesSnapshot.empty) {
-        servicesContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado.</p>';
-      } else {
-        servicesSnapshot.forEach(doc => {
-          const data = doc.data();
-          const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
-          servicesContainer.innerHTML += `
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div class="flex items-center gap-3">
-                <img src="${data.photo}" class="w-10 h-10 rounded-lg object-cover">
-                <div>
-                  <p class="font-semibold text-sm text-slate-800">${data.name} <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded ml-1">${data.category || 'Geral'}</span></p>
-                  <p class="text-xs text-slate-500">${data.duration} min • ${priceDisplay}</p>
-                </div>
-              </div>
-              <button onclick="window.deleteService('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium cursor-pointer">Excluir</button>
-            </div>
-          `;
-        });
-      }
-
-      // Agendamentos
-      const bookingsSnapshot = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
-      const bookingsContainer = document.getElementById('admin-bookings-list');
-      bookingsContainer.innerHTML = '';
-      if (bookingsSnapshot.empty) {
-        bookingsContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum agendamento recebido.</p>';
-      } else {
-        bookingsSnapshot.forEach(doc => {
-          const data = doc.data();
-          bookingsContainer.innerHTML += `
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-sm text-slate-900">${data.clientName}</span>
-                <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-semibold">${data.date} às ${data.time}</span>
-              </div>
-              <p class="text-xs text-slate-600">Serviço: <strong>${data.serviceName}</strong> com <strong>${data.staffName || 'Qualquer um'}</strong></p>
-              <p class="text-xs text-indigo-600 font-medium">Cabelo: ${data.hairSpecs || 'Não informado'}</p>
-              <p class="text-xs text-slate-500">Contato: ${data.clientPhone}</p>
-            </div>
-          `;
-        });
+      if (currentStoreId) {
+        loadStoreInfo(currentStoreId);
+        loadClientServices(currentStoreId);
+        loadClientStaff(currentStoreId);
       }
     }
 
-    window.deleteStaff = async function(id) {
-      if (confirm("Remover este profissional?")) {
-        await db.collection('staff').doc(id).delete();
-        loadAdminData();
+    async function loadStoreInfo(storeId) {
+      const doc = await db.collection('settings').doc(storeId).get();
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('store-display-name').innerText = data.storeName || 'Salão de Beleza';
+        merchantWhatsapp = data.whatsapp ? data.whatsapp.replace(/\D/g, '') : '';
+        openHour = data.open || "08:00";
+        closeHour = data.close || "18:00";
+        document.getElementById('client-working-hours').innerText = `${openHour} às ${closeHour}`;
+        
+        if (data.socialLink) {
+          const social = document.getElementById('client-social-link');
+          social.href = data.socialLink;
+          social.classList.remove('hidden');
+          social.classList.add('flex');
+        }
       }
-    };
+    }
 
-    window.deleteService = async function(id) {
-      if (confirm("Remover este serviço?")) {
-        await db.collection('services').doc(id).delete();
-        loadAdminData();
-      }
-    };
+    async function loadClientServices(storeId) {
+      const container = document.getElementById('client-services-list');
+      const snapshot = await db.collection('services').where('merchantId', '==', storeId).get();
 
-    async function loadClientServices() {
-      const servicesContainer = document.getElementById('client-services-list');
-      const snapshot = await db.collection('services').get();
-
-      servicesContainer.innerHTML = '';
+      container.innerHTML = '';
       if (snapshot.empty) {
-        servicesContainer.innerHTML = '<p class="text-sm text-slate-400 py-4 text-center">Nenhum serviço disponível.</p>';
+        container.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Nenhum serviço cadastrado para este salão ainda.</p>';
         return;
       }
 
@@ -797,144 +523,193 @@
       for (const [catName, items] of Object.entries(categories)) {
         let htmlItems = '';
         items.forEach(data => {
-          const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
-          const serviceData = JSON.stringify({
+          const priceDisplay = data.price > 0 ? `R$ ${parseFloat(data.price).toFixed(2)}` : 'Sob Consulta';
+          const serviceJson = JSON.stringify({
             id: data.id,
             name: data.name,
             price: data.price,
+            duration: data.duration || 60,
             merchantId: data.merchantId
           }).replace(/"/g, '&quot;');
 
           htmlItems += `
-            <div onclick="window.selectService(${serviceData})" class="step-card p-3.5 rounded-xl border border-slate-200 bg-white hover:border-indigo-500 cursor-pointer transition flex justify-between items-center shadow-sm">
-              <div class="flex items-center gap-3">
-                <img src="${data.photo}" class="w-12 h-12 rounded-lg object-cover">
-                <div>
-                  <h4 class="font-semibold text-slate-800 text-sm">${data.name}</h4>
-                  <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${data.duration} min</p>
-                </div>
+            <div id="service-card-${data.id}" onclick="window.selectService(${serviceJson}, this)" class="card-selectable p-3.5 rounded-xl bg-white cursor-pointer flex justify-between items-center shadow-sm">
+              <div>
+                <h4 class="font-semibold text-slate-800 text-sm">${data.name}</h4>
+                <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1 text-slate-400"></i>${data.duration || 60} min</p>
               </div>
               <span class="font-bold text-indigo-600 text-xs sm:text-sm">${priceDisplay}</span>
             </div>
           `;
         });
 
-        servicesContainer.innerHTML += `
+        container.innerHTML += `
           <div class="space-y-2">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg">${catName}</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              ${htmlItems}
-            </div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg">${catName}</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${htmlItems}</div>
           </div>
         `;
       }
     }
 
-    async function loadClientStaff() {
-      const staffContainer = document.getElementById('client-staff-list');
-      const snapshot = await db.collection('staff').get();
+    async function loadClientStaff(storeId) {
+      const container = document.getElementById('client-staff-list');
+      const snapshot = await db.collection('staff').where('merchantId', '==', storeId).get();
 
-      staffContainer.innerHTML = '';
-      if (snapshot.empty) {
-        staffContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2">Atendimento com qualquer profissional disponível.</p>';
-        return;
-      }
+      container.innerHTML = '';
+      // Opção padrão: "Qualquer um"
+      container.innerHTML += `
+        <div onclick="window.selectStaff(null, this)" class="card-selectable selected p-3 rounded-xl bg-white cursor-pointer text-center shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center mx-auto mb-1.5 font-bold text-xs">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <h4 class="font-semibold text-slate-800 text-xs">Qualquer um</h4>
+          <p class="text-[10px] text-slate-400">Primeiro disponível</p>
+        </div>
+      `;
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        const staffData = JSON.stringify({
+        const staffJson = JSON.stringify({
+          id: doc.id,
           name: data.name,
-          whatsapp: data.whatsapp
+          whatsapp: data.whatsapp ? data.whatsapp.replace(/\D/g, '') : ''
         }).replace(/"/g, '&quot;');
 
-        staffContainer.innerHTML += `
-          <div onclick="window.selectStaff(${staffData})" class="step-card p-3 rounded-xl border border-slate-200 bg-white hover:border-indigo-500 cursor-pointer transition text-center shadow-sm">
-            <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5">
-            <h4 class="font-semibold text-slate-800 text-xs">${data.name}</h4>
-            <p class="text-[10px] text-slate-500">${data.role}</p>
+        container.innerHTML += `
+          <div onclick="window.selectStaff(${staffJson}, this)" class="card-selectable p-3 rounded-xl bg-white cursor-pointer text-center shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-1.5 font-bold text-xs">
+              ${data.name.charAt(0)}
+            </div>
+            <h4 class="font-semibold text-slate-800 text-xs truncate">${data.name}</h4>
+            <p class="text-[10px] text-slate-500 truncate">${data.role}</p>
           </div>
         `;
       });
     }
 
-    window.updateHairSpecs = function() {
-      const length = document.getElementById('hair-length').value;
-      const type = document.getElementById('hair-type').value;
-      
-      let summaryText = '';
-      if (length !== 'Não informado' || type !== 'Não informado') {
-        summaryText = `${length !== 'Não informado' ? length : ''} ${type !== 'Não informado' ? '(' + type + ')' : ''}`;
-      } else {
-        summaryText = 'Não informado';
-      }
-
-      document.getElementById('summary-hair').innerText = summaryText;
-    };
-
-    window.selectService = function(service) {
+    window.selectService = function(service, el) {
       selectedService = service;
+      document.querySelectorAll('#client-services-list .card-selectable').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
       document.getElementById('summary-service').innerText = service.name;
-      const priceText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
+      const priceText = service.price > 0 ? `R$ ${parseFloat(service.price).toFixed(2)}` : 'Sob Consulta';
       document.getElementById('summary-price').innerText = priceText;
+
+      window.renderTimeSlots();
     };
 
-    window.selectStaff = function(staff) {
+    window.selectStaff = function(staff, el) {
       selectedStaffObj = staff;
-      document.getElementById('summary-staff').innerText = staff.name;
+      document.querySelectorAll('#client-staff-list .card-selectable').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
+      document.getElementById('summary-staff').innerText = staff ? staff.name : 'Qualquer um';
+      window.renderTimeSlots();
     };
 
-    window.renderTimeSlots = function() {
+    // Gera horários e DESABILITA os que já foram agendados no banco
+    window.renderTimeSlots = async function() {
       const dateVal = document.getElementById('booking-date').value;
       document.getElementById('summary-date').innerText = dateVal || '--/--/----';
 
-      if (!dateVal) return;
+      if (!dateVal || !currentStoreId) return;
 
       const slotsContainer = document.getElementById('time-slots-container');
-      slotsContainer.innerHTML = '';
+      slotsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2 text-center">Verificando agenda...</p>';
 
+      // Consulta agendamentos já existentes na mesma data para o salão
+      let query = db.collection('bookings')
+                    .where('merchantId', '==', currentStoreId)
+                    .where('date', '==', dateVal);
+
+      // Se um profissional específico foi escolhido, filtra por ele
+      if (selectedStaffObj) {
+        query = query.where('staffName', '==', selectedStaffObj.name);
+      }
+
+      const bookedSnapshot = await query.get();
+      const bookedTimes = new Set();
+      bookedSnapshot.forEach(doc => {
+        bookedTimes.add(doc.data().time);
+      });
+
+      slotsContainer.innerHTML = '';
       const now = new Date();
       const selectedDate = new Date(dateVal + 'T00:00:00');
       const isToday = now.toDateString() === selectedDate.toDateString();
 
-      const startHour = parseInt(openHour.split(':')[0]);
-      const endHour = parseInt(closeHour.split(':')[0]);
+      const startHour = parseInt(openHour.split(':')[0]) || 8;
+      const endHour = parseInt(closeHour.split(':')[0]) || 18;
 
-      let availableSlotsCount = 0;
+      let slotsCount = 0;
 
       for (let h = startHour; h < endHour; h++) {
         const timeString = `${h.toString().padStart(2, '0')}:00`;
-        
-        if (isToday && h <= now.getHours()) {
-          continue;
-        }
 
-        availableSlotsCount++;
-        slotsContainer.innerHTML += `
-          <button onclick="window.selectTime('${timeString}')" class="py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-600 transition cursor-pointer">
-            ${timeString}
-          </button>
-        `;
+        // Se for hoje e a hora já passou
+        const isPast = isToday && h <= now.getHours();
+        const isBooked = bookedTimes.has(timeString);
+
+        slotsCount++;
+
+        if (isPast || isBooked) {
+          slotsContainer.innerHTML += `
+            <button disabled class="slot-btn disabled py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200">
+              ${timeString} ${isBooked ? '(Ocupado)' : ''}
+            </button>
+          `;
+        } else {
+          const isSelected = selectedTime === timeString ? 'selected' : '';
+          slotsContainer.innerHTML += `
+            <button type="button" onclick="window.selectTime('${timeString}', this)" class="slot-btn ${isSelected} py-1.5 px-2 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-600 transition">
+              ${timeString}
+            </button>
+          `;
+        }
       }
 
-      if (availableSlotsCount === 0) {
-        slotsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2 text-center">Nenhum horário disponível para a data selecionada.</p>';
+      if (slotsCount === 0) {
+        slotsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2 text-center">Nenhum horário disponível.</p>';
       }
     };
 
-    window.selectTime = function(time) {
+    window.selectTime = function(time, el) {
       selectedTime = time;
+      document.querySelectorAll('#time-slots-container .slot-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
       document.getElementById('summary-time').innerText = time;
     };
 
+    window.updateHairSpecs = function() {
+      const length = document.getElementById('hair-length').value;
+      const type = document.getElementById('hair-type').value;
+      let text = 'Não informado';
+      if (length !== 'Não informado' || type !== 'Não informado') {
+        text = `${length !== 'Não informado' ? length : ''} ${type !== 'Não informado' ? '(' + type + ')' : ''}`.trim();
+      }
+      document.getElementById('summary-hair').innerText = text;
+    };
+
+    // Confirmação com limpeza de telefone para o WhatsApp
     window.confirmBooking = async function() {
-      const name = document.getElementById('client-name').value;
-      const phone = document.getElementById('client-phone').value;
+      const name = document.getElementById('client-name').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
       const date = document.getElementById('booking-date').value;
       const hairLength = document.getElementById('hair-length').value;
       const hairType = document.getElementById('hair-type').value;
 
-      if (!selectedService || !selectedTime || !name || !phone || !date) {
-        alert("Por favor, preencha todos os campos do agendamento (Serviço, Data, Horário, Nome e WhatsApp).");
+      if (!selectedService) {
+        alert("Por favor, selecione um serviço no Passo 1.");
+        return;
+      }
+      if (!selectedTime) {
+        alert("Por favor, selecione um horário no Passo 2.");
+        return;
+      }
+      if (!name || !phone || !date) {
+        alert("Por favor, preencha seu Nome e WhatsApp.");
         return;
       }
 
@@ -942,9 +717,9 @@
       const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
 
       try {
-        // 1. Salva no Firebase para aparecer no Painel do Lojista
+        // Salva agendamento
         await db.collection('bookings').add({
-          merchantId: selectedService.merchantId,
+          merchantId: currentStoreId,
           serviceName: selectedService.name,
           staffName: staffName,
           hairSpecs: hairSpecs,
@@ -956,37 +731,212 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. Busca o WhatsApp geral da loja caso o profissional não tenha um número cadastrado
-        const settingsDoc = await db.collection('settings').doc(selectedService.merchantId).get();
-        if (settingsDoc.exists && settingsDoc.data().whatsapp) {
-          merchantWhatsapp = settingsDoc.data().whatsapp;
+        // Determina destino do WhatsApp
+        let targetWhatsapp = (selectedStaffObj && selectedStaffObj.whatsapp) ? selectedStaffObj.whatsapp : merchantWhatsapp;
+        
+        // Garante que o número só tenha dígitos e tenha DDI (55 para Brasil se não houver)
+        let cleanPhone = targetWhatsapp.replace(/\D/g, '');
+        if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+          cleanPhone = '55' + cleanPhone;
         }
 
-        // Define se vai para o WhatsApp direto do profissional ou para o geral da loja
-        let targetWhatsapp = merchantWhatsapp;
-        if (selectedStaffObj && selectedStaffObj.whatsapp) {
-          targetWhatsapp = selectedStaffObj.whatsapp;
+        const valorTexto = selectedService.price > 0 ? `R$ ${parseFloat(selectedService.price).toFixed(2)}` : 'Sob Consulta';
+        const msg = `Olá! Gostaria de confirmar meu agendamento:%0A%0A*Cliente:* ${name}%0A*Telefone:* ${phone}%0A*Serviço:* ${selectedService.name}%0A*Cabelo:* ${hairSpecs}%0A*Profissional:* ${staffName}%0A*Data:* ${date}%0A*Horário:* ${selectedTime}%0A*Valor:* ${valorTexto}`;
+
+        if (cleanPhone) {
+          window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
         }
 
-        const valorTexto = selectedService.price > 0 ? `R$ ${selectedService.price.toFixed(2)}` : 'Sob Consulta (a avaliar)';
-        const mensagem = `Olá! Gostaria de confirmar meu agendamento:%0A%0A*Cliente:* ${name}%0A*Telefone:* ${phone}%0A*Serviço:* ${selectedService.name}%0A*Cabelo:* ${hairSpecs}%0A*Profissional:* ${staffName}%0A*Data:* ${date}%0A*Horário:* ${selectedTime}%0A*Valor:* ${valorTexto}`;
+        alert("Agendamento confirmado com sucesso!");
         
-        // Abre o WhatsApp do profissional correspondente
-        window.open(`https://wa.me/${targetWhatsapp}?text=${mensagem}`, '_blank');
-
-        alert("🎉 Agendamento enviado com sucesso para o profissional e registrado no painel!");
-        
+        // Limpa formulário
         document.getElementById('client-name').value = '';
         document.getElementById('client-phone').value = '';
-        document.getElementById('summary-service').innerText = 'Nenhum selecionado';
-        document.getElementById('summary-staff').innerText = 'Qualquer um';
-        document.getElementById('summary-hair').innerText = 'Não informado';
-        document.getElementById('summary-date').innerText = '--/--/----';
+        selectedTime = null;
         document.getElementById('summary-time').innerText = '--:--';
-        document.getElementById('summary-price').innerText = 'Sob Consulta';
-        selectedStaffObj = null;
-      } catch (error) {
-        alert("Erro ao confirmar agendamento: " + error.message);
+        window.renderTimeSlots();
+      } catch (err) {
+        alert("Erro ao confirmar agendamento: " + err.message);
+      }
+    };
+
+    // ==================== ROTINAS DO PAINEL ====================
+    window.toggleAuthMode = function() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Cadastrar Lojista" : "Painel do Lojista";
+      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta de Lojista" : "Entrar no Painel";
+      document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? "Já tem conta? Entrar" : "Não tem conta? Cadastrar salão";
+    };
+
+    window.handleAuth = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const pwd = document.getElementById('auth-password').value;
+      try {
+        if (isRegisterMode) {
+          await auth.createUserWithEmailAndPassword(email, pwd);
+          alert("Conta criada com sucesso!");
+        } else {
+          await auth.signInWithEmailAndPassword(email, pwd);
+        }
+      } catch (e) {
+        alert("Erro de autenticação: " + e.message);
+      }
+    };
+
+    window.logoutMerchant = function() {
+      auth.signOut();
+    };
+
+    window.saveStoreSettings = async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('store-name-input').value;
+        const zap = document.getElementById('store-whatsapp-input').value;
+        const social = document.getElementById('store-social-input').value;
+        const open = document.getElementById('open-time').value;
+        const close = document.getElementById('close-time').value;
+
+        await db.collection('settings').doc(currentUser.uid).set({
+          storeName: name,
+          whatsapp: zap,
+          socialLink: social,
+          open: open,
+          close: close
+        }, { merge: true });
+
+        alert("Perfil atualizado!");
+        loadAdminData();
+      } catch (err) {
+        alert("Erro ao salvar: " + err.message);
+      }
+    };
+
+    window.saveStaff = async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('staff-name').value;
+        const role = document.getElementById('staff-role').value;
+        const zap = document.getElementById('staff-whatsapp').value;
+
+        await db.collection('staff').add({
+          merchantId: currentUser.uid,
+          name: name,
+          role: role,
+          whatsapp: zap,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('staff-name').value = '';
+        document.getElementById('staff-role').value = '';
+        document.getElementById('staff-whatsapp').value = '';
+        loadAdminData();
+        alert("Profissional cadastrado!");
+      } catch (err) {
+        alert("Erro: " + err.message);
+      }
+    };
+
+    window.saveService = async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      try {
+        const cat = document.getElementById('service-category').value.trim() || 'Geral';
+        const name = document.getElementById('service-name').value;
+        const price = parseFloat(document.getElementById('service-price').value) || 0;
+        const duration = parseInt(document.getElementById('service-duration').value) || 60;
+
+        await db.collection('services').add({
+          merchantId: currentUser.uid,
+          category: cat,
+          name: name,
+          price: price,
+          duration: duration,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('service-name').value = '';
+        document.getElementById('service-price').value = '';
+        loadAdminData();
+        alert("Serviço cadastrado!");
+      } catch (err) {
+        alert("Erro: " + err.message);
+      }
+    };
+
+    async function loadAdminData() {
+      if (!currentUser) return;
+
+      // Carrega configs do Salão
+      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        document.getElementById('store-name-input').value = data.storeName || '';
+        document.getElementById('store-whatsapp-input').value = data.whatsapp || '';
+        document.getElementById('store-social-input').value = data.socialLink || '';
+        document.getElementById('open-time').value = data.open || '08:00';
+        document.getElementById('close-time').value = data.close || '18:00';
+      }
+
+      // Profissionais
+      const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
+      const staffList = document.getElementById('admin-staff-list');
+      staffList.innerHTML = staffSnap.empty ? '<p class="text-xs text-slate-400 py-2">Nenhum profissional cadastrado.</p>' : '';
+      staffSnap.forEach(doc => {
+        const d = doc.data();
+        staffList.innerHTML += `
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div>
+              <p class="font-semibold text-sm text-slate-800">${d.name}</p>
+              <p class="text-xs text-slate-500">${d.role} • ${d.whatsapp}</p>
+            </div>
+            <button onclick="window.deleteItem('staff', '${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Excluir</button>
+          </div>
+        `;
+      });
+
+      // Serviços
+      const srvSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      const srvList = document.getElementById('admin-services-list');
+      srvList.innerHTML = srvSnap.empty ? '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado.</p>' : '';
+      srvSnap.forEach(doc => {
+        const d = doc.data();
+        srvList.innerHTML += `
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div>
+              <p class="font-semibold text-sm text-slate-800">${d.name} <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1 rounded">${d.category}</span></p>
+              <p class="text-xs text-slate-500">${d.duration} min • R$ ${parseFloat(d.price).toFixed(2)}</p>
+            </div>
+            <button onclick="window.deleteItem('services', '${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Excluir</button>
+          </div>
+        `;
+      });
+
+      // Agendamentos
+      const bookSnap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
+      const bookList = document.getElementById('admin-bookings-list');
+      bookList.innerHTML = bookSnap.empty ? '<p class="text-xs text-slate-400 py-2">Nenhum agendamento recebido.</p>' : '';
+      bookSnap.forEach(doc => {
+        const d = doc.data();
+        bookList.innerHTML += `
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-sm text-slate-900">${d.clientName}</span>
+              <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-semibold">${d.date} às ${d.time}</span>
+            </div>
+            <p class="text-xs text-slate-600">Serviço: <strong>${d.serviceName}</strong> (${d.staffName || 'Qualquer'})</p>
+            <p class="text-xs text-slate-500">Contato: ${d.clientPhone}</p>
+          </div>
+        `;
+      });
+    }
+
+    window.deleteItem = async function(collection, id) {
+      if (confirm("Deseja realmente excluir este item?")) {
+        await db.collection(collection).doc(id).delete();
+        loadAdminData();
       }
     };
   </script>
