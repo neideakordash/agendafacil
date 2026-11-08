@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v22 - AgendaFácil com Botão do Instagram na Página Inicial -->
+<!-- v23 - Versão Otimizada para Firestore (Sem precisar do Firebase Storage) -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -22,11 +22,10 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 
-  <!-- Firebase Scripts (Compat v9) -->
+  <!-- Firebase Scripts (Compat v9) - Apenas Auth e Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </head>
 
 <body class="text-slate-800 min-h-screen flex flex-col antialiased pb-16 selection:bg-indigo-600 selection:text-white">
@@ -53,7 +52,7 @@
     <!-- VISÃO DO CLIENTE -->
     <div id="client-container" class="space-y-6">
 
-      <!-- ABA 1: INÍCIO (Com Botão do Instagram) -->
+      <!-- ABA 1: INÍCIO -->
       <div id="tab-home" class="client-tab space-y-6">
         <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-4">
           <img id="home-logo-img" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150" class="w-24 h-24 rounded-2xl mx-auto object-cover shadow-md border-2 border-slate-100 hidden" alt="Logo">
@@ -64,7 +63,6 @@
             </p>
           </div>
 
-          <!-- Botão do Instagram na Página Inicial (Oculto se o lojista não tiver cadastrado) -->
           <div id="home-instagram-container" class="pt-2 hidden">
             <a id="home-instagram-btn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-rose-500/20 transition">
               <i class="fa-brands fa-instagram text-base"></i> Visite nosso Instagram
@@ -327,7 +325,6 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
     let currentUser = null;
     let isRegisterMode = false;
@@ -387,11 +384,18 @@
       }
     };
 
-    async function uploadImageFile(file, path) {
-      if (!file) return null;
-      const ref = storage.ref().child(`${path}/${Date.now()}_${file.name}`);
-      const snapshot = await ref.put(file);
-      return await snapshot.ref.getDownloadURL();
+    // Conversão direta de imagem para Base64 (Sem precisar do Firebase Storage)
+    function convertImageToBase64(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve(null);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -519,8 +523,9 @@
         const whatsapp = document.getElementById('store-whatsapp-input').value;
         const social = document.getElementById('store-social-input').value;
         const logoFile = document.getElementById('store-logo-file').files[0];
+        
         let logoUrl = null;
-        if (logoFile) logoUrl = await uploadImageFile(logoFile, 'store_logos');
+        if (logoFile) logoUrl = await convertImageToBase64(logoFile);
 
         let newSchedule = {};
         for (let day = 0; day <= 6; day++) {
@@ -547,8 +552,9 @@
         const role = document.getElementById('staff-role').value;
         const whatsapp = document.getElementById('staff-whatsapp').value;
         const photoFile = document.getElementById('staff-photo-file').files[0];
+        
         let photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
-        if (photoFile) photo = await uploadImageFile(photoFile, 'staff_photos');
+        if (photoFile) photo = await convertImageToBase64(photoFile);
 
         await db.collection('staff').add({ merchantId: currentUser.uid, name, role, whatsapp, photo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         document.getElementById('staff-name').value = '';
@@ -569,8 +575,9 @@
         const price = rawPrice ? parseFloat(rawPrice) : 0;
         const duration = parseInt(document.getElementById('service-duration').value);
         const photoFile = document.getElementById('service-photo-file').files[0];
+        
         let photo = "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
-        if (photoFile) photo = await uploadImageFile(photoFile, 'service_photos');
+        if (photoFile) photo = await convertImageToBase64(photoFile);
 
         await db.collection('services').add({ merchantId: currentUser.uid, category, name, price, duration, photo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         document.getElementById('service-category').value = '';
@@ -644,7 +651,6 @@
           logoImg.classList.remove('hidden');
         }
         
-        // Exibir o botão do Instagram na página inicial se houver link cadastrado
         if (data.socialLink) {
           const instaBtn = document.getElementById('home-instagram-btn');
           instaBtn.href = data.socialLink;
@@ -653,4 +659,206 @@
           document.getElementById('home-instagram-container').classList.add('hidden');
         }
 
-        if (data.weeklySchedule
+        if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
+      }
+
+      const servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
+      allServicesRaw = [];
+      const categoriesSet = new Set(['Todos']);
+      servicesSnap.forEach(doc => {
+        const data = doc.data();
+        allServicesRaw.push({ id: doc.id, ...data });
+        categoriesSet.add(data.category || 'Geral');
+      });
+
+      const catContainer = document.getElementById('category-filters');
+      catContainer.innerHTML = '';
+      categoriesSet.forEach(cat => {
+        const activeClass = cat === currentCategoryFilter ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200';
+        catContainer.innerHTML += `<button onclick="window.filterCategory('${cat}')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer ${activeClass}">${cat}</button>`;
+      });
+
+      renderServicesList();
+
+      const staffSnap = await db.collection('staff').where('merchantId', '==', salonId).get();
+      const staffContainer = document.getElementById('client-staff-list');
+      staffContainer.innerHTML = '';
+      if (staffSnap.empty) {
+        staffContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3">Nenhum profissional cadastrado.</p>';
+      } else {
+        staffSnap.forEach(doc => {
+          const data = doc.data();
+          const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
+          staffContainer.innerHTML += `
+            <div onclick="window.selectStaff(${staffData})" class="card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs">
+              <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5 shadow-xs">
+              <h4 class="font-bold text-slate-800 text-xs truncate">${data.name}</h4>
+              <p class="text-[9px] text-slate-400 uppercase">${data.role}</p>
+            </div>
+          `;
+        });
+      }
+    }
+
+    window.filterCategory = function(cat) {
+      currentCategoryFilter = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if(btn.innerText === cat) {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer bg-slate-900 text-white";
+        } else {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer bg-white text-slate-700 border border-slate-200";
+        }
+      });
+      renderServicesList();
+    };
+
+    function renderServicesList() {
+      const container = document.getElementById('client-services-list');
+      container.innerHTML = '';
+      const filtered = currentCategoryFilter === 'Todos' ? allServicesRaw : allServicesRaw.filter(s => (s.category || 'Geral') === currentCategoryFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum serviço encontrado.</p>';
+        return;
+      }
+
+      filtered.forEach(data => {
+        const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+        const serviceData = JSON.stringify({ id: data.id, name: data.name, price: data.price, merchantId: data.merchantId }).replace(/"/g, '&quot;');
+        container.innerHTML += `
+          <div onclick="window.selectService(${serviceData})" class="card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs">
+            <div class="flex items-center gap-3">
+              <img src="${data.photo}" class="w-12 h-12 rounded-xl object-cover">
+              <div>
+                <h4 class="font-bold text-slate-800 text-xs sm:text-sm">${data.name}</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1 text-indigo-600"></i>${data.duration} min</p>
+              </div>
+            </div>
+            <span class="font-extrabold text-indigo-600 text-xs sm:text-sm bg-indigo-50 px-3 py-1.5 rounded-xl">${priceDisplay}</span>
+          </div>
+        `;
+      });
+    }
+
+    window.updateHairSpecs = function() {
+      const length = document.getElementById('hair-length').value;
+      const type = document.getElementById('hair-type').value;
+      document.getElementById('summary-hair').innerText = `${length} | ${type}`;
+    };
+
+    window.selectService = function(service) {
+      selectedService = service;
+      document.getElementById('summary-service').innerText = service.name;
+      document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
+    };
+
+    window.selectStaff = function(staff) {
+      selectedStaffObj = staff;
+      document.getElementById('summary-staff').innerText = staff.name;
+      if (document.getElementById('booking-date').value) window.renderTimeSlots();
+    };
+
+    window.renderTimeSlots = async function() {
+      const dateVal = document.getElementById('booking-date').value;
+      if (!dateVal) return;
+      document.getElementById('summary-datetime').innerText = `${dateVal.split('-').reverse().join('/')}`;
+
+      const slotsContainer = document.getElementById('time-slots-container');
+      slotsContainer.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Verificando...</p>';
+
+      const parts = dateVal.split('-');
+      const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = selectedObjDate.getDay();
+      const schedule = window.salonSchedule || {};
+      const dayConfig = schedule[dayOfWeek];
+
+      if (!dayConfig || !dayConfig.active) {
+        slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center font-bold">Fechado neste dia.</p>';
+        return;
+      }
+
+      const openHour = parseInt(dayConfig.open.split(':')[0]);
+      const closeHour = parseInt(dayConfig.close.split(':')[0]);
+      let bookedTimes = [];
+
+      try {
+        let query = db.collection('bookings').where('merchantId', '==', window.currentSalonId).where('date', '==', dateVal);
+        if (selectedStaffObj) query = query.where('staffName', '==', selectedStaffObj.name);
+        const snapshot = await query.get();
+        snapshot.forEach(doc => bookedTimes.push(doc.data().time));
+      } catch (e) { console.error(e); }
+
+      slotsContainer.innerHTML = '';
+      let count = 0;
+      for (let h = openHour; h < closeHour; h++) {
+        const timeString = `${h.toString().padStart(2, '0')}:00`;
+        if (bookedTimes.includes(timeString)) continue;
+        count++;
+        slotsContainer.innerHTML += `<button type="button" onclick="window.selectTime('${timeString}')" class="py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
+      }
+      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Indisponível.</p>';
+    };
+
+    window.selectTime = function(time) {
+      selectedTime = time;
+      const dateVal = document.getElementById('booking-date').value.split('-').reverse().join('/');
+      document.getElementById('summary-datetime').innerText = `${dateVal} às ${time}`;
+    };
+
+    window.confirmBooking = async function() {
+      const name = document.getElementById('client-name').value;
+      const phone = document.getElementById('client-phone').value;
+      const date = document.getElementById('booking-date').value;
+      if (!selectedService || !selectedTime || !name || !phone || !date) {
+        alert("Preencha todos os campos do agendamento.");
+        return;
+      }
+
+      const hairLength = document.getElementById('hair-length').value;
+      const hairType = document.getElementById('hair-type').value;
+      const hairSpecs = `${hairLength} / ${hairType}`;
+      const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
+
+      try {
+        await db.collection('bookings').add({
+          merchantId: selectedService.merchantId,
+          serviceName: selectedService.name,
+          staffName,
+          hairSpecs,
+          price: selectedService.price,
+          date,
+          time: selectedTime,
+          clientName: name,
+          clientPhone: phone,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        let targetWhatsapp = merchantWhatsapp;
+        if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
+
+        const msg = `Olá, ${staffName}! Novo agendamento:%0A*Cliente:* ${name}%0A*Serviço:* ${selectedService.name}%0A*Data:* ${date} às ${selectedTime}`;
+        window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
+        alert("Agendamento realizado!");
+        window.switchTab('reservas');
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    window.searchClientBookings = async function() {
+      const phone = document.getElementById('search-phone').value.trim();
+      const container = document.getElementById('client-bookings-result');
+      container.innerHTML = '<p class="text-xs text-slate-400">Buscando...</p>';
+      if (!phone) { container.innerHTML = '<p class="text-xs text-rose-500">Informe o WhatsApp.</p>'; return; }
+
+      try {
+        const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
+        container.innerHTML = '';
+        if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado.</p>'; return; }
+        snap.forEach(doc => {
+          const d = doc.data();
+          container.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1"><b>${d.serviceName}</b> com ${d.staffName}<br>Data: ${d.date} às ${d.time}</div>`;
+        });
+      } catch(e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro na busca.</p>'; }
+    };
+  </script>
+</body>
+</html>
