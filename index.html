@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v24 - AgendaFácil com Edição Completa de Serviços -->
+<!-- v25 - AgendaFácil com Vínculo de Profissionais aos Serviços -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -266,16 +266,24 @@
               </form>
             </div>
 
-            <!-- Formulário de Cadastro / Edição de Serviço -->
+            <!-- Cadastro / Edição de Serviço com Vínculo de Profissional -->
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
               <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 id="service-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Cadastrar Serviço</h3>
-                <button type="button" id="btn-cancel-edit" onclick="window.cancelEditService()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
+                <button type="button" id="btn-cancel-edit" onclick="window.cancelEditService()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar</button>
               </div>
               <form onsubmit="window.saveService(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="editing-service-id" value="">
                 <input type="text" id="service-category" placeholder="Categoria (ex: Cabelo, Unhas)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-1">Vincular a Profissional Específico</label>
+                  <select id="service-staff-select" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="todos">Disponível para Qualquer Profissional</option>
+                  </select>
+                </div>
+
                 <input type="number" step="0.01" id="service-price" placeholder="Preço R$ (Vazio = Sob Consulta)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="number" id="service-duration" placeholder="Duração (minutos)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <div>
@@ -341,6 +349,7 @@
     let selectedTime = null;
     let merchantWhatsapp = "5511999999999";
     let allServicesRaw = [];
+    let allStaffRaw = [];
     let currentCategoryFilter = 'Todos';
 
     let weeklySchedule = {
@@ -569,7 +578,7 @@
       } catch (e) { alert("Erro: " + e.message); }
     };
 
-    // Salvar ou Atualizar Serviço (com suporte a edição)
+    // Salvar ou Atualizar Serviço com Vínculo de Profissional
     window.saveService = async function(event) {
       event.preventDefault();
       if (!currentUser) return;
@@ -577,6 +586,7 @@
         const serviceId = document.getElementById('editing-service-id').value;
         const category = document.getElementById('service-category').value.trim() || "Geral";
         const name = document.getElementById('service-name').value;
+        const assignedStaff = document.getElementById('service-staff-select').value;
         const rawPrice = document.getElementById('service-price').value;
         const price = rawPrice ? parseFloat(rawPrice) : 0;
         const duration = parseInt(document.getElementById('service-duration').value);
@@ -591,17 +601,16 @@
           merchantId: currentUser.uid,
           category,
           name,
+          assignedStaff, // 'todos' ou ID/Nome do profissional
           price,
           duration
         };
         if (photoData) servicePayload.photo = photoData;
 
         if (serviceId) {
-          // Atualizar serviço existente
           await db.collection('services').doc(serviceId).update(servicePayload);
           alert("Serviço atualizado com sucesso!");
         } else {
-          // Criar novo serviço
           servicePayload.photo = photoData || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
           servicePayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
           await db.collection('services').add(servicePayload);
@@ -613,11 +622,11 @@
       } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
     };
 
-    // Preencher formulário para editar o serviço
-    window.editService = async function(id, name, category, price, duration) {
+    window.editService = async function(id, name, category, price, duration, assignedStaff) {
       document.getElementById('editing-service-id').value = id;
       document.getElementById('service-category').value = category;
       document.getElementById('service-name').value = name;
+      document.getElementById('service-staff-select').value = assignedStaff || 'todos';
       document.getElementById('service-price').value = price > 0 ? price : '';
       document.getElementById('service-duration').value = duration;
 
@@ -627,11 +636,11 @@
       window.scrollTo({ top: document.getElementById('service-form-title').offsetTop, behavior: 'smooth' });
     };
 
-    // Cancelar edição e resetar formulário
     window.cancelEditService = function() {
       document.getElementById('editing-service-id').value = '';
       document.getElementById('service-category').value = '';
       document.getElementById('service-name').value = '';
+      document.getElementById('service-staff-select').value = 'todos';
       document.getElementById('service-price').value = '';
       document.getElementById('service-duration').value = '';
       document.getElementById('service-photo-file').value = '';
@@ -652,12 +661,20 @@
         if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
       }
 
+      // Carregar Profissionais e popular o select de vínculo de serviços
       const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
       const staffContainer = document.getElementById('admin-staff-list');
+      const staffSelect = document.getElementById('service-staff-select');
+      
       staffContainer.innerHTML = '';
+      staffSelect.innerHTML = '<option value="todos">Disponível para Qualquer Profissional</option>';
+      
+      allStaffRaw = [];
       staffSnap.forEach(doc => {
         const data = doc.data();
+        allStaffRaw.push({ id: doc.id, ...data });
         staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role})</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
+        staffSelect.innerHTML += `<option value="${data.name}">${data.name} (${data.role})</option>`;
       });
 
       const servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
@@ -666,14 +683,15 @@
       servicesSnap.forEach(doc => {
         const data = doc.data();
         const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+        const assignedText = data.assignedStaff && data.assignedStaff !== 'todos' ? `Prof: ${data.assignedStaff}` : 'Qualquer Profissional';
         servicesContainer.innerHTML += `
           <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
             <div>
               <b>${data.name}</b> <span class="text-indigo-600">[${data.category}]</span><br>
-              <span class="text-slate-400">${data.duration} min • ${priceText}</span>
+              <span class="text-slate-400">${data.duration} min • ${priceText} • <span class="text-emerald-600 font-bold">${assignedText}</span></span>
             </div>
             <div class="flex gap-2">
-              <button onclick="window.editService('${doc.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration})" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+              <button onclick="window.editService('${doc.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, '${data.assignedStaff || 'todos'}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
               <button onclick="window.deleteService('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
             </div>
           </div>
@@ -745,6 +763,7 @@
       renderServicesList();
 
       const staffSnap = await db.collection('staff').where('merchantId', '==', salonId).get();
+      allStaffRaw = [];
       const staffContainer = document.getElementById('client-staff-list');
       staffContainer.innerHTML = '';
       if (staffSnap.empty) {
@@ -752,9 +771,10 @@
       } else {
         staffSnap.forEach(doc => {
           const data = doc.data();
+          allStaffRaw.push({ id: doc.id, ...data });
           const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
           staffContainer.innerHTML += `
-            <div onclick="window.selectStaff(${staffData})" class="card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs">
+            <div onclick="window.selectStaff(${staffData})" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs" data-staff-name="${data.name}">
               <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5 shadow-xs">
               <h4 class="font-bold text-slate-800 text-xs truncate">${data.name}</h4>
               <p class="text-[9px] text-slate-400 uppercase">${data.role}</p>
@@ -788,7 +808,14 @@
 
       filtered.forEach(data => {
         const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
-        const serviceData = JSON.stringify({ id: data.id, name: data.name, price: data.price, merchantId: data.merchantId }).replace(/"/g, '&quot;');
+        const serviceData = JSON.stringify({ 
+          id: data.id, 
+          name: data.name, 
+          price: data.price, 
+          merchantId: data.merchantId,
+          assignedStaff: data.assignedStaff || 'todos'
+        }).replace(/"/g, '&quot;');
+
         container.innerHTML += `
           <div onclick="window.selectService(${serviceData})" class="card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs">
             <div class="flex items-center gap-3">
@@ -810,10 +837,31 @@
       document.getElementById('summary-hair').innerText = `${length} | ${type}`;
     };
 
+    // Ao selecionar um serviço, filtra visualmente os profissionais vinculados a ele
     window.selectService = function(service) {
       selectedService = service;
       document.getElementById('summary-service').innerText = service.name;
       document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
+
+      // Destacar ou filtrar profissionais compatíveis
+      const staffCards = document.querySelectorAll('.staff-card');
+      staffCards.forEach(card => {
+        const staffName = card.getAttribute('data-staff-name');
+        if (service.assignedStaff === 'todos' || service.assignedStaff === staffName) {
+          card.style.opacity = '1';
+          card.style.pointerEvents = 'auto';
+          card.style.borderColor = '#cbd5e1';
+        } else {
+          card.style.opacity = '0.3';
+          card.style.pointerEvents = 'none'; // Desativa clique em profissionais que não fazem o serviço
+        }
+      });
+
+      // Se o profissional selecionado atualmente não fizer o serviço, limpa a seleção dele
+      if (selectedStaffObj && service.assignedStaff !== 'todos' && service.assignedStaff !== selectedStaffObj.name) {
+        selectedStaffObj = null;
+        document.getElementById('summary-staff').innerText = 'Qualquer';
+      }
     };
 
     window.selectStaff = function(staff) {
