@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20 - Código Completo e Otimizado para o GitHub Pages (Padrão Gendo) -->
+<!-- v22 - AgendaFácil com Botão do Instagram na Página Inicial -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -31,7 +31,7 @@
 
 <body class="text-slate-800 min-h-screen flex flex-col antialiased pb-16 selection:bg-indigo-600 selection:text-white">
 
-  <!-- CABEÇALHO SUPERIOR DISCRETO -->
+  <!-- CABEÇALHO SUPERIOR -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.switchTab('home')">
@@ -53,7 +53,7 @@
     <!-- VISÃO DO CLIENTE -->
     <div id="client-container" class="space-y-6">
 
-      <!-- ABA 1: INÍCIO -->
+      <!-- ABA 1: INÍCIO (Com Botão do Instagram) -->
       <div id="tab-home" class="client-tab space-y-6">
         <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-4">
           <img id="home-logo-img" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150" class="w-24 h-24 rounded-2xl mx-auto object-cover shadow-md border-2 border-slate-100 hidden" alt="Logo">
@@ -62,6 +62,13 @@
             <p class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-location-dot text-indigo-600"></i> <span id="home-store-address">Atendimento com hora marcada</span>
             </p>
+          </div>
+
+          <!-- Botão do Instagram na Página Inicial (Oculto se o lojista não tiver cadastrado) -->
+          <div id="home-instagram-container" class="pt-2 hidden">
+            <a id="home-instagram-btn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-rose-500/20 transition">
+              <i class="fa-brands fa-instagram text-base"></i> Visite nosso Instagram
+            </a>
           </div>
 
           <div class="grid grid-cols-2 gap-3 pt-4">
@@ -165,4 +172,485 @@
           <h3 class="text-lg font-extrabold text-slate-900">Meus Agendamentos</h3>
           <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados:</p>
           <div class="flex gap-2 max-w-md mx-auto">
-            <input type="tel" id="search-phone" placeholder="(00) 00000-0000
+            <input type="tel" id="search-phone" placeholder="(00) 00000-0000" class="flex-grow px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+            <button onclick="window.searchClientBookings()" class="px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar</button>
+          </div>
+          <div id="client-bookings-result" class="space-y-3 pt-4 text-left"></div>
+        </div>
+      </div>
+
+      <!-- ABA 4: MAIS -->
+      <div id="tab-mais" class="client-tab hidden space-y-4">
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
+          <div onclick="alert('AgendaFácil v1.0 - Sistema Integrado')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Sobre o Sistema</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
+          <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
+          <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista</span><i class="fa-solid fa-store"></i></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PAINEL DO LOJISTA -->
+    <div id="admin-view" class="hidden space-y-6">
+      <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-100 my-8">
+        <div class="text-center mb-6">
+          <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-lg">
+            <i class="fa-solid fa-store"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista</h2>
+          <p class="text-xs text-slate-500 mt-1">Gerencie seu estabelecimento.</p>
+        </div>
+
+        <form id="auth-form" onsubmit="window.handleAuth(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">E-mail</label>
+            <input type="email" id="auth-email" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Senha</label>
+            <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+          <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Entrar</button>
+        </form>
+        <div class="mt-4 text-center">
+          <button type="button" onclick="window.toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 hover:underline font-semibold cursor-pointer">Cadastrar estabelecimento</button>
+        </div>
+      </div>
+
+      <div id="admin-dashboard" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-3">
+          <div>
+            <h2 class="font-extrabold text-slate-900 text-base">Painel Administrativo</h2>
+            <p class="text-xs text-slate-500" id="merchant-email-display"></p>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <span class="text-[11px] text-indigo-600 font-bold" id="merchant-link-display">Link do salão: Carregando...</span>
+              <button onclick="window.copyMerchantLink()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-copy"></i> Copiar Link
+              </button>
+              <button onclick="window.shareOnWhatsApp()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                <i class="fa-brands fa-whatsapp"></i> Compartilhar WhatsApp
+              </button>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl cursor-pointer">Sair</button>
+            <button onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded-xl cursor-pointer">Excluir</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Perfil e Expediente</h3>
+              <form onsubmit="window.saveStoreSettings(event)" class="space-y-3 text-xs">
+                <input type="text" id="store-name-input" placeholder="Nome do Salão" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="store-whatsapp-input" placeholder="WhatsApp (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="file" id="store-logo-file" accept="image/*" class="w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                
+                <div class="pt-2 border-t border-slate-100 space-y-2">
+                  <span class="font-bold text-indigo-600">Horários por Dia da Semana</span>
+                  <div id="schedule-config-container" class="space-y-2"></div>
+                </div>
+
+                <button type="submit" class="w-full py-2 bg-slate-900 text-white font-bold rounded-xl cursor-pointer">Salvar Perfil</button>
+              </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Cadastrar Profissional</h3>
+              <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
+                <input type="text" id="staff-name" placeholder="Nome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-role" placeholder="Cargo/Especialidade" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
+                <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar</button>
+              </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Cadastrar Serviço</h3>
+              <form onsubmit="window.saveService(event)" class="space-y-3 text-xs">
+                <input type="text" id="service-category" placeholder="Categoria (ex: Cabelo, Unhas)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="number" step="0.01" id="service-price" placeholder="Preço R$ (Vazio = Sob Consulta)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="number" id="service-duration" placeholder="Duração (minutos)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="file" id="service-photo-file" accept="image/*" class="w-full text-slate-500">
+                <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="md:col-span-2 space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Profissionais</h3><div id="admin-staff-list" class="space-y-2"></div></div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços</h3><div id="admin-services-list" class="space-y-2"></div></div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Agendamentos</h3><div id="admin-bookings-list" class="space-y-2"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
+  <nav class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-50 h-16 flex items-center justify-around px-2 shadow-lg">
+    <button onclick="window.switchTab('home')" class="tab-btn flex flex-col items-center text-indigo-600 cursor-pointer" data-tab="home">
+      <i class="fa-solid fa-house text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Início</span>
+    </button>
+    <button onclick="window.switchTab('agenda')" class="tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer" data-tab="agenda">
+      <i class="fa-solid fa-calendar-plus text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Agendar</span>
+    </button>
+    <button onclick="window.switchTab('reservas')" class="tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer" data-tab="reservas">
+      <i class="fa-solid fa-calendar-check text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Reservas</span>
+    </button>
+    <button onclick="window.switchTab('mais')" class="tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer" data-tab="mais">
+      <i class="fa-solid fa-ellipsis text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Mais</span>
+    </button>
+  </nav>
+
+  <!-- SCRIPT -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
+      authDomain: "agendafacil-20e04.firebaseapp.com",
+      projectId: "agendafacil-20e04",
+      storageBucket: "agendafacil-20e04.appspot.com",
+      messagingSenderId: "236064027235",
+      appId: "1:236064027235:web:dd6869f55206fc496c3e56",
+      measurementId: "G-9WNTJND5X1"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    let currentUser = null;
+    let isRegisterMode = false;
+    let selectedService = null;
+    let selectedStaffObj = null;
+    let selectedTime = null;
+    let merchantWhatsapp = "5511999999999";
+    let allServicesRaw = [];
+    let currentCategoryFilter = 'Todos';
+
+    let weeklySchedule = {
+      0: { active: false, open: "08:00", close: "18:00" },
+      1: { active: true, open: "08:00", close: "18:00" },
+      2: { active: true, open: "08:00", close: "18:00" },
+      3: { active: true, open: "08:00", close: "18:00" },
+      4: { active: true, open: "08:00", close: "18:00" },
+      5: { active: true, open: "08:00", close: "18:00" },
+      6: { active: true, open: "08:00", close: "14:00" }
+    };
+
+    const dayNames = { 0: "Domingo", 1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado" };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetMerchantId = urlParams.get('salao');
+
+    window.switchTab = function(tabId) {
+      document.querySelectorAll('.client-tab').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if(btn.dataset.tab === tabId) {
+          btn.className = "tab-btn flex flex-col items-center text-indigo-600 cursor-pointer";
+        } else {
+          btn.className = "tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer";
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.toggleAdminView = function() {
+      const clientContainer = document.getElementById('client-container');
+      const adminView = document.getElementById('admin-view');
+      const bottomNav = document.querySelector('nav');
+      const btnText = document.getElementById('admin-btn-text');
+
+      if (adminView.classList.contains('hidden')) {
+        clientContainer.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        bottomNav.classList.add('hidden');
+        btnText.innerText = "Ver Cliente";
+      } else {
+        adminView.classList.add('hidden');
+        clientContainer.classList.remove('hidden');
+        bottomNav.classList.remove('hidden');
+        btnText.innerText = "Painel Lojista";
+        loadClientData();
+      }
+    };
+
+    async function uploadImageFile(file, path) {
+      if (!file) return null;
+      const ref = storage.ref().child(`${path}/${Date.now()}_${file.name}`);
+      const snapshot = await ref.put(file);
+      return await snapshot.ref.getDownloadURL();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('booking-date');
+      if(dateInput) dateInput.setAttribute('min', today);
+      renderScheduleInputs();
+      loadClientData();
+    });
+
+    function renderScheduleInputs(savedSchedule = null) {
+      const container = document.getElementById('schedule-config-container');
+      if (!container) return;
+      container.innerHTML = '';
+      if (savedSchedule) weeklySchedule = savedSchedule;
+
+      for (let day = 0; day <= 6; day++) {
+        const config = weeklySchedule[day] || { active: false, open: "08:00", close: "18:00" };
+        container.innerHTML += `
+          <div class="p-2 bg-white border border-slate-200 rounded-xl space-y-1">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-800 flex items-center gap-1.5">
+                <input type="checkbox" id="day-active-${day}" ${config.active ? 'checked' : ''} onchange="toggleDayInputs(${day})" class="rounded text-indigo-600">
+                ${dayNames[day]}
+              </label>
+              <span id="day-status-${day}" class="text-[9px] font-bold px-2 py-0.5 rounded-full ${config.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">${config.active ? 'Aberto' : 'Fechado'}</span>
+            </div>
+            <div id="day-times-${day}" class="grid grid-cols-2 gap-2 ${config.active ? '' : 'hidden'}">
+              <input type="time" id="day-open-${day}" value="${config.open}" class="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px]">
+              <input type="time" id="day-close-${day}" value="${config.close}" class="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px]">
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.toggleDayInputs = function(day) {
+      const isActive = document.getElementById(`day-active-${day}`).checked;
+      const timesDiv = document.getElementById(`day-times-${day}`);
+      const statusSpan = document.getElementById(`day-status-${day}`);
+      if (isActive) {
+        timesDiv.classList.remove('hidden');
+        statusSpan.innerText = "Aberto";
+        statusSpan.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+      } else {
+        timesDiv.classList.add('hidden');
+        statusSpan.innerText = "Fechado";
+        statusSpan.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600";
+      }
+    };
+
+    auth.onAuthStateChanged((user) => {
+      currentUser = user;
+      if (user) {
+        document.getElementById('admin-auth-screen').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('merchant-email-display').innerText = `E-mail: ${user.email}`;
+        
+        const fullSalonLink = `${window.location.origin}${window.location.pathname}?salao=${user.uid}`;
+        document.getElementById('merchant-link-display').innerHTML = `Link do salão: <a href="${fullSalonLink}" target="_blank" class="text-indigo-600 underline">${fullSalonLink}</a>`;
+        window.generatedMerchantLink = fullSalonLink;
+
+        loadAdminData();
+      } else {
+        document.getElementById('admin-auth-screen').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+      }
+      loadClientData();
+    });
+
+    window.copyMerchantLink = function() {
+      if (window.generatedMerchantLink) {
+        navigator.clipboard.writeText(window.generatedMerchantLink);
+        alert("📋 Link do salão copiado para a área de transferência!");
+      }
+    };
+
+    window.shareOnWhatsApp = function() {
+      if (window.generatedMerchantLink) {
+        const text = encodeURIComponent(`Olá! Agende seu horário no nosso salão através do link abaixo:\n${window.generatedMerchantLink}`);
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+      }
+    };
+
+    window.toggleAuthMode = function() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Cadastrar Lojista" : "Painel do Lojista";
+      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta" : "Entrar";
+    };
+
+    window.handleAuth = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      try {
+        if (isRegisterMode) {
+          await auth.createUserWithEmailAndPassword(email, password);
+          alert("Conta criada com sucesso!");
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+      } catch (error) { alert("Erro: " + error.message); }
+    };
+
+    window.logoutMerchant = function() { auth.signOut(); };
+
+    window.deleteAccount = async function() {
+      if (confirm("Tem certeza que deseja excluir sua conta e dados?")) {
+        try {
+          const services = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+          services.forEach(doc => doc.ref.delete());
+          const staff = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
+          staff.forEach(doc => doc.ref.delete());
+          await currentUser.delete();
+          alert("Conta excluída.");
+        } catch (error) { alert("Erro: " + error.message); }
+      }
+    };
+
+    window.saveStoreSettings = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('store-name-input').value;
+        const whatsapp = document.getElementById('store-whatsapp-input').value;
+        const social = document.getElementById('store-social-input').value;
+        const logoFile = document.getElementById('store-logo-file').files[0];
+        let logoUrl = null;
+        if (logoFile) logoUrl = await uploadImageFile(logoFile, 'store_logos');
+
+        let newSchedule = {};
+        for (let day = 0; day <= 6; day++) {
+          const active = document.getElementById(`day-active-${day}`).checked;
+          const open = document.getElementById(`day-open-${day}`).value;
+          const close = document.getElementById(`day-close-${day}`).value;
+          newSchedule[day] = { active, open, close };
+        }
+
+        const updateData = { storeName: name, whatsapp, socialLink: social, weeklySchedule: newSchedule };
+        if (logoUrl) updateData.logoUrl = logoUrl;
+
+        await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
+        alert("Perfil salvo!");
+        loadAdminData();
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    window.saveStaff = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('staff-name').value;
+        const role = document.getElementById('staff-role').value;
+        const whatsapp = document.getElementById('staff-whatsapp').value;
+        const photoFile = document.getElementById('staff-photo-file').files[0];
+        let photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
+        if (photoFile) photo = await uploadImageFile(photoFile, 'staff_photos');
+
+        await db.collection('staff').add({ merchantId: currentUser.uid, name, role, whatsapp, photo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        document.getElementById('staff-name').value = '';
+        document.getElementById('staff-role').value = '';
+        document.getElementById('staff-whatsapp').value = '';
+        loadAdminData();
+        alert("Profissional cadastrado!");
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    window.saveService = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const category = document.getElementById('service-category').value.trim() || "Geral";
+        const name = document.getElementById('service-name').value;
+        const rawPrice = document.getElementById('service-price').value;
+        const price = rawPrice ? parseFloat(rawPrice) : 0;
+        const duration = parseInt(document.getElementById('service-duration').value);
+        const photoFile = document.getElementById('service-photo-file').files[0];
+        let photo = "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
+        if (photoFile) photo = await uploadImageFile(photoFile, 'service_photos');
+
+        await db.collection('services').add({ merchantId: currentUser.uid, category, name, price, duration, photo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        document.getElementById('service-category').value = '';
+        document.getElementById('service-name').value = '';
+        document.getElementById('service-price').value = '';
+        document.getElementById('service-duration').value = '';
+        loadAdminData();
+        alert("Serviço cadastrado!");
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    async function loadAdminData() {
+      if (!currentUser) return;
+      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        if (data.storeName) document.getElementById('store-name-input').value = data.storeName;
+        if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
+        if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
+        if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
+      }
+
+      const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
+      const staffContainer = document.getElementById('admin-staff-list');
+      staffContainer.innerHTML = '';
+      staffSnap.forEach(doc => {
+        const data = doc.data();
+        staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role})</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold">Excluir</button></div>`;
+      });
+
+      const servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      const servicesContainer = document.getElementById('admin-services-list');
+      servicesContainer.innerHTML = '';
+      servicesSnap.forEach(doc => {
+        const data = doc.data();
+        servicesContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> [${data.category}]</span><button onclick="window.deleteService('${doc.id}')" class="text-rose-500 font-bold">Excluir</button></div>`;
+      });
+
+      const bookingsSnap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
+      const bookingsContainer = document.getElementById('admin-bookings-list');
+      bookingsContainer.innerHTML = '';
+      bookingsSnap.forEach(doc => {
+        const data = doc.data();
+        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName}</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName}</p></div>`;
+      });
+    }
+
+    window.deleteStaff = async function(id) { await db.collection('staff').doc(id).delete(); loadAdminData(); };
+    window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
+
+    async function loadClientData() {
+      let salonId = targetMerchantId;
+      if (!salonId && currentUser) salonId = currentUser.uid;
+      if (!salonId) {
+        const settingsSnap = await db.collection('settings').limit(1).get();
+        if (!settingsSnap.empty) salonId = settingsSnap.docs[0].id;
+      }
+      if (!salonId) return;
+      window.currentSalonId = salonId;
+
+      const settingsDoc = await db.collection('settings').doc(salonId).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        const storeName = data.storeName || "Meu Salão";
+        document.getElementById('header-store-name').innerText = storeName;
+        document.getElementById('home-store-name').innerText = storeName;
+        if (data.whatsapp) merchantWhatsapp = data.whatsapp;
+        if (data.logoUrl) {
+          const logoImg = document.getElementById('home-logo-img');
+          logoImg.src = data.logoUrl;
+          logoImg.classList.remove('hidden');
+        }
+        
+        // Exibir o botão do Instagram na página inicial se houver link cadastrado
+        if (data.socialLink) {
+          const instaBtn = document.getElementById('home-instagram-btn');
+          instaBtn.href = data.socialLink;
+          document.getElementById('home-instagram-container').classList.remove('hidden');
+        } else {
+          document.getElementById('home-instagram-container').classList.add('hidden');
+        }
+
+        if (data.weeklySchedule
