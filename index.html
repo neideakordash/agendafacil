@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v25 - AgendaFácil com Vínculo de Profissionais aos Serviços -->
+<!-- v26 - AgendaFácil com Múltiplos Profissionais por Serviço -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -101,7 +101,7 @@
               <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Profissional e Data</h3>
               <div>
                 <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <p class="text-xs text-slate-400 col-span-3 py-2">Carregando profissionais...</p>
+                  <p class="text-xs text-slate-400 col-span-3 py-2">Selecione um serviço primeiro.</p>
                 </div>
               </div>
 
@@ -266,7 +266,7 @@
               </form>
             </div>
 
-            <!-- Cadastro / Edição de Serviço com Vínculo de Profissional -->
+            <!-- Cadastro / Edição de Serviço com Múltiplos Profissionais -->
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
               <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 id="service-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Cadastrar Serviço</h3>
@@ -278,10 +278,10 @@
                 <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 
                 <div>
-                  <label class="block text-[10px] text-slate-400 mb-1">Vincular a Profissional Específico</label>
-                  <select id="service-staff-select" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="todos">Disponível para Qualquer Profissional</option>
-                  </select>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Profissionais que realizam este serviço:</label>
+                  <div id="service-staff-checkboxes" class="space-y-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    <p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>
+                  </div>
                 </div>
 
                 <input type="number" step="0.01" id="service-price" placeholder="Preço R$ (Vazio = Sob Consulta)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
@@ -578,7 +578,7 @@
       } catch (e) { alert("Erro: " + e.message); }
     };
 
-    // Salvar ou Atualizar Serviço com Vínculo de Profissional
+    // Salvar Serviço com Múltiplos Profissionais Selecionados
     window.saveService = async function(event) {
       event.preventDefault();
       if (!currentUser) return;
@@ -586,7 +586,12 @@
         const serviceId = document.getElementById('editing-service-id').value;
         const category = document.getElementById('service-category').value.trim() || "Geral";
         const name = document.getElementById('service-name').value;
-        const assignedStaff = document.getElementById('service-staff-select').value;
+        
+        // Coleta os profissionais marcados nas caixas de seleção
+        const checkboxes = document.querySelectorAll('.staff-checkbox:checked');
+        let assignedStaff = [];
+        checkboxes.forEach(cb => assignedStaff.push(cb.value));
+
         const rawPrice = document.getElementById('service-price').value;
         const price = rawPrice ? parseFloat(rawPrice) : 0;
         const duration = parseInt(document.getElementById('service-duration').value);
@@ -601,7 +606,7 @@
           merchantId: currentUser.uid,
           category,
           name,
-          assignedStaff, // 'todos' ou ID/Nome do profissional
+          assignedStaff, // Array com os nomes dos profissionais
           price,
           duration
         };
@@ -622,13 +627,20 @@
       } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
     };
 
-    window.editService = async function(id, name, category, price, duration, assignedStaff) {
+    window.editService = async function(id, name, category, price, duration, assignedStaffJson) {
       document.getElementById('editing-service-id').value = id;
       document.getElementById('service-category').value = category;
       document.getElementById('service-name').value = name;
-      document.getElementById('service-staff-select').value = assignedStaff || 'todos';
       document.getElementById('service-price').value = price > 0 ? price : '';
       document.getElementById('service-duration').value = duration;
+
+      // Marcar os checkboxes correspondentes
+      let assignedArray = [];
+      try { assignedArray = JSON.parse(assignedStaffJson || '[]'); } catch(err) { assignedArray = []; }
+      
+      document.querySelectorAll('.staff-checkbox').forEach(cb => {
+        cb.checked = assignedArray.includes(cb.value);
+      });
 
       document.getElementById('service-form-title').innerText = "Editar Serviço";
       document.getElementById('btn-save-service').innerText = "Salvar Alterações";
@@ -640,10 +652,10 @@
       document.getElementById('editing-service-id').value = '';
       document.getElementById('service-category').value = '';
       document.getElementById('service-name').value = '';
-      document.getElementById('service-staff-select').value = 'todos';
       document.getElementById('service-price').value = '';
       document.getElementById('service-duration').value = '';
       document.getElementById('service-photo-file').value = '';
+      document.querySelectorAll('.staff-checkbox').forEach(cb => cb.checked = false);
 
       document.getElementById('service-form-title').innerText = "Cadastrar Serviço";
       document.getElementById('btn-save-service').innerText = "+ Adicionar Serviço";
@@ -661,21 +673,31 @@
         if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
       }
 
-      // Carregar Profissionais e popular o select de vínculo de serviços
+      // Carregar Profissionais e preencher os checkboxes de seleção para os serviços
       const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
       const staffContainer = document.getElementById('admin-staff-list');
-      const staffSelect = document.getElementById('service-staff-select');
+      const staffCheckboxesDiv = document.getElementById('service-staff-checkboxes');
       
       staffContainer.innerHTML = '';
-      staffSelect.innerHTML = '<option value="todos">Disponível para Qualquer Profissional</option>';
+      staffCheckboxesDiv.innerHTML = '';
       
       allStaffRaw = [];
-      staffSnap.forEach(doc => {
-        const data = doc.data();
-        allStaffRaw.push({ id: doc.id, ...data });
-        staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role})</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
-        staffSelect.innerHTML += `<option value="${data.name}">${data.name} (${data.role})</option>`;
-      });
+      if (staffSnap.empty) {
+        staffCheckboxesDiv.innerHTML = '<p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>';
+      } else {
+        staffSnap.forEach(doc => {
+          const data = doc.data();
+          allStaffRaw.push({ id: doc.id, ...data });
+          staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role})</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
+          
+          staffCheckboxesDiv.innerHTML += `
+            <label class="flex items-center gap-2 text-xs cursor-pointer text-slate-700">
+              <input type="checkbox" value="${data.name}" class="staff-checkbox rounded text-indigo-600">
+              ${data.name} (${data.role})
+            </label>
+          `;
+        });
+      }
 
       const servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
       const servicesContainer = document.getElementById('admin-services-list');
@@ -683,15 +705,17 @@
       servicesSnap.forEach(doc => {
         const data = doc.data();
         const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
-        const assignedText = data.assignedStaff && data.assignedStaff !== 'todos' ? `Prof: ${data.assignedStaff}` : 'Qualquer Profissional';
+        const staffListStr = JSON.stringify(data.assignedStaff || []).replace(/"/g, '&quot;');
+        const assignedNames = (data.assignedStaff && data.assignedStaff.length > 0) ? data.assignedStaff.join(', ') : 'Qualquer um';
+
         servicesContainer.innerHTML += `
           <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
             <div>
               <b>${data.name}</b> <span class="text-indigo-600">[${data.category}]</span><br>
-              <span class="text-slate-400">${data.duration} min • ${priceText} • <span class="text-emerald-600 font-bold">${assignedText}</span></span>
+              <span class="text-slate-400">${data.duration} min • ${priceText} • <span class="text-emerald-600 font-bold">Prof: ${assignedNames}</span></span>
             </div>
             <div class="flex gap-2">
-              <button onclick="window.editService('${doc.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, '${data.assignedStaff || 'todos'}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+              <button onclick="window.editService('${doc.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, '${staffListStr}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
               <button onclick="window.deleteService('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
             </div>
           </div>
@@ -813,7 +837,7 @@
           name: data.name, 
           price: data.price, 
           merchantId: data.merchantId,
-          assignedStaff: data.assignedStaff || 'todos'
+          assignedStaff: data.assignedStaff || []
         }).replace(/"/g, '&quot;');
 
         container.innerHTML += `
@@ -837,28 +861,29 @@
       document.getElementById('summary-hair').innerText = `${length} | ${type}`;
     };
 
-    // Ao selecionar um serviço, filtra visualmente os profissionais vinculados a ele
+    // Ao selecionar um serviço, exibe apenas os profissionais que fazem aquele serviço
     window.selectService = function(service) {
       selectedService = service;
       document.getElementById('summary-service').innerText = service.name;
       document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
 
-      // Destacar ou filtrar profissionais compatíveis
       const staffCards = document.querySelectorAll('.staff-card');
       staffCards.forEach(card => {
         const staffName = card.getAttribute('data-staff-name');
-        if (service.assignedStaff === 'todos' || service.assignedStaff === staffName) {
+        const assignedArray = service.assignedStaff || [];
+        
+        // Se nenhum foi marcado ou o profissional está na lista do serviço
+        if (assignedArray.length === 0 || assignedArray.includes(staffName)) {
           card.style.opacity = '1';
           card.style.pointerEvents = 'auto';
           card.style.borderColor = '#cbd5e1';
         } else {
           card.style.opacity = '0.3';
-          card.style.pointerEvents = 'none'; // Desativa clique em profissionais que não fazem o serviço
+          card.style.pointerEvents = 'none';
         }
       });
 
-      // Se o profissional selecionado atualmente não fizer o serviço, limpa a seleção dele
-      if (selectedStaffObj && service.assignedStaff !== 'todos' && service.assignedStaff !== selectedStaffObj.name) {
+      if (selectedStaffObj && service.assignedStaff && service.assignedStaff.length > 0 && !service.assignedStaff.includes(selectedStaffObj.name)) {
         selectedStaffObj = null;
         document.getElementById('summary-staff').innerText = 'Qualquer';
       }
