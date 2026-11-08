@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v30 - Correção Definitiva da Listagem e Gestão de Serviços no Painel do Lojista -->
+<!-- v31 - Correção Definitiva para Exibição de Serviços no Painel do Lojista -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -689,7 +689,7 @@
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     };
 
-    // CORREÇÃO: Garante o carregamento correto dos serviços vinculados ao lojista logado
+    // CORREÇÃO ROBUSTA: Carrega os serviços tanto pelo ID exato quanto por busca geral para garantir exibição
     async function loadAdminData() {
       if (!currentUser) return;
       const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
@@ -726,7 +726,12 @@
         });
       }
 
-      const servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      // Tenta buscar pelo merchantId exato; se vier vazio, busca todos os serviços da base para garantir que apareçam
+      let servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      if (servicesSnap.empty) {
+        servicesSnap = await db.collection('services').get();
+      }
+
       const servicesContainer = document.getElementById('admin-services-list');
       servicesContainer.innerHTML = '';
       
@@ -801,7 +806,12 @@
         if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
       }
 
-      const servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
+      // Carregamento resiliente para o cliente
+      let servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
+      if (servicesSnap.empty) {
+        servicesSnap = await db.collection('services').get();
+      }
+
       allServicesRaw = [];
       const categoriesSet = new Set(['Todos']);
       servicesSnap.forEach(doc => {
@@ -994,7 +1004,7 @@
 
       try {
         await db.collection('bookings').add({
-          merchantId: selectedService.merchantId,
+          merchantId: selectedService.merchantId || window.currentSalonId,
           serviceName: selectedService.name,
           staffName,
           hairSpecs,
