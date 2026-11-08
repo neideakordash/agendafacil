@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v31 - Correção Definitiva para Exibição de Serviços no Painel do Lojista -->
+<!-- v33 - Exibição Condicional das Especificações de Cabelo -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -105,8 +105,9 @@
                 </div>
               </div>
 
-              <div class="pt-3 border-t border-slate-100">
-                <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo (Opcional)</label>
+              <!-- ESPECIFICAÇÕES DO CABELO (Aparece apenas se o serviço for de cabelo) -->
+              <div id="hair-specs-section" class="pt-3 border-t border-slate-100 hidden">
+                <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo</label>
                 <div class="grid grid-cols-2 gap-2">
                   <select id="hair-length" onchange="window.updateHairSpecs()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
                     <option value="Não informado">Tamanho...</option>
@@ -146,7 +147,7 @@
               <div class="space-y-2 text-xs">
                 <div class="flex justify-between"><span class="text-slate-400">Serviço:</span><span id="summary-service" class="font-bold text-right">Nenhum</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Qualquer</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Cabelo:</span><span id="summary-hair" class="font-bold text-right">Não informado</span></div>
+                <div id="summary-hair-container" class="flex justify-between hidden"><span class="text-slate-400">Cabelo:</span><span id="summary-hair" class="font-bold text-right">Não informado</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Data/Hora:</span><span id="summary-datetime" class="font-bold">--/-- --:--</span></div>
                 <div class="flex justify-between text-sm font-extrabold text-indigo-600 pt-2 border-t border-slate-100"><span>Total:</span><span id="summary-price">Sob Consulta</span></div>
               </div>
@@ -548,15 +549,24 @@
     window.logoutMerchant = function() { auth.signOut(); };
 
     window.deleteAccount = async function() {
-      if (confirm("Tem certeza que deseja excluir sua conta e dados?")) {
+      if (!currentUser) return;
+      if (confirm("Tem certeza que deseja excluir sua conta e todos os dados associados? Esta ação é irreversível.")) {
         try {
           const services = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
           services.forEach(doc => doc.ref.delete());
           const staff = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
           staff.forEach(doc => doc.ref.delete());
+          
           await currentUser.delete();
-          alert("Conta excluída.");
-        } catch (error) { alert("Erro: " + error.message); }
+          alert("Conta excluída com sucesso.");
+        } catch (error) {
+          if (error.code === 'auth/requires-recent-login') {
+            alert("Por segurança, o Firebase exige que você faça login novamente antes de excluir a conta. Por favor, clique em 'Sair', entre com sua senha e tente excluir novamente.");
+            auth.signOut();
+          } else {
+            alert("Erro ao excluir conta: " + error.message);
+          }
+        }
       }
     };
 
@@ -689,7 +699,6 @@
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     };
 
-    // CORREÇÃO ROBUSTA: Carrega os serviços tanto pelo ID exato quanto por busca geral para garantir exibição
     async function loadAdminData() {
       if (!currentUser) return;
       const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
@@ -726,7 +735,6 @@
         });
       }
 
-      // Tenta buscar pelo merchantId exato; se vier vazio, busca todos os serviços da base para garantir que apareçam
       let servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
       if (servicesSnap.empty) {
         servicesSnap = await db.collection('services').get();
@@ -806,7 +814,6 @@
         if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
       }
 
-      // Carregamento resiliente para o cliente
       let servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
       if (servicesSnap.empty) {
         servicesSnap = await db.collection('services').get();
@@ -880,6 +887,7 @@
           name: data.name, 
           price: data.price, 
           merchantId: data.merchantId,
+          category: data.category || '',
           assignedStaff: data.assignedStaff || []
         }).replace(/"/g, '&quot;');
 
@@ -901,13 +909,34 @@
     window.updateHairSpecs = function() {
       const length = document.getElementById('hair-length').value;
       const type = document.getElementById('hair-type').value;
-      document.getElementById('summary-hair').innerText = `${length} | ${type}`;
+      const hairText = `${length} | ${type}`;
+      document.getElementById('summary-hair').innerText = hairText;
     };
 
+    // FUNÇÃO INTELIGENTE: Exibe as especificações do cabelo APENAS quando o serviço for de cabelo
     window.selectService = function(service) {
       selectedService = service;
       document.getElementById('summary-service').innerText = service.name;
       document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
+
+      // Verifica se a categoria ou o nome do serviço envolve cabelo (ex: Cabelo, Corte, Colocação, Hidratação, Escova, etc.)
+      const catLower = (service.category || '').toLowerCase();
+      const nameLower = (service.name || '').toLowerCase();
+      const isHairService = catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova') || nameLower.includes('cauter') || nameLower.includes('reconstruc') || nameLower.includes('nutrição');
+
+      const hairSection = document.getElementById('hair-specs-section');
+      const hairSummaryContainer = document.getElementById('summary-hair-container');
+
+      if (isHairService) {
+        hairSection.classList.remove('hidden');
+        hairSummaryContainer.classList.remove('hidden');
+      } else {
+        hairSection.classList.add('hidden');
+        hairSummaryContainer.classList.add('hidden');
+        // Limpa os valores se não for serviço de cabelo
+        document.getElementById('hair-length').value = 'Não informado';
+        document.getElementById('hair-type').value = 'Não informado';
+      }
 
       const staffCards = document.querySelectorAll('.staff-card');
       staffCards.forEach(card => {
@@ -997,9 +1026,17 @@
         return;
       }
 
-      const hairLength = document.getElementById('hair-length').value;
-      const hairType = document.getElementById('hair-type').value;
-      const hairSpecs = `${hairLength} / ${hairType}`;
+      const catLower = (selectedService.category || '').toLowerCase();
+      const nameLower = (selectedService.name || '').toLowerCase();
+      const isHairService = catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova') || nameLower.includes('cauter') || nameLower.includes('reconstruc') || nameLower.includes('nutrição');
+
+      let hairSpecs = 'Não aplicável';
+      if (isHairService) {
+        const hairLength = document.getElementById('hair-length').value;
+        const hairType = document.getElementById('hair-type').value;
+        hairSpecs = `${hairLength} / ${hairType}`;
+      }
+
       const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
 
       try {
