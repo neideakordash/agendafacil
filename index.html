@@ -473,4 +473,456 @@
     window.copyMerchantLink = function() {
       if (window.generatedMerchantLink) {
         navigator.clipboard.writeText(window.generatedMerchantLink);
-        alert("📋 Link do
+        alert("📋 Link do salão copiado para a área de transferência!");
+      }
+    };
+
+    window.shareOnWhatsApp = function() {
+      if (window.generatedMerchantLink) {
+        const text = encodeURIComponent(`Olá! Agende seu horário no nosso salão através do link abaixo:\n${window.generatedMerchantLink}`);
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+      }
+    };
+
+    window.toggleAuthMode = function() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Cadastrar Lojista" : "Painel do Lojista";
+      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta" : "Entrar";
+    };
+
+    window.handleAuth = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      try {
+        if (isRegisterMode) {
+          await auth.createUserWithEmailAndPassword(email, password);
+          alert("Conta criada com sucesso!");
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+      } catch (error) { alert("Erro: " + error.message); }
+    };
+
+    window.logoutMerchant = function() { auth.signOut(); };
+
+    window.deleteAccount = async function() {
+      if (confirm("Tem certeza que deseja excluir sua conta e dados?")) {
+        try {
+          const services = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+          services.forEach(doc => doc.ref.delete());
+          const staff = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
+          staff.forEach(doc => doc.ref.delete());
+          await currentUser.delete();
+          alert("Conta excluída.");
+        } catch (error) { alert("Erro: " + error.message); }
+      }
+    };
+
+    window.saveStoreSettings = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('store-name-input').value;
+        const whatsapp = document.getElementById('store-whatsapp-input').value;
+        const social = document.getElementById('store-social-input').value;
+        const logoFile = document.getElementById('store-logo-file').files[0];
+        
+        let logoUrl = null;
+        if (logoFile) logoUrl = await convertImageToBase64(logoFile);
+
+        let newSchedule = {};
+        for (let day = 0; day <= 6; day++) {
+          const active = document.getElementById(`day-active-${day}`).checked;
+          const open = document.getElementById(`day-open-${day}`).value;
+          const close = document.getElementById(`day-close-${day}`).value;
+          newSchedule[day] = { active, open, close };
+        }
+
+        const updateData = { storeName: name, whatsapp, socialLink: social, weeklySchedule: newSchedule };
+        if (logoUrl) updateData.logoUrl = logoUrl;
+
+        await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
+        alert("Perfil salvo!");
+        loadAdminData();
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    window.saveStaff = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('staff-name').value;
+        const role = document.getElementById('staff-role').value;
+        const whatsapp = document.getElementById('staff-whatsapp').value;
+        const photoFile = document.getElementById('staff-photo-file').files[0];
+        
+        let photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
+        if (photoFile) photo = await convertImageToBase64(photoFile);
+
+        await db.collection('staff').add({ merchantId: currentUser.uid, name, role, whatsapp, photo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        document.getElementById('staff-name').value = '';
+        document.getElementById('staff-role').value = '';
+        document.getElementById('staff-whatsapp').value = '';
+        loadAdminData();
+        alert("Profissional cadastrado!");
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    // Salvar ou Atualizar Serviço (com suporte a edição)
+    window.saveService = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const serviceId = document.getElementById('editing-service-id').value;
+        const category = document.getElementById('service-category').value.trim() || "Geral";
+        const name = document.getElementById('service-name').value;
+        const rawPrice = document.getElementById('service-price').value;
+        const price = rawPrice ? parseFloat(rawPrice) : 0;
+        const duration = parseInt(document.getElementById('service-duration').value);
+        const photoFile = document.getElementById('service-photo-file').files[0];
+        
+        let photoData = null;
+        if (photoFile) {
+          photoData = await convertImageToBase64(photoFile);
+        }
+
+        const servicePayload = {
+          merchantId: currentUser.uid,
+          category,
+          name,
+          price,
+          duration
+        };
+        if (photoData) servicePayload.photo = photoData;
+
+        if (serviceId) {
+          // Atualizar serviço existente
+          await db.collection('services').doc(serviceId).update(servicePayload);
+          alert("Serviço atualizado com sucesso!");
+        } else {
+          // Criar novo serviço
+          servicePayload.photo = photoData || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
+          servicePayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('services').add(servicePayload);
+          alert("Serviço cadastrado com sucesso!");
+        }
+
+        window.cancelEditService();
+        loadAdminData();
+      } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
+    };
+
+    // Preencher formulário para editar o serviço
+    window.editService = async function(id, name, category, price, duration) {
+      document.getElementById('editing-service-id').value = id;
+      document.getElementById('service-category').value = category;
+      document.getElementById('service-name').value = name;
+      document.getElementById('service-price').value = price > 0 ? price : '';
+      document.getElementById('service-duration').value = duration;
+
+      document.getElementById('service-form-title').innerText = "Editar Serviço";
+      document.getElementById('btn-save-service').innerText = "Salvar Alterações";
+      document.getElementById('btn-cancel-edit').classList.remove('hidden');
+      window.scrollTo({ top: document.getElementById('service-form-title').offsetTop, behavior: 'smooth' });
+    };
+
+    // Cancelar edição e resetar formulário
+    window.cancelEditService = function() {
+      document.getElementById('editing-service-id').value = '';
+      document.getElementById('service-category').value = '';
+      document.getElementById('service-name').value = '';
+      document.getElementById('service-price').value = '';
+      document.getElementById('service-duration').value = '';
+      document.getElementById('service-photo-file').value = '';
+
+      document.getElementById('service-form-title').innerText = "Cadastrar Serviço";
+      document.getElementById('btn-save-service').innerText = "+ Adicionar Serviço";
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
+    };
+
+    async function loadAdminData() {
+      if (!currentUser) return;
+      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        if (data.storeName) document.getElementById('store-name-input').value = data.storeName;
+        if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
+        if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
+        if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
+      }
+
+      const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
+      const staffContainer = document.getElementById('admin-staff-list');
+      staffContainer.innerHTML = '';
+      staffSnap.forEach(doc => {
+        const data = doc.data();
+        staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role})</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
+      });
+
+      const servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      const servicesContainer = document.getElementById('admin-services-list');
+      servicesContainer.innerHTML = '';
+      servicesSnap.forEach(doc => {
+        const data = doc.data();
+        const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+        servicesContainer.innerHTML += `
+          <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
+            <div>
+              <b>${data.name}</b> <span class="text-indigo-600">[${data.category}]</span><br>
+              <span class="text-slate-400">${data.duration} min • ${priceText}</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="window.editService('${doc.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration})" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+              <button onclick="window.deleteService('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
+            </div>
+          </div>
+        `;
+      });
+
+      const bookingsSnap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
+      const bookingsContainer = document.getElementById('admin-bookings-list');
+      bookingsContainer.innerHTML = '';
+      bookingsSnap.forEach(doc => {
+        const data = doc.data();
+        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName}</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName}</p></div>`;
+      });
+    }
+
+    window.deleteStaff = async function(id) { await db.collection('staff').doc(id).delete(); loadAdminData(); };
+    window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
+
+    async function loadClientData() {
+      let salonId = targetMerchantId;
+      if (!salonId && currentUser) salonId = currentUser.uid;
+      if (!salonId) {
+        const settingsSnap = await db.collection('settings').limit(1).get();
+        if (!settingsSnap.empty) salonId = settingsSnap.docs[0].id;
+      }
+      if (!salonId) return;
+      window.currentSalonId = salonId;
+
+      const settingsDoc = await db.collection('settings').doc(salonId).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        const storeName = data.storeName || "Meu Salão";
+        document.getElementById('header-store-name').innerText = storeName;
+        document.getElementById('home-store-name').innerText = storeName;
+        if (data.whatsapp) merchantWhatsapp = data.whatsapp;
+        if (data.logoUrl) {
+          const logoImg = document.getElementById('home-logo-img');
+          logoImg.src = data.logoUrl;
+          logoImg.classList.remove('hidden');
+        }
+        
+        if (data.socialLink) {
+          const instaBtn = document.getElementById('home-instagram-btn');
+          instaBtn.href = data.socialLink;
+          document.getElementById('home-instagram-container').classList.remove('hidden');
+        } else {
+          document.getElementById('home-instagram-container').classList.add('hidden');
+        }
+
+        if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
+      }
+
+      const servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
+      allServicesRaw = [];
+      const categoriesSet = new Set(['Todos']);
+      servicesSnap.forEach(doc => {
+        const data = doc.data();
+        allServicesRaw.push({ id: doc.id, ...data });
+        categoriesSet.add(data.category || 'Geral');
+      });
+
+      const catContainer = document.getElementById('category-filters');
+      catContainer.innerHTML = '';
+      categoriesSet.forEach(cat => {
+        const activeClass = cat === currentCategoryFilter ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200';
+        catContainer.innerHTML += `<button onclick="window.filterCategory('${cat}')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer ${activeClass}">${cat}</button>`;
+      });
+
+      renderServicesList();
+
+      const staffSnap = await db.collection('staff').where('merchantId', '==', salonId).get();
+      const staffContainer = document.getElementById('client-staff-list');
+      staffContainer.innerHTML = '';
+      if (staffSnap.empty) {
+        staffContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3">Nenhum profissional cadastrado.</p>';
+      } else {
+        staffSnap.forEach(doc => {
+          const data = doc.data();
+          const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
+          staffContainer.innerHTML += `
+            <div onclick="window.selectStaff(${staffData})" class="card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs">
+              <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5 shadow-xs">
+              <h4 class="font-bold text-slate-800 text-xs truncate">${data.name}</h4>
+              <p class="text-[9px] text-slate-400 uppercase">${data.role}</p>
+            </div>
+          `;
+        });
+      }
+    }
+
+    window.filterCategory = function(cat) {
+      currentCategoryFilter = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if(btn.innerText === cat) {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer bg-slate-900 text-white";
+        } else {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer bg-white text-slate-700 border border-slate-200";
+        }
+      });
+      renderServicesList();
+    };
+
+    function renderServicesList() {
+      const container = document.getElementById('client-services-list');
+      container.innerHTML = '';
+      const filtered = currentCategoryFilter === 'Todos' ? allServicesRaw : allServicesRaw.filter(s => (s.category || 'Geral') === currentCategoryFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum serviço encontrado.</p>';
+        return;
+      }
+
+      filtered.forEach(data => {
+        const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+        const serviceData = JSON.stringify({ id: data.id, name: data.name, price: data.price, merchantId: data.merchantId }).replace(/"/g, '&quot;');
+        container.innerHTML += `
+          <div onclick="window.selectService(${serviceData})" class="card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs">
+            <div class="flex items-center gap-3">
+              <img src="${data.photo}" class="w-12 h-12 rounded-xl object-cover">
+              <div>
+                <h4 class="font-bold text-slate-800 text-xs sm:text-sm">${data.name}</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1 text-indigo-600"></i>${data.duration} min</p>
+              </div>
+            </div>
+            <span class="font-extrabold text-indigo-600 text-xs sm:text-sm bg-indigo-50 px-3 py-1.5 rounded-xl">${priceDisplay}</span>
+          </div>
+        `;
+      });
+    }
+
+    window.updateHairSpecs = function() {
+      const length = document.getElementById('hair-length').value;
+      const type = document.getElementById('hair-type').value;
+      document.getElementById('summary-hair').innerText = `${length} | ${type}`;
+    };
+
+    window.selectService = function(service) {
+      selectedService = service;
+      document.getElementById('summary-service').innerText = service.name;
+      document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
+    };
+
+    window.selectStaff = function(staff) {
+      selectedStaffObj = staff;
+      document.getElementById('summary-staff').innerText = staff.name;
+      if (document.getElementById('booking-date').value) window.renderTimeSlots();
+    };
+
+    window.renderTimeSlots = async function() {
+      const dateVal = document.getElementById('booking-date').value;
+      if (!dateVal) return;
+      document.getElementById('summary-datetime').innerText = `${dateVal.split('-').reverse().join('/')}`;
+
+      const slotsContainer = document.getElementById('time-slots-container');
+      slotsContainer.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Verificando...</p>';
+
+      const parts = dateVal.split('-');
+      const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = selectedObjDate.getDay();
+      const schedule = window.salonSchedule || {};
+      const dayConfig = schedule[dayOfWeek];
+
+      if (!dayConfig || !dayConfig.active) {
+        slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center font-bold">Fechado neste dia.</p>';
+        return;
+      }
+
+      const openHour = parseInt(dayConfig.open.split(':')[0]);
+      const closeHour = parseInt(dayConfig.close.split(':')[0]);
+      let bookedTimes = [];
+
+      try {
+        let query = db.collection('bookings').where('merchantId', '==', window.currentSalonId).where('date', '==', dateVal);
+        if (selectedStaffObj) query = query.where('staffName', '==', selectedStaffObj.name);
+        const snapshot = await query.get();
+        snapshot.forEach(doc => bookedTimes.push(doc.data().time));
+      } catch (e) { console.error(e); }
+
+      slotsContainer.innerHTML = '';
+      let count = 0;
+      for (let h = openHour; h < closeHour; h++) {
+        const timeString = `${h.toString().padStart(2, '0')}:00`;
+        if (bookedTimes.includes(timeString)) continue;
+        count++;
+        slotsContainer.innerHTML += `<button type="button" onclick="window.selectTime('${timeString}')" class="py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
+      }
+      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Indisponível.</p>';
+    };
+
+    window.selectTime = function(time) {
+      selectedTime = time;
+      const dateVal = document.getElementById('booking-date').value.split('-').reverse().join('/');
+      document.getElementById('summary-datetime').innerText = `${dateVal} às ${time}`;
+    };
+
+    window.confirmBooking = async function() {
+      const name = document.getElementById('client-name').value;
+      const phone = document.getElementById('client-phone').value;
+      const date = document.getElementById('booking-date').value;
+      if (!selectedService || !selectedTime || !name || !phone || !date) {
+        alert("Preencha todos os campos do agendamento.");
+        return;
+      }
+
+      const hairLength = document.getElementById('hair-length').value;
+      const hairType = document.getElementById('hair-type').value;
+      const hairSpecs = `${hairLength} / ${hairType}`;
+      const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
+
+      try {
+        await db.collection('bookings').add({
+          merchantId: selectedService.merchantId,
+          serviceName: selectedService.name,
+          staffName,
+          hairSpecs,
+          price: selectedService.price,
+          date,
+          time: selectedTime,
+          clientName: name,
+          clientPhone: phone,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        let targetWhatsapp = merchantWhatsapp;
+        if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
+
+        const msg = `Olá, ${staffName}! Novo agendamento:%0A*Cliente:* ${name}%0A*Serviço:* ${selectedService.name}%0A*Data:* ${date} às ${selectedTime}`;
+        window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
+        alert("Agendamento realizado!");
+        window.switchTab('reservas');
+      } catch (e) { alert("Erro: " + e.message); }
+    };
+
+    window.searchClientBookings = async function() {
+      const phone = document.getElementById('search-phone').value.trim();
+      const container = document.getElementById('client-bookings-result');
+      container.innerHTML = '<p class="text-xs text-slate-400">Buscando...</p>';
+      if (!phone) { container.innerHTML = '<p class="text-xs text-rose-500">Informe o WhatsApp.</p>'; return; }
+
+      try {
+        const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
+        container.innerHTML = '';
+        if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado.</p>'; return; }
+        snap.forEach(doc => {
+          const d = doc.data();
+          container.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1"><b>${d.serviceName}</b> com ${d.staffName}<br>Data: ${d.date} às ${d.time}</div>`;
+        });
+      } catch(e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro na busca.</p>'; }
+    };
+  </script>
+</body>
+</html>
