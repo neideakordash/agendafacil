@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v15 - AgendaFácil Estilo Gendo (Design Moderno + Bloqueio de Horários) -->
+<!-- v16 - Correção Definitiva de Carregamento por Salão -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -32,7 +32,7 @@
 
 <body class="text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-600 selection:text-white">
 
-  <!-- CABEÇALHO / HEADER ESTILO GENDO -->
+  <!-- CABEÇALHO / HEADER -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
       <div class="flex items-center gap-3 cursor-pointer" onclick="window.switchView('client')">
@@ -45,7 +45,6 @@
         </div>
       </div>
 
-      <!-- Navegação Superior -->
       <div class="flex items-center gap-2 sm:gap-3">
         <button id="btn-view-client" type="button" onclick="window.switchView('client')" class="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 transition cursor-pointer flex items-center gap-2">
           <i class="fa-solid fa-calendar-days"></i> Agendar
@@ -60,9 +59,7 @@
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- ========================================== -->
-    <!-- VISÃO CLIENTE                              -->
-    <!-- ========================================== -->
+    <!-- VISÃO CLIENTE -->
     <div id="client-view" class="space-y-8">
       
       <!-- Banner do Salão -->
@@ -75,7 +72,7 @@
               <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-medium text-indigo-200 mb-3 border border-white/10">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Estabelecimento Verificado
               </span>
-              <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight" id="store-display-name">Studio Elegance</h2>
+              <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight" id="store-display-name">Carregando Salão...</h2>
               <p class="text-slate-300 text-sm mt-1 flex items-center gap-2">
                 <i class="fa-solid fa-location-dot text-indigo-400"></i> Agende seu horário de forma rápida e prática
               </p>
@@ -96,10 +93,8 @@
         </div>
       </div>
 
-      <!-- GRID DE AGENDAMENTO (FLUXO GENDO) -->
+      <!-- GRID DE AGENDAMENTO -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
-        <!-- Coluna Esquerda: Etapas 1 e 2 -->
         <div class="lg:col-span-2 space-y-8">
           
           <!-- Etapa 1: Serviços -->
@@ -108,7 +103,7 @@
               <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">1</div>
               <h3 class="text-xl font-bold text-slate-900">Selecione o Serviço Desejado</h3>
             </div>
-            <div id="client-services-list" class="space-y-6">
+            <div id="client-services-list" class="space-y-4">
               <div class="text-center py-12 text-slate-400">
                 <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
                 <p class="text-sm">Carregando serviços...</p>
@@ -116,14 +111,13 @@
             </div>
           </div>
 
-          <!-- Etapa 2: Profissional, Cabelo, Data e Horário -->
+          <!-- Etapa 2: Profissional e Horário -->
           <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
             <div class="flex items-center gap-3 mb-2">
               <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">2</div>
               <h3 class="text-xl font-bold text-slate-900">Profissional e Horário</h3>
             </div>
 
-            <!-- Profissionais -->
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Escolha o Profissional</label>
               <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -131,9 +125,8 @@
               </div>
             </div>
 
-            <!-- Cabelo (Opcional) -->
             <div class="pt-4 border-t border-slate-100">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3"><i class="fa-solid fa-scissors mr-1 text-indigo-600"></i> Especificações do Cabelo (Se aplicável)</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3"><i class="fa-solid fa-scissors mr-1 text-indigo-600"></i> Especificações do Cabelo (Opcional)</label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs text-slate-500 mb-1">Comprimento / Tamanho</label>
@@ -158,7 +151,6 @@
               </div>
             </div>
 
-            <!-- Calendário e Horários -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Selecione a Data</label>
@@ -171,12 +163,10 @@
                 </div>
               </div>
             </div>
-
           </div>
-
         </div>
 
-        <!-- Coluna Direita: Resumo Fixo (Sticky Sidebar estilo Gendo) -->
+        <!-- Coluna Direita: Resumo Fixo -->
         <div class="lg:col-span-1">
           <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-100 sticky top-28 space-y-6">
             <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -211,7 +201,6 @@
               </div>
             </div>
 
-            <!-- Dados do Cliente -->
             <div class="space-y-4 pt-2">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Seu Nome Completo</label>
@@ -228,24 +217,18 @@
             </button>
           </div>
         </div>
-
       </div>
-
     </div>
 
-    <!-- ========================================== -->
-    <!-- PAINEL DO LOJISTA                          -->
-    <!-- ========================================== -->
+    <!-- VISÃO PAINEL DO LOJISTA -->
     <div id="admin-view" class="hidden space-y-8">
-
-      <!-- Tela de Autenticação -->
       <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 my-12">
         <div class="text-center mb-8">
           <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl shadow-inner">
             <i class="fa-solid fa-store"></i>
           </div>
           <h2 class="text-2xl font-bold text-slate-900" id="auth-title">Painel do Lojista</h2>
-          <p class="text-xs text-slate-500 mt-1">Gerencie seu salão, profissionais e horários com facilidade.</p>
+          <p class="text-xs text-slate-500 mt-1">Gerencie seu salão e acompanhe seus agendamentos.</p>
         </div>
 
         <form id="auth-form" onsubmit="window.handleAuth(event)" class="space-y-5">
@@ -270,13 +253,12 @@
         </div>
       </div>
 
-      <!-- Dashboard do Lojista -->
       <div id="admin-dashboard" class="hidden space-y-8">
-        
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm gap-4">
           <div>
             <h2 class="text-2xl font-extrabold text-slate-900">Gestão do Estabelecimento</h2>
             <p class="text-xs text-slate-500 mt-0.5" id="merchant-email-display">Conectado como: ...</p>
+            <p class="text-xs text-indigo-600 font-semibold mt-1" id="merchant-id-display"></p>
           </div>
           <div class="flex items-center gap-3">
             <button onclick="window.logoutMerchant()" class="px-4 py-2 text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition cursor-pointer">
@@ -289,11 +271,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          <!-- Formulários Administrativos -->
           <div class="md:col-span-1 space-y-8">
-            
-            <!-- Perfil do Salão -->
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-5">
               <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                 <i class="fa-solid fa-sliders text-indigo-600"></i> Informações do Salão
@@ -331,7 +309,6 @@
               </form>
             </div>
 
-            <!-- Cadastro de Profissional -->
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-5">
               <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                 <i class="fa-solid fa-user-plus text-indigo-600"></i> Novo Profissional
@@ -359,7 +336,6 @@
               </form>
             </div>
 
-            <!-- Cadastro de Serviço -->
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-5">
               <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                 <i class="fa-solid fa-list-check text-indigo-600"></i> Novo Serviço
@@ -390,10 +366,8 @@
                 </button>
               </form>
             </div>
-
           </div>
 
-          <!-- Listas e Agendamentos -->
           <div class="md:col-span-2 space-y-6">
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
               <h3 class="font-bold text-slate-900 mb-4">Profissionais Cadastrados</h3>
@@ -410,16 +384,12 @@
               <div id="admin-bookings-list" class="space-y-3"></div>
             </div>
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   </main>
 
-  <!-- SCRIPT COMPLETO DE LÓGICA E FIREBASE -->
+  <!-- SCRIPTS -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
@@ -490,6 +460,7 @@
         document.getElementById('admin-auth-screen').classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('merchant-email-display').innerText = `Conectado como: ${user.email}`;
+        document.getElementById('merchant-id-display').innerText = `ID do seu salão para link: ?salao=${user.uid}`;
         loadAdminData();
       } else {
         document.getElementById('admin-auth-screen').classList.remove('hidden');
@@ -676,11 +647,9 @@
         const data = settingsDoc.data();
         if (data.storeName) {
           document.getElementById('store-name-input').value = data.storeName;
-          document.getElementById('store-display-name').innerText = data.storeName;
         }
         if (data.whatsapp) {
           document.getElementById('store-whatsapp-input').value = data.whatsapp;
-          merchantWhatsapp = data.whatsapp;
         }
         if (data.socialLink) {
           document.getElementById('store-social-input').value = data.socialLink;
@@ -691,7 +660,6 @@
         document.getElementById('close-time').value = closeHour;
       }
 
-      // Profissionais do Admin
       const staffSnapshot = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
       const staffContainer = document.getElementById('admin-staff-list');
       staffContainer.innerHTML = '';
@@ -715,7 +683,6 @@
         });
       }
 
-      // Serviços do Admin
       const servicesSnapshot = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
       const servicesContainer = document.getElementById('admin-services-list');
       servicesContainer.innerHTML = '';
@@ -740,7 +707,6 @@
         });
       }
 
-      // Agendamentos do Admin
       const bookingsSnapshot = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
       const bookingsContainer = document.getElementById('admin-bookings-list');
       bookingsContainer.innerHTML = '';
@@ -778,9 +744,10 @@
       }
     };
 
-    // Carregamento da Visão do Cliente com Filtro Exato por Salão
     async function loadClientData() {
       let salonId = targetMerchantId;
+      
+      // Se o lojista estiver logado no painel, prioriza a conta dele para visualização imediata
       if (!salonId && currentUser) {
         salonId = currentUser.uid;
       }
@@ -793,6 +760,7 @@
       }
 
       if (!salonId) return;
+      window.currentSalonId = salonId;
 
       const settingsDoc = await db.collection('settings').doc(salonId).get();
       if (settingsDoc.exists) {
@@ -815,14 +783,12 @@
         document.getElementById('client-working-hours').innerText = `${openHour} às ${closeHour}`;
       }
 
-      // Serviços Filtrados do Salão
-      window.currentSalonId = salonId;
       const servicesContainer = document.getElementById('client-services-list');
       const servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
 
       servicesContainer.innerHTML = '';
       if (servicesSnap.empty) {
-        servicesContainer.innerHTML = '<p class="text-sm text-slate-400 py-8 text-center">Nenhum serviço disponível no momento.</p>';
+        servicesContainer.innerHTML = '<p class="text-sm text-slate-400 py-8 text-center">Nenhum serviço cadastrado para este salão.</p>';
       } else {
         const categories = {};
         servicesSnap.forEach(doc => {
@@ -868,13 +834,12 @@
         }
       }
 
-      // Profissionais Filtrados do Salão
       const staffContainer = document.getElementById('client-staff-list');
       const staffSnap = await db.collection('staff').where('merchantId', '==', salonId).get();
 
       staffContainer.innerHTML = '';
       if (staffSnap.empty) {
-        staffContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2">Atendimento com qualquer profissional disponível.</p>';
+        staffContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3 py-2">Nenhum profissional cadastrado para este salão.</p>';
       } else {
         staffSnap.forEach(doc => {
           const data = doc.data();
@@ -918,13 +883,11 @@
     window.selectStaff = function(staff) {
       selectedStaffObj = staff;
       document.getElementById('summary-staff').innerText = staff.name;
-      // Se já houver uma data escolhida, atualiza os horários considerando o profissional selecionado
       if (document.getElementById('booking-date').value) {
         window.renderTimeSlots();
       }
     };
 
-    // LÓGICA INTELIGENTE: Renderização e Bloqueio de Horários Ocupados
     window.renderTimeSlots = async function() {
       const dateVal = document.getElementById('booking-date').value;
       document.getElementById('summary-date').innerText = dateVal || '--/--/----';
@@ -941,7 +904,6 @@
       const startHour = parseInt(openHour.split(':')[0]);
       const endHour = parseInt(closeHour.split(':')[0]);
 
-      // Buscar horários já agendados no Firebase para este salão, data e profissional
       let bookedTimes = [];
       try {
         let query = db.collection('bookings')
@@ -954,10 +916,10 @@
 
         const snapshot = await query.get();
         snapshot.forEach(doc => {
-          bookedTimes.push(doc.data().time); // Ex: "10:00"
+          bookedTimes.push(doc.data().time);
         });
       } catch (e) {
-        console.error("Erro ao checar horários ocupados:", e);
+        console.error("Erro ao checar horários:", e);
       }
 
       slotsContainer.innerHTML = '';
@@ -966,15 +928,8 @@
       for (let h = startHour; h < endHour; h++) {
         const timeString = `${h.toString().padStart(2, '0')}:00`;
         
-        // Bloqueia horários passados se for hoje
-        if (isToday && h <= now.getHours()) {
-          continue;
-        }
-
-        // Se o horário já estiver ocupado, não exibe
-        if (bookedTimes.includes(timeString)) {
-          continue;
-        }
+        if (isToday && h <= now.getHours()) continue;
+        if (bookedTimes.includes(timeString)) continue;
 
         availableSlotsCount++;
         slotsContainer.innerHTML += `
@@ -1010,7 +965,6 @@
       const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
 
       try {
-        // Grava no banco
         await db.collection('bookings').add({
           merchantId: selectedService.merchantId,
           serviceName: selectedService.name,
@@ -1050,7 +1004,7 @@
         document.getElementById('summary-time').innerText = '--:--';
         document.getElementById('summary-price').innerText = 'Sob Consulta';
         selectedStaffObj = null;
-        window.renderTimeSlots(); // Atualiza a grade de horários bloqueando o recém-reservado
+        window.renderTimeSlots();
       } catch (error) {
         alert("Erro ao confirmar agendamento: " + error.message);
       }
