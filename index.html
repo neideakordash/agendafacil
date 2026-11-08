@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v33 - Exibição Condicional das Especificações de Cabelo -->
+<!-- v34 - Compressão Automática de Imagens para Evitar Limite do Firestore -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -105,7 +105,7 @@
                 </div>
               </div>
 
-              <!-- ESPECIFICAÇÕES DO CABELO (Aparece apenas se o serviço for de cabelo) -->
+              <!-- ESPECIFICAÇÕES DO CABELO -->
               <div id="hair-specs-section" class="pt-3 border-t border-slate-100 hidden">
                 <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo</label>
                 <div class="grid grid-cols-2 gap-2">
@@ -432,12 +432,45 @@
       }
     };
 
+    // FUNÇÃO INTELIGENTE: Redimensiona e comprime qualquer imagem para menos de 100 KB antes de salvar
     function convertImageToBase64(file) {
       return new Promise((resolve, reject) => {
         if (!file) { resolve(null); return; }
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 300;
+            const MAX_HEIGHT = 300;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Comprime para JPEG com qualidade de 70% (garante tamanho super leve abaixo de 100kb)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(dataUrl);
+          };
+          img.onerror = (error) => reject(error);
+          img.src = event.target.result;
+        };
+        reader.onerror = (error) => reject(error);
         reader.readAsDataURL(file);
       });
     }
@@ -913,13 +946,11 @@
       document.getElementById('summary-hair').innerText = hairText;
     };
 
-    // FUNÇÃO INTELIGENTE: Exibe as especificações do cabelo APENAS quando o serviço for de cabelo
     window.selectService = function(service) {
       selectedService = service;
       document.getElementById('summary-service').innerText = service.name;
       document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
 
-      // Verifica se a categoria ou o nome do serviço envolve cabelo (ex: Cabelo, Corte, Colocação, Hidratação, Escova, etc.)
       const catLower = (service.category || '').toLowerCase();
       const nameLower = (service.name || '').toLowerCase();
       const isHairService = catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova') || nameLower.includes('cauter') || nameLower.includes('reconstruc') || nameLower.includes('nutrição');
@@ -933,7 +964,6 @@
       } else {
         hairSection.classList.add('hidden');
         hairSummaryContainer.classList.add('hidden');
-        // Limpa os valores se não for serviço de cabelo
         document.getElementById('hair-length').value = 'Não informado';
         document.getElementById('hair-type').value = 'Não informado';
       }
