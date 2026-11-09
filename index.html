@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- v34 - Compressão Automática de Imagens para Evitar Limite do Firestore -->
+<!-- v36 - AgendaFácil Completo com Todas as Melhorias Solicitadas -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AgendaFácil - Sistema Profissional</title>
+  <title>Raí Cabeleireiros - Sistema de Agendamento</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,6 +17,7 @@
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     .card-hover { transition: all 0.2s ease-in-out; }
     .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+    .selected-card { border: 2px solid #4f46e5 !important; background-color: #eef2ff !important; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -30,19 +31,15 @@
 
 <body class="text-slate-800 min-h-screen flex flex-col antialiased pb-16 selection:bg-indigo-600 selection:text-white">
 
-  <!-- CABEÇALHO SUPERIOR -->
+  <!-- CABEÇALHO SUPERIOR (Sem o botão do lojista na parte superior) -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.switchTab('home')">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-sm">
           <i class="fa-solid fa-scissors text-sm"></i>
         </div>
-        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">AgendaFácil</h1>
+        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Raí Cabeleireiros</h1>
       </div>
-
-      <button id="btn-view-admin" type="button" onclick="window.toggleAdminView()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer flex items-center gap-1.5">
-        <i class="fa-solid fa-store"></i> <span id="admin-btn-text">Painel Lojista</span>
-      </button>
     </div>
   </header>
 
@@ -132,7 +129,7 @@
                   <input type="date" id="booking-date" onchange="window.renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1.5">Horários</label>
+                  <label class="block text-xs font-bold text-slate-600 mb-1.5">Horários Disponíveis</label>
                   <div id="time-slots-container" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
                     <p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione data e profissional.</p>
                   </div>
@@ -169,7 +166,7 @@
       <div id="tab-reservas" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 text-center">
           <h3 class="text-lg font-extrabold text-slate-900">Meus Agendamentos</h3>
-          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados:</p>
+          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados e avaliar:</p>
           <div class="flex gap-2 max-w-md mx-auto">
             <input type="tel" id="search-phone" placeholder="(00) 00000-0000" class="flex-grow px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
             <button onclick="window.searchClientBookings()" class="px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar</button>
@@ -238,6 +235,7 @@
             </div>
           </div>
           <div class="flex gap-2">
+            <button onclick="window.toggleAdminView()" class="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl cursor-pointer">Ver Cliente</button>
             <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl cursor-pointer">Sair</button>
             <button onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded-xl cursor-pointer">Excluir</button>
           </div>
@@ -246,9 +244,10 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="space-y-6">
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Perfil e Expediente</h3>
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Perfil, Endereço e Expediente</h3>
               <form onsubmit="window.saveStoreSettings(event)" class="space-y-3 text-xs">
                 <input type="text" id="store-name-input" placeholder="Nome do Salão" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="store-whatsapp-input" placeholder="WhatsApp (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="store-logo-file" accept="image/*" class="w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700">
@@ -305,7 +304,7 @@
           <div class="md:col-span-2 space-y-6">
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Profissionais</h3><div id="admin-staff-list" class="space-y-2"></div></div>
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços</h3><div id="admin-services-list" class="space-y-2"></div></div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Agendamentos</h3><div id="admin-bookings-list" class="space-y-2"></div></div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Agendamentos Recentes</h3><div id="admin-bookings-list" class="space-y-2"></div></div>
           </div>
         </div>
       </div>
@@ -398,12 +397,10 @@
         clientContainer.classList.add('hidden');
         adminView.classList.remove('hidden');
         bottomNav.classList.add('hidden');
-        btnText.innerText = "Ver Cliente";
       } else {
         adminView.classList.add('hidden');
         clientContainer.classList.remove('hidden');
         bottomNav.classList.remove('hidden');
-        btnText.innerText = "Painel Lojista";
         loadClientData();
       }
     };
@@ -432,7 +429,6 @@
       }
     };
 
-    // FUNÇÃO INTELIGENTE: Redimensiona e comprime qualquer imagem para menos de 100 KB antes de salvar
     function convertImageToBase64(file) {
       return new Promise((resolve, reject) => {
         if (!file) { resolve(null); return; }
@@ -445,27 +441,16 @@
             const MAX_HEIGHT = 300;
             let width = img.width;
             let height = img.height;
-
             if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
+              if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
             } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
+              if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
             }
-
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-
-            // Comprime para JPEG com qualidade de 70% (garante tamanho super leve abaixo de 100kb)
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            resolve(dataUrl);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
           };
           img.onerror = (error) => reject(error);
           img.src = event.target.result;
@@ -589,15 +574,14 @@
           services.forEach(doc => doc.ref.delete());
           const staff = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
           staff.forEach(doc => doc.ref.delete());
-          
           await currentUser.delete();
           alert("Conta excluída com sucesso.");
         } catch (error) {
           if (error.code === 'auth/requires-recent-login') {
-            alert("Por segurança, o Firebase exige que você faça login novamente antes de excluir a conta. Por favor, clique em 'Sair', entre com sua senha e tente excluir novamente.");
+            alert("Por segurança, faça login novamente antes de excluir a conta.");
             auth.signOut();
           } else {
-            alert("Erro ao excluir conta: " + error.message);
+            alert("Erro: " + error.message);
           }
         }
       }
@@ -608,6 +592,7 @@
       if (!currentUser) return;
       try {
         const name = document.getElementById('store-name-input').value;
+        const address = document.getElementById('store-address-input').value;
         const whatsapp = document.getElementById('store-whatsapp-input').value;
         const social = document.getElementById('store-social-input').value;
         const logoFile = document.getElementById('store-logo-file').files[0];
@@ -623,11 +608,11 @@
           newSchedule[day] = { active, open, close };
         }
 
-        const updateData = { storeName: name, whatsapp, socialLink: social, weeklySchedule: newSchedule };
+        const updateData = { storeName: name, address, whatsapp, socialLink: social, weeklySchedule: newSchedule };
         if (logoUrl) updateData.logoUrl = logoUrl;
 
         await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
-        alert("Perfil salvo!");
+        alert("Perfil e Endereço salvos!");
         loadAdminData();
       } catch (e) { alert("Erro: " + e.message); }
     };
@@ -673,14 +658,7 @@
         let photoData = null;
         if (photoFile) photoData = await convertImageToBase64(photoFile);
 
-        const servicePayload = {
-          merchantId: currentUser.uid,
-          category,
-          name,
-          assignedStaff,
-          price,
-          duration
-        };
+        const servicePayload = { merchantId: currentUser.uid, category, name, assignedStaff, price, duration };
         if (photoData) servicePayload.photo = photoData;
 
         if (serviceId) {
@@ -738,6 +716,7 @@
       if (settingsDoc.exists) {
         const data = settingsDoc.data();
         if (data.storeName) document.getElementById('store-name-input').value = data.storeName;
+        if (data.address) document.getElementById('store-address-input').value = data.address;
         if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
         if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
         if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
@@ -769,9 +748,7 @@
       }
 
       let servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
-      if (servicesSnap.empty) {
-        servicesSnap = await db.collection('services').get();
-      }
+      if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
 
       const servicesContainer = document.getElementById('admin-services-list');
       servicesContainer.innerHTML = '';
@@ -806,7 +783,7 @@
       bookingsContainer.innerHTML = '';
       bookingsSnap.forEach(doc => {
         const data = doc.data();
-        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName}</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName}</p></div>`;
+        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName}</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'}</p></div>`;
       });
     }
 
@@ -829,6 +806,9 @@
         const storeName = data.storeName || "Meu Salão";
         document.getElementById('header-store-name').innerText = storeName;
         document.getElementById('home-store-name').innerText = storeName;
+        if (data.address) {
+          document.getElementById('home-store-address').innerText = data.address;
+        }
         if (data.whatsapp) merchantWhatsapp = data.whatsapp;
         if (data.logoUrl) {
           const logoImg = document.getElementById('home-logo-img');
@@ -848,9 +828,7 @@
       }
 
       let servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
-      if (servicesSnap.empty) {
-        servicesSnap = await db.collection('services').get();
-      }
+      if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
 
       allServicesRaw = [];
       const categoriesSet = new Set(['Todos']);
@@ -881,7 +859,7 @@
           allStaffRaw.push({ id: doc.id, ...data });
           const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
           staffContainer.innerHTML += `
-            <div onclick="window.selectStaff(${staffData})" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs" data-staff-name="${data.name}">
+            <div onclick="window.selectStaff(${staffData}, this)" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs" data-staff-name="${data.name}">
               <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5 shadow-xs">
               <h4 class="font-bold text-slate-800 text-xs truncate">${data.name}</h4>
               <p class="text-[9px] text-slate-400 uppercase">${data.role}</p>
@@ -925,7 +903,7 @@
         }).replace(/"/g, '&quot;');
 
         container.innerHTML += `
-          <div onclick="window.selectService(${serviceData})" class="card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs">
+          <div onclick="window.selectService(${serviceData}, this)" class="service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs">
             <div class="flex items-center gap-3">
               <img src="${data.photo}" class="w-12 h-12 rounded-xl object-cover">
               <div>
@@ -942,11 +920,14 @@
     window.updateHairSpecs = function() {
       const length = document.getElementById('hair-length').value;
       const type = document.getElementById('hair-type').value;
-      const hairText = `${length} | ${type}`;
-      document.getElementById('summary-hair').innerText = hairText;
+      document.getElementById('summary-hair').innerText = `${length} | ${type}`;
     };
 
-    window.selectService = function(service) {
+    // SELEÇÃO EM EVIDÊNCIA
+    window.selectService = function(service, element) {
+      document.querySelectorAll('.service-card').forEach(card => card.classList.remove('selected-card'));
+      element.classList.add('selected-card');
+
       selectedService = service;
       document.getElementById('summary-service').innerText = service.name;
       document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
@@ -982,14 +963,12 @@
           card.style.pointerEvents = 'none';
         }
       });
-
-      if (selectedStaffObj && service.assignedStaff && service.assignedStaff.length > 0 && !service.assignedStaff.includes(selectedStaffObj.name)) {
-        selectedStaffObj = null;
-        document.getElementById('summary-staff').innerText = 'Qualquer';
-      }
     };
 
-    window.selectStaff = function(staff) {
+    window.selectStaff = function(staff, element) {
+      document.querySelectorAll('.staff-card').forEach(card => card.classList.remove('selected-card'));
+      element.classList.add('selected-card');
+
       selectedStaffObj = staff;
       document.getElementById('summary-staff').innerText = staff.name;
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
@@ -1031,28 +1010,27 @@
         const timeString = `${h.toString().padStart(2, '0')}:00`;
         if (bookedTimes.includes(timeString)) continue;
         count++;
-        slotsContainer.innerHTML += `<button type="button" onclick="window.selectTime('${timeString}')" class="py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
+        slotsContainer.innerHTML += `<button type="button" onclick="window.selectTime('${timeString}', this)" class="time-btn py-2 px-1 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
       }
-      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Indisponível.</p>';
+      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Nenhum horário disponível.</p>';
     };
 
-    window.selectTime = function(time) {
+    window.selectTime = function(time, element) {
+      document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+      element.classList.add('bg-indigo-600', 'text-white');
+
       selectedTime = time;
       const dateVal = document.getElementById('booking-date').value.split('-').reverse().join('/');
       document.getElementById('summary-datetime').innerText = `${dateVal} às ${time}`;
     };
 
     window.confirmBooking = async function() {
-      const name = document.getElementById('client-name-input') || document.getElementById('client-name');
-      const phone = document.getElementById('client-phone');
-      const date = document.getElementById('booking-date');
-      
-      const clientName = name ? name.value : '';
-      const clientPhone = phone ? phone.value : '';
-      const bookingDate = date ? date.value : '';
+      const name = document.getElementById('client-name-input').value;
+      const phone = document.getElementById('client-phone').value;
+      const date = document.getElementById('booking-date').value;
 
-      if (!selectedService || !selectedTime || !clientName || !clientPhone || !bookingDate) {
-        alert("Preencha todos os campos do agendamento (Serviço, Horário, Nome e WhatsApp).");
+      if (!selectedService || !selectedTime || !name || !phone || !date) {
+        alert("Preencha todos os campos do agendamento (Serviço, Profissional, Data, Horário, Nome e WhatsApp).");
         return;
       }
 
@@ -1076,19 +1054,21 @@
           staffName,
           hairSpecs,
           price: selectedService.price,
-          date: bookingDate,
+          date,
           time: selectedTime,
-          clientName,
-          clientPhone,
+          clientName: name,
+          clientPhone: phone,
+          rating: 0,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         let targetWhatsapp = merchantWhatsapp;
         if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
 
-        const msg = `Olá, ${staffName}! Novo agendamento:%0A*Cliente:* ${clientName}%0A*Serviço:* ${selectedService.name}%0A*Data:* ${bookingDate} às ${selectedTime}`;
+        const msg = encodeURIComponent(`Olá, ${staffName}! Novo agendamento confirmado:%0A*Cliente:* ${name}%0A*Serviço:* ${selectedService.name}%0A*Cabelo:* ${hairSpecs}%0A*Data:* ${date.split('-').reverse().join('/')} às ${selectedTime}`);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
-        alert("Agendamento realizado!");
+        
+        alert("Agendamento realizado com sucesso e notificação enviada!");
         window.switchTab('reservas');
       } catch (e) { alert("Erro: " + e.message); }
     };
@@ -1103,11 +1083,52 @@
         const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
         container.innerHTML = '';
         if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado.</p>'; return; }
+        
         snap.forEach(doc => {
           const d = doc.data();
-          container.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1"><b>${d.serviceName}</b> com ${d.staffName}<br>Data: ${d.date} às ${d.time}</div>`;
+          const ratingStars = d.rating > fn => '★'.repeat(d.rating) + '☆'.repeat(5 - d.rating);
+          
+          container.innerHTML += `
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-2">
+              <div class="flex justify-between items-center">
+                <b>${d.serviceName}</b>
+                <span class="text-emerald-600 font-bold">${d.date.split('-').reverse().join('/')} às ${d.time}</span>
+              </div>
+              <p class="text-slate-500">Profissional: ${d.staffName} | Cabelo: ${d.hairSpecs}</p>
+              
+              <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                <div class="flex gap-1 text-amber-500 text-sm cursor-pointer" onclick="window.rateBooking('${doc.id}', 5)">
+                  <span>${d.rating ? '★'.repeat(d.rating) : '☆☆☆☆☆ Avaliar'}</span>
+                </div>
+                <button onclick="window.cancelBooking('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Cancelar Horário</button>
+              </div>
+            </div>`;
         });
       } catch(e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro na busca.</p>'; }
+    };
+
+    // Funcionalidade de Exclusão/Cancelamento pelo Cliente
+    window.cancelBooking = async function(bookingId) {
+      if (confirm("Deseja realmente cancelar este agendamento?")) {
+        try {
+          await db.collection('bookings').doc(bookingId).delete();
+          alert("Agendamento cancelado com sucesso.");
+          window.searchClientBookings();
+        } catch (e) {
+          alert("Erro ao cancelar: " + e.message);
+        }
+      }
+    };
+
+    // Funcionalidade de Avaliação de Serviço
+    window.rateBooking = async function(bookingId, stars) {
+      try {
+        await db.collection('bookings').doc(bookingId).update({ rating: stars });
+        alert("Obrigado pela sua avaliação!");
+        window.searchClientBookings();
+      } catch (e) {
+        alert("Erro ao avaliar: " + e.message);
+      }
     };
   </script>
 </body>
