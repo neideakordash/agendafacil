@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v41 - AgendaFácil com Agendamento Manual pelo Lojista -->
+<!-- v42 - AgendaFácil com Tutoriais para Lojistas e Clientes -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -175,7 +175,7 @@
         </div>
       </div>
 
-      <!-- ABA 4: MAIS -->
+      <!-- ABA 4: MAIS (Com Atalho para Tutoriais) -->
       <div id="tab-mais" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
@@ -186,10 +186,12 @@
 
     </div>
 
-    <!-- PAINEL DO LOJISTA -->
+    <!-- PAINEL DO LOJISTA COM TUTORIAIS -->
     <div id="admin-view" class="hidden space-y-6">
-      <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-100 my-8">
-        <div class="text-center mb-6">
+      
+      <!-- TELA DE LOGIN / CADASTRO DO LOJISTA -->
+      <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-100 my-8 space-y-6">
+        <div class="text-center">
           <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-lg">
             <i class="fa-solid fa-store"></i>
           </div>
@@ -214,11 +216,22 @@
           <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Entrar</button>
         </form>
 
-        <div class="mt-4 text-center">
+        <div class="text-center pt-2 border-t border-slate-100">
           <button type="button" onclick="window.toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 hover:underline font-semibold cursor-pointer">Não tem uma conta? Cadastre seu estabelecimento</button>
+        </div>
+
+        <!-- BOTÕES DE TUTORIAIS NA TELA DO LOJISTA -->
+        <div class="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+          <button type="button" onclick="window.openTutorial('merchant')" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-book-open text-indigo-600"></i> Tutorial Lojista
+          </button>
+          <button type="button" onclick="window.openTutorial('client')" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-book-open text-emerald-600"></i> Tutorial Cliente
+          </button>
         </div>
       </div>
 
+      <!-- PAINEL ADMINISTRATIVO (LOGADO) -->
       <div id="admin-dashboard" class="hidden space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-3">
           <div>
@@ -234,7 +247,8 @@
               </button>
             </div>
           </div>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
+            <button onclick="window.openTutorial('merchant')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-xl cursor-pointer">Manual Lojista</button>
             <button onclick="window.toggleAdminView()" class="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl cursor-pointer">Ver Cliente</button>
             <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl cursor-pointer">Sair</button>
             <button onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded-xl cursor-pointer">Excluir</button>
@@ -400,6 +414,18 @@
 
   </main>
 
+  <!-- MODAL DE TUTORIAL -->
+  <div id="tutorial-modal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="tutorial-modal-title" class="font-extrabold text-base text-slate-900">Manual de Uso</h3>
+        <button onclick="window.closeTutorial()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="tutorial-modal-content" class="text-xs text-slate-600 space-y-3 leading-relaxed"></div>
+      <button onclick="window.closeTutorial()" class="w-full py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs cursor-pointer">Entendi</button>
+    </div>
+  </div>
+
   <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
   <nav class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-50 h-16 flex items-center justify-around px-2 shadow-lg">
     <button onclick="window.switchTab('home')" class="tab-btn flex flex-col items-center text-indigo-600 cursor-pointer" data-tab="home">
@@ -472,7 +498,38 @@
           btn.className = "tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer";
         }
       });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: document.getElementById('client-container').offsetTop, behavior: 'smooth' });
+    };
+
+    // Sistema de Tutoriais (Modais)
+    window.openTutorial = function(type) {
+      const modal = document.getElementById('tutorial-modal');
+      const title = document.getElementById('tutorial-modal-title');
+      const content = document.getElementById('tutorial-modal-content');
+
+      if (type === 'merchant') {
+        title.innerHTML = "📖 Manual do Lojista (Como Usar)";
+        content.innerHTML = `
+          <p><b>1. Configurar Perfil e Endereço:</b> Clique em <i>Perfil, Endereço e Expediente</i> para definir o nome do salão, endereço, link do Instagram, logo e os horários de funcionamento de cada dia da semana.</p>
+          <p><b>2. Cadastrar Profissionais:</b> Em <i>Cadastrar Profissionais</i>, adicione os colaboradores que atendem no espaço, com foto e WhatsApp direto.</p>
+          <p><b>3. Cadastrar Serviços:</b> Em <i>Gerenciar e Cadastrar Serviços</i>, crie os tratamentos, defina preços, duração, associe os profissionais e use o campo <b>Ordem</b> para definir qual aparece primeiro.</p>
+          <p><b>4. Agendamento Manual:</b> Se um cliente ligar ou aparecer no balcão, use o bloco <i>Novo Agendamento Manual</i> para bloquear o horário na hora.</p>
+          <p><b>5. Histórico e Link:</b> Copie o link exclusivo do seu salão no topo do painel para divulgar no WhatsApp ou Instagram dos seus clientes!</p>
+        `;
+      } else {
+        title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
+        content.innerHTML = `
+          <p><b>1. Escolher o Serviço:</b> Na aba <i>Agendar</i>, escolha o serviço desejado (você pode filtrar por categorias). Serviços de cabelo solicitarão o tamanho e tipo dos fios.</p>
+          <p><b>2. Escolher Profissional e Data:</b> Selecione o profissional preferido e a data desejada na agenda. Os horários disponíveis aparecerão automaticamente.</p>
+          <p><b>3. Confirmar pelo WhatsApp:</b> Preencha seu nome e WhatsApp e clique em <i>Confirmar Agendamento</i>. O sistema enviará os detalhes direto para o WhatsApp do salão.</p>
+          <p><b>4. Consultar ou Cancelar:</b> Na aba <i>Minhas Reservas</i>, digite seu WhatsApp para ver seus horários marcados, avaliar o atendimento com estrelas ou cancelar caso precise.</p>
+        `;
+      }
+      modal.classList.remove('hidden');
+    };
+
+    window.closeTutorial = function() {
+      document.getElementById('tutorial-modal').classList.add('hidden');
     };
 
     window.toggleSection = function(sectionId) {
@@ -780,7 +837,6 @@
       } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
     };
 
-    // Agendamento manual feito pelo lojista
     window.saveManualBooking = async function(event) {
       event.preventDefault();
       if (!currentUser) return;
@@ -797,7 +853,6 @@
           return;
         }
 
-        // Busca o preço do serviço selecionado
         let servicePrice = 0;
         const foundService = allServicesRaw.find(s => s.name === serviceName);
         if (foundService) servicePrice = foundService.price || 0;
@@ -954,7 +1009,6 @@
       });
     }
 
-    // Popula os selects do agendamento manual no painel do lojista
     function loadAdminDropdowns() {
       const serviceSelect = document.getElementById('manual-service-select');
       const staffSelect = document.getElementById('manual-staff-select');
