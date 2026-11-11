@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v39 - Painel com Todas as Seções Retráteis (Push), Ordenação e Acompanhamento por Cliente -->
+<!-- v40 - Histórico de Atendimento por Nome do Cliente -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -330,15 +330,15 @@
             </div>
           </div>
 
-          <!-- BLOCO 4: AGENDAMENTOS E HISTÓRICO POR CLIENTE -->
+          <!-- BLOCO 4: AGENDAMENTOS E HISTÓRICO POR NOME DO CLIENTE -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Acompanhamento de Agendamentos e Clientes</span>
+              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Acompanhamento de Agendamentos por Nome do Cliente</span>
               <i id="icon-section-bookings" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-bookings" class="p-5 hidden space-y-4">
               <div class="flex gap-2">
-                <input type="tel" id="admin-search-client-phone" placeholder="Pesquisar histórico por WhatsApp do cliente..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+                <input type="text" id="admin-search-client-name" placeholder="Digite o nome do cliente para buscar histórico..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
                 <button onclick="window.adminSearchClientHistory()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar Histórico</button>
               </div>
               <div id="admin-client-history-result" class="space-y-2"></div>
@@ -432,7 +432,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Controle dos Menus Retráteis (Push) no Painel
     window.toggleSection = function(sectionId) {
       const el = document.getElementById(sectionId);
       const icon = document.getElementById(`icon-${sectionId}`);
@@ -858,30 +857,39 @@
       });
     }
 
-    // Acompanhamento de Histórico do Cliente pelo Lojista
+    // Acompanhamento de Histórico do Cliente por NOME no Painel
     window.adminSearchClientHistory = async function() {
-      const phone = document.getElementById('admin-search-client-phone').value.trim();
+      const searchName = document.getElementById('admin-search-client-name').value.trim().toLowerCase();
       const container = document.getElementById('admin-client-history-result');
       container.innerHTML = '<p class="text-xs text-slate-400">Buscando histórico...</p>';
-      if (!phone) { container.innerHTML = '<p class="text-xs text-rose-500">Digite o WhatsApp do cliente.</p>'; return; }
+      if (!searchName) { container.innerHTML = '<p class="text-xs text-rose-500">Digite o nome do cliente.</p>'; return; }
 
       try {
-        const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
+        const snap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
         container.innerHTML = '';
-        if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum histórico encontrado para este número.</p>'; return; }
         
         let totalAtendimentos = 0;
         let htmlList = '';
+        
         snap.forEach(doc => {
-          totalAtendimentos++;
           const d = doc.data();
-          htmlList += `<div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-0.5">
-            <b>${d.serviceName}</b> com ${d.staffName}<br>
-            <span class="text-slate-500">Data: ${d.date} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
-          </div>`;
+          const clientNameMatch = (d.clientName || '').toLowerCase();
+          
+          if (clientNameMatch.includes(searchName)) {
+            totalAtendimentos++;
+            htmlList += `<div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-0.5">
+              <b>Cliente: ${d.clientName} (${d.clientPhone})</b><br>
+              <span>Serviço: <b>${d.serviceName}</b> com ${d.staffName}</span><br>
+              <span class="text-slate-500">Data: ${d.date} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
+            </div>`;
+          }
         });
 
-        container.innerHTML = `<p class="text-xs font-bold text-slate-700 mb-2">Total de atendimentos: ${totalAtendimentos}</p>` + htmlList;
+        if (totalAtendimentos === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-400">Nenhum histórico encontrado com este nome.</p>';
+        } else {
+          container.innerHTML = `<p class="text-xs font-bold text-slate-700 mb-2">Total de atendimentos encontrados: ${totalAtendimentos}</p>` + htmlList;
+        }
       } catch (e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro ao buscar histórico.</p>'; }
     };
 
