@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v37 - AgendaFácil Completo e Corrigido -->
+<!-- v38 - Painel do Lojista Retrátil (Push) e Ordenação Personalizada de Serviços -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -241,10 +241,16 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-6">
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Perfil, Endereço e Expediente</h3>
+        <!-- OPÇÕES EM PUSH (RETÁTEIS) PARA NÃO POLUIR A TELA -->
+        <div class="space-y-4">
+          
+          <!-- BLOCO 1: PERFIL E EXPEDIENTE -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-profile')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-store mr-2 text-indigo-600"></i> Perfil, Endereço e Expediente</span>
+              <i id="icon-section-profile" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-profile" class="p-5 hidden space-y-4">
               <form onsubmit="window.saveStoreSettings(event)" class="space-y-3 text-xs">
                 <input type="text" id="store-name-input" placeholder="Nome do Salão" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
@@ -260,29 +266,47 @@
                 <button type="submit" class="w-full py-2 bg-slate-900 text-white font-bold rounded-xl cursor-pointer">Salvar Perfil</button>
               </form>
             </div>
+          </div>
 
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Cadastrar Profissional</h3>
+          <!-- BLOCO 2: CADASTRAR PROFISSIONAL -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissional</span>
+              <i id="icon-section-staff" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-staff" class="p-5 hidden space-y-4">
               <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
                 <input type="text" id="staff-name" placeholder="Nome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-role" placeholder="Cargo/Especialidade" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
-                <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar</button>
+                <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
               </form>
             </div>
+          </div>
 
-            <!-- Cadastro / Edição de Serviço -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <!-- BLOCO 3: CADASTRAR / EDITAR SERVIÇO -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-service')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-scissors mr-2 text-indigo-600"></i> <span id="service-form-header-title">Cadastrar Serviço</span></span>
+              <i id="icon-section-service" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-service" class="p-5 hidden space-y-4">
               <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                <h3 id="service-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Cadastrar Serviço</h3>
-                <button type="button" id="btn-cancel-edit" onclick="window.cancelEditService()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar</button>
+                <h3 id="service-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Novo Serviço</h3>
+                <button type="button" id="btn-cancel-edit" onclick="window.cancelEditService()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
               </div>
               <form onsubmit="window.saveService(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="editing-service-id" value="">
                 <input type="text" id="service-category" placeholder="Categoria (ex: Cabelo, Unhas)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 
+                <!-- ORDEM DE EXIBIÇÃO -->
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">Ordem / Posição (Ex: 1, 2, 3 para ordenar na lista)</label>
+                  <input type="number" id="service-order" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                </div>
+
                 <div>
                   <label class="block text-[11px] font-bold text-slate-700 mb-1">Profissionais que realizam este serviço:</label>
                   <div id="service-staff-checkboxes" class="space-y-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
@@ -301,12 +325,15 @@
             </div>
           </div>
 
-          <div class="md:col-span-2 space-y-6">
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Profissionais</h3><div id="admin-staff-list" class="space-y-2"></div></div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços</h3><div id="admin-services-list" class="space-y-2"></div></div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Agendamentos Recentes</h3><div id="admin-bookings-list" class="space-y-2"></div></div>
-          </div>
         </div>
+
+        <!-- LISTAGENS NO PAINEL -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Profissionais Cadastrados</h3><div id="admin-staff-list" class="space-y-2"></div></div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços (Ordenados)</h3><div id="admin-services-list" class="space-y-2"></div></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Agendamentos Recentes</h3><div id="admin-bookings-list" class="space-y-2"></div></div>
+
       </div>
     </div>
 
@@ -385,6 +412,19 @@
         }
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Controle dos Menus Retráteis (Push) no Painel
+    window.toggleSection = function(sectionId) {
+      const el = document.getElementById(sectionId);
+      const icon = document.getElementById(`icon-${sectionId}`);
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        icon.className = "fa-solid fa-chevron-up";
+      } else {
+        el.classList.add('hidden');
+        icon.className = "fa-solid fa-chevron-down";
+      }
     };
 
     window.toggleAdminView = function() {
@@ -644,6 +684,7 @@
         const serviceId = document.getElementById('editing-service-id').value;
         const category = document.getElementById('service-category').value.trim() || "Geral";
         const name = document.getElementById('service-name').value;
+        const order = parseInt(document.getElementById('service-order').value) || 0;
         
         const checkboxes = document.querySelectorAll('.staff-checkbox:checked');
         let assignedStaff = [];
@@ -657,7 +698,7 @@
         let photoData = null;
         if (photoFile) photoData = await convertImageToBase64(photoFile);
 
-        const servicePayload = { merchantId: currentUser.uid, category, name, assignedStaff, price, duration };
+        const servicePayload = { merchantId: currentUser.uid, category, name, order, assignedStaff, price, duration };
         if (photoData) servicePayload.photo = photoData;
 
         if (serviceId) {
@@ -675,12 +716,13 @@
       } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
     };
 
-    window.editService = async function(id, name, category, price, duration, assignedStaffJson) {
+    window.editService = async function(id, name, category, price, duration, order, assignedStaffJson) {
       document.getElementById('editing-service-id').value = id;
       document.getElementById('service-category').value = category;
       document.getElementById('service-name').value = name;
       document.getElementById('service-price').value = price > 0 ? price : '';
       document.getElementById('service-duration').value = duration;
+      document.getElementById('service-order').value = order || 0;
 
       let assignedArray = [];
       try { assignedArray = JSON.parse(assignedStaffJson || '[]'); } catch(err) { assignedArray = []; }
@@ -690,9 +732,14 @@
       });
 
       document.getElementById('service-form-title').innerText = "Editar Serviço";
+      document.getElementById('service-form-header-title').innerText = "Editar Serviço (Editando)";
       document.getElementById('btn-save-service').innerText = "Salvar Alterações";
       document.getElementById('btn-cancel-edit').classList.remove('hidden');
-      window.scrollTo({ top: document.getElementById('service-form-title').offsetTop, behavior: 'smooth' });
+      
+      // Abre a seção automaticamente ao clicar em editar
+      document.getElementById('section-service').classList.remove('hidden');
+      document.getElementById('icon-section-service').className = "fa-solid fa-chevron-up";
+      window.scrollTo({ top: document.getElementById('section-service').offsetTop, behavior: 'smooth' });
     };
 
     window.cancelEditService = function() {
@@ -701,10 +748,12 @@
       document.getElementById('service-name').value = '';
       document.getElementById('service-price').value = '';
       document.getElementById('service-duration').value = '';
+      document.getElementById('service-order').value = '0';
       document.getElementById('service-photo-file').value = '';
       document.querySelectorAll('.staff-checkbox').forEach(cb => cb.checked = false);
 
-      document.getElementById('service-form-title').innerText = "Cadastrar Serviço";
+      document.getElementById('service-form-title').innerText = "Novo Serviço";
+      document.getElementById('service-form-header-title').innerText = "Cadastrar Serviço";
       document.getElementById('btn-save-service').innerText = "+ Adicionar Serviço";
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     };
@@ -749,14 +798,21 @@
       let servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
       if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
 
+      let servicesArray = [];
+      servicesSnap.forEach(doc => {
+        servicesArray.push({ id: doc.id, ...doc.data() });
+      });
+
+      // Ordena os serviços pela ordem definida pelo lojista
+      servicesArray.sort((a, b) => (a.order || 0) - (b.order || 0));
+
       const servicesContainer = document.getElementById('admin-services-list');
       servicesContainer.innerHTML = '';
       
-      if (servicesSnap.empty) {
+      if (servicesArray.length === 0) {
         servicesContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado.</p>';
       } else {
-        servicesSnap.forEach(doc => {
-          const data = doc.data();
+        servicesArray.forEach(data => {
           const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
           const staffListStr = JSON.stringify(data.assignedStaff || []).replace(/"/g, '&quot;');
           const assignedNames = (data.assignedStaff && data.assignedStaff.length > 0) ? data.assignedStaff.join(', ') : 'Qualquer profissional';
@@ -764,13 +820,13 @@
           servicesContainer.innerHTML += `
             <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
               <div class="space-y-0.5">
-                <p><b>${data.name}</b> <span class="text-indigo-600">[${data.category}]</span></p>
+                <p><b>[Ordem: ${data.order || 0}] ${data.name}</b> <span class="text-indigo-600">[${data.category}]</span></p>
                 <p class="text-slate-400">${data.duration} min • ${priceText}</p>
                 <p class="text-emerald-600 font-bold">Prof: ${assignedNames}</p>
               </div>
               <div class="flex gap-2">
-                <button onclick="window.editService('${doc.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, '${staffListStr}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
-                <button onclick="window.deleteService('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
+                <button onclick="window.editService('${data.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, ${data.order || 0}, '${staffListStr}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+                <button onclick="window.deleteService('${data.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
               </div>
             </div>
           `;
@@ -791,8 +847,6 @@
 
     async function loadClientData() {
       let salonId = targetMerchantId;
-      
-      // Se não houver salão na URL, tenta pegar o primeiro salão cadastrado automaticamente para nunca travar
       if (!salonId) {
         const settingsSnap = await db.collection('settings').limit(1).get();
         if (!settingsSnap.empty) {
@@ -838,8 +892,13 @@
       allServicesRaw = [];
       const categoriesSet = new Set(['Todos']);
       servicesSnap.forEach(doc => {
-        const data = doc.data();
-        allServicesRaw.push({ id: doc.id, ...data });
+        allServicesRaw.push({ id: doc.id, ...doc.data() });
+      });
+
+      // Ordena os serviços na visão do cliente de acordo com a ordem definida pelo lojista
+      allServicesRaw.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      allServicesRaw.forEach(data => {
         categoriesSet.add(data.category || 'Geral');
       });
 
