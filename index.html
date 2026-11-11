@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v38 - Painel do Lojista Retrátil (Push) e Ordenação Personalizada de Serviços -->
+<!-- v39 - Painel com Todas as Seções Retráteis (Push), Ordenação e Acompanhamento por Cliente -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -271,7 +271,7 @@
           <!-- BLOCO 2: CADASTRAR PROFISSIONAL -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissional</span>
+              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais</span>
               <i id="icon-section-staff" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-staff" class="p-5 hidden space-y-4">
@@ -282,13 +282,14 @@
                 <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
                 <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
               </form>
+              <div class="pt-2 border-t border-slate-100"><div id="admin-staff-list" class="space-y-2"></div></div>
             </div>
           </div>
 
-          <!-- BLOCO 3: CADASTRAR / EDITAR SERVIÇO -->
+          <!-- BLOCO 3: CADASTRAR / GERENCIAR SERVIÇOS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-service')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-scissors mr-2 text-indigo-600"></i> <span id="service-form-header-title">Cadastrar Serviço</span></span>
+              <span><i class="fa-solid fa-scissors mr-2 text-indigo-600"></i> <span id="service-form-header-title">Gerenciar e Cadastrar Serviços</span></span>
               <i id="icon-section-service" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-service" class="p-5 hidden space-y-4">
@@ -301,7 +302,6 @@
                 <input type="text" id="service-category" placeholder="Categoria (ex: Cabelo, Unhas)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 
-                <!-- ORDEM DE EXIBIÇÃO -->
                 <div>
                   <label class="block text-[10px] text-slate-500 mb-1">Ordem / Posição (Ex: 1, 2, 3 para ordenar na lista)</label>
                   <input type="number" id="service-order" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
@@ -322,17 +322,35 @@
                 </div>
                 <button type="submit" id="btn-save-service" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Serviço</button>
               </form>
+
+              <div class="pt-4 border-t border-slate-100">
+                <h4 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços Cadastrados</h4>
+                <div id="admin-services-list" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCO 4: AGENDAMENTOS E HISTÓRICO POR CLIENTE -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Acompanhamento de Agendamentos e Clientes</span>
+              <i id="icon-section-bookings" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-bookings" class="p-5 hidden space-y-4">
+              <div class="flex gap-2">
+                <input type="tel" id="admin-search-client-phone" placeholder="Pesquisar histórico por WhatsApp do cliente..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+                <button onclick="window.adminSearchClientHistory()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar Histórico</button>
+              </div>
+              <div id="admin-client-history-result" class="space-y-2"></div>
+
+              <div class="pt-4 border-t border-slate-100">
+                <h4 class="font-bold text-slate-900 mb-3 text-xs uppercase">Todos os Agendamentos Recentes</h4>
+                <div id="admin-bookings-list" class="space-y-2"></div>
+              </div>
             </div>
           </div>
 
         </div>
-
-        <!-- LISTAGENS NO PAINEL -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Profissionais Cadastrados</h3><div id="admin-staff-list" class="space-y-2"></div></div>
-          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços (Ordenados)</h3><div id="admin-services-list" class="space-y-2"></div></div>
-        </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"><h3 class="font-bold text-slate-900 mb-3 text-xs uppercase">Agendamentos Recentes</h3><div id="admin-bookings-list" class="space-y-2"></div></div>
 
       </div>
     </div>
@@ -732,11 +750,10 @@
       });
 
       document.getElementById('service-form-title').innerText = "Editar Serviço";
-      document.getElementById('service-form-header-title').innerText = "Editar Serviço (Editando)";
+      document.getElementById('service-form-header-title').innerText = "Gerenciar e Cadastrar Serviços (Editando)";
       document.getElementById('btn-save-service').innerText = "Salvar Alterações";
       document.getElementById('btn-cancel-edit').classList.remove('hidden');
       
-      // Abre a seção automaticamente ao clicar em editar
       document.getElementById('section-service').classList.remove('hidden');
       document.getElementById('icon-section-service').className = "fa-solid fa-chevron-up";
       window.scrollTo({ top: document.getElementById('section-service').offsetTop, behavior: 'smooth' });
@@ -753,7 +770,7 @@
       document.querySelectorAll('.staff-checkbox').forEach(cb => cb.checked = false);
 
       document.getElementById('service-form-title').innerText = "Novo Serviço";
-      document.getElementById('service-form-header-title').innerText = "Cadastrar Serviço";
+      document.getElementById('service-form-header-title').innerText = "Gerenciar e Cadastrar Serviços";
       document.getElementById('btn-save-service').innerText = "+ Adicionar Serviço";
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     };
@@ -803,7 +820,6 @@
         servicesArray.push({ id: doc.id, ...doc.data() });
       });
 
-      // Ordena os serviços pela ordem definida pelo lojista
       servicesArray.sort((a, b) => (a.order || 0) - (b.order || 0));
 
       const servicesContainer = document.getElementById('admin-services-list');
@@ -838,9 +854,36 @@
       bookingsContainer.innerHTML = '';
       bookingsSnap.forEach(doc => {
         const data = doc.data();
-        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName}</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'}</p></div>`;
+        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName} (${data.clientPhone})</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'}</p></div>`;
       });
     }
+
+    // Acompanhamento de Histórico do Cliente pelo Lojista
+    window.adminSearchClientHistory = async function() {
+      const phone = document.getElementById('admin-search-client-phone').value.trim();
+      const container = document.getElementById('admin-client-history-result');
+      container.innerHTML = '<p class="text-xs text-slate-400">Buscando histórico...</p>';
+      if (!phone) { container.innerHTML = '<p class="text-xs text-rose-500">Digite o WhatsApp do cliente.</p>'; return; }
+
+      try {
+        const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
+        container.innerHTML = '';
+        if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum histórico encontrado para este número.</p>'; return; }
+        
+        let totalAtendimentos = 0;
+        let htmlList = '';
+        snap.forEach(doc => {
+          totalAtendimentos++;
+          const d = doc.data();
+          htmlList += `<div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-0.5">
+            <b>${d.serviceName}</b> com ${d.staffName}<br>
+            <span class="text-slate-500">Data: ${d.date} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
+          </div>`;
+        });
+
+        container.innerHTML = `<p class="text-xs font-bold text-slate-700 mb-2">Total de atendimentos: ${totalAtendimentos}</p>` + htmlList;
+      } catch (e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro ao buscar histórico.</p>'; }
+    };
 
     window.deleteStaff = async function(id) { await db.collection('staff').doc(id).delete(); loadAdminData(); };
     window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
@@ -895,7 +938,6 @@
         allServicesRaw.push({ id: doc.id, ...doc.data() });
       });
 
-      // Ordena os serviços na visão do cliente de acordo com a ordem definida pelo lojista
       allServicesRaw.sort((a, b) => (a.order || 0) - (b.order || 0));
 
       allServicesRaw.forEach(data => {
