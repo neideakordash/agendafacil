@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v44 - AgendaFácil Completo com Todas as Modificações Solicitadas -->
+<!-- v45 - Horários de 5 em 5 min com Intervalos/Encaixes e Duração Formatada em Horas -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -81,7 +81,7 @@
 
       <!-- ABA 2: AGENDAR -->
       <div id="tab-agenda" class="client-tab hidden space-y-6">
-        <!-- SELETOR DE CATEGORIAS EXCLUSIVO (Sem Todos) -->
+        <!-- SELETOR DE CATEGORIAS EXCLUSIVO -->
         <div id="category-filters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -128,7 +128,7 @@
                   <input type="date" id="booking-date" onchange="window.renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1.5">Horários Disponíveis</label>
+                  <label class="block text-xs font-bold text-slate-600 mb-1.5">Horários Disponíveis (5 em 5 min)</label>
                   <div id="time-slots-container" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
                     <p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione data e profissional.</p>
                   </div>
@@ -501,6 +501,16 @@
     const urlParams = new URLSearchParams(window.location.search);
     let targetMerchantId = urlParams.get('salao');
 
+    // Formata a duração: 60+ min vira horas (ex: 60 min -> 1h, 90 min -> 1h 30min)
+    function formatDuration(mins) {
+      if (!mins) return '0 min';
+      if (mins < 60) return `${mins} min`;
+      const hours = Math.floor(mins / 60);
+      const remainingMins = mins % 60;
+      if (remainingMins === 0) return `${hours}h`;
+      return `${hours}h ${remainingMins}min`;
+    }
+
     window.switchTab = function(tabId) {
       document.querySelectorAll('.client-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -525,16 +535,16 @@
         content.innerHTML = `
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo/encaixe</b> para otimizar a agenda.</p>
-          <p><b>4. Agendamento Manual:</b> Faça agendamentos diretos pelo painel preenchendo o nome e o WhatsApp do cliente.</p>
+          <p><b>3. Serviços, Intervalos e Encaixes:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo (em minutos)</b>. O sistema calcula automaticamente as brechas para encaixes de 5 em 5 minutos.</p>
+          <p><b>4. Agendamento Manual:</b> Faça agendamentos diretos pelo painel preenchendo o nome e o WhatsApp obrigatórios do cliente.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher Serviços:</b> Navegue pelas categorias e selecione **um ou mais serviços** para o seu atendimento.</p>
-          <p><b>2. Profissional e Data:</b> Escolha o profissional e o dia desejado.</p>
+          <p><b>1. Escolher Serviços:</b> Navegue pelas categorias e selecione **um ou mais serviços** para o seu atendimento. Serviços de 60 min ou mais aparecem representados em horas.</p>
+          <p><b>2. Profissional e Data:</b> Escolha o profissional e o dia desejado. Os horários são gerados de 5 em 5 minutos considerando os encaixes.</p>
           <p><b>3. Dados Obrigatórios:</b> É **obrigatório** preencher seu Nome Completo e WhatsApp para confirmar a reserva.</p>
-          <p><b>4. Pagamento Online:</b> Caso o salão tenha configurado, você poderá usar o botão de pagamento online gerado no resumo.</p>
+          <p><b>4. Pagamento Online:</b> Utilize o botão de pagamento online gerado no resumo caso o salão disponibilize.</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -1006,13 +1016,14 @@
           const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
           const staffListStr = JSON.stringify(data.assignedStaff || []).replace(/"/g, '&quot;');
           const assignedNames = (data.assignedStaff && data.assignedStaff.length > 0) ? data.assignedStaff.join(', ') : 'Qualquer profissional';
+          const durText = formatDuration(data.duration);
           const intervalText = data.interval > 0 ? ` | Intervalo: ${data.interval} min` : '';
 
           servicesContainer.innerHTML += `
             <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
               <div class="space-y-0.5">
                 <p><b>[Ordem: ${data.order || 0}] ${data.name}</b> <span class="text-indigo-600">[${data.category}]</span></p>
-                <p class="text-slate-400">${data.duration} min${intervalText} • ${priceText}</p>
+                <p class="text-slate-400">${durText}${intervalText} • ${priceText}</p>
                 <p class="text-emerald-600 font-bold">Prof: ${assignedNames}</p>
               </div>
               <div class="flex gap-2">
@@ -1216,6 +1227,7 @@
         const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
         const isSelected = selectedServices.some(s => s.id === data.id);
         const cardClass = isSelected ? 'service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs selected-card' : 'service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs';
+        const durFormatted = formatDuration(data.duration);
 
         const serviceData = JSON.stringify({ 
           id: data.id, 
@@ -1234,7 +1246,7 @@
               <img src="${data.photo}" class="w-12 h-12 rounded-xl object-cover">
               <div>
                 <h4 class="font-bold text-slate-800 text-xs sm:text-sm">${data.name}</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1 text-indigo-600"></i>${data.duration} min</p>
+                <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1 text-indigo-600"></i>${durFormatted}</p>
               </div>
             </div>
             <div class="text-right">
@@ -1297,6 +1309,7 @@
         hairSection.classList.add('hidden');
         hairSummaryContainer.classList.add('hidden');
       }
+      if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
     window.selectStaff = function(staff, element) {
@@ -1308,13 +1321,14 @@
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
+    // GERAÇÃO DE HORÁRIOS DE 5 EM 5 MIN COM CÁLCULO DE INTERVALOS/ENCAIXES
     window.renderTimeSlots = async function() {
       const dateVal = document.getElementById('booking-date').value;
       if (!dateVal) return;
       document.getElementById('summary-datetime').innerText = `${dateVal.split('-').reverse().join('/')}`;
 
       const slotsContainer = document.getElementById('time-slots-container');
-      slotsContainer.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Verificando...</p>';
+      slotsContainer.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Calculando horários...</p>';
 
       const parts = dateVal.split('-');
       const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -1327,26 +1341,64 @@
         return;
       }
 
-      const openHour = parseInt(dayConfig.open.split(':')[0]);
-      const closeHour = parseInt(dayConfig.close.split(':')[0]);
-      let bookedTimes = [];
+      const [openH, openM] = dayConfig.open.split(':').map(Number);
+      const [closeH, closeM] = dayConfig.close.split(':').map(Number);
+      const openTotalMins = openH * 60 + openM;
+      const closeTotalMins = closeH * 60 + closeM;
 
+      let bookedRanges = [];
       try {
         let query = db.collection('bookings').where('merchantId', '==', window.currentSalonId).where('date', '==', dateVal);
         if (selectedStaffObj) query = query.where('staffName', '==', selectedStaffObj.name);
         const snapshot = await query.get();
-        snapshot.forEach(doc => bookedTimes.push(doc.data().time));
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const [h, m] = d.time.split(':').map(Number);
+          const startMins = h * 60 + m;
+          const dur = d.duration || 30;
+          const inter = d.interval || 0;
+          const endMins = startMins + dur + inter; // Considera duração + intervalo para bloquear encaixes indevidos
+          bookedRanges.push({ start: startMins, end: endMins });
+        });
       } catch (e) { console.error(e); }
+
+      let totalServiceDuration = 0;
+      let totalServiceInterval = 0;
+      selectedServices.forEach(s => {
+        totalServiceDuration += (s.duration || 30);
+        totalServiceInterval += (s.interval || 0);
+      });
+      if (totalServiceDuration === 0) totalServiceDuration = 30;
+
+      const neededTotalTime = totalServiceDuration + totalServiceInterval;
 
       slotsContainer.innerHTML = '';
       let count = 0;
-      for (let h = openHour; h < closeHour; h++) {
-        const timeString = `${h.toString().padStart(2, '0')}:00`;
-        if (bookedTimes.includes(timeString)) continue;
+
+      // Loop de 5 em 5 minutos
+      for (let currentMins = openTotalMins; currentMins + neededTotalTime <= closeTotalMins; currentMins += 5) {
+        const slotStart = currentMins;
+        const slotEnd = currentMins + neededTotalTime;
+
+        let isConflict = false;
+        for (let range of bookedRanges) {
+          if (slotStart < range.end && slotEnd > range.start) {
+            isConflict = true;
+            break;
+          }
+        }
+
+        if (isConflict) continue;
+
+        const hourStr = Math.floor(currentMins / 60).toString().padStart(2, '0');
+        const minStr = (currentMins % 60).toString().padStart(2, '0');
+        const timeString = `${hourStr}:${minStr}`;
+
         count++;
         slotsContainer.innerHTML += `<button type="button" onclick="window.selectTime('${timeString}', this)" class="time-btn py-2 px-1 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
       }
-      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Nenhum horário disponível.</p>';
+
+      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Nenhum horário disponível para esta duração.</p>';
     };
 
     window.selectTime = function(time, element) {
@@ -1363,7 +1415,7 @@
       const phone = document.getElementById('client-phone').value.trim();
       const date = document.getElementById('booking-date').value;
 
-      // Validação obrigatória de Nome e WhatsApp
+      // Validação OBRIGATÓRIA de Nome e WhatsApp
       if (!name || !phone) {
         alert("⚠️ ATENÇÃO: O preenchimento do NOME COMPLETO e do WHATSAPP é obrigatório para agendar!");
         document.getElementById('client-name-input').focus();
