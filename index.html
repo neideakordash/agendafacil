@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v42 - AgendaFácil com Tutoriais para Lojistas e Clientes -->
+<!-- v44 - AgendaFácil Completo com Todas as Modificações Solicitadas -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -81,14 +81,13 @@
 
       <!-- ABA 2: AGENDAR -->
       <div id="tab-agenda" class="client-tab hidden space-y-6">
-        <div id="category-filters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          <button onclick="window.filterCategory('Todos')" class="cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shrink-0 transition cursor-pointer">Todos</button>
-        </div>
+        <!-- SELETOR DE CATEGORIAS EXCLUSIVO (Sem Todos) -->
+        <div id="category-filters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           <div class="md:col-span-2 space-y-6">
             <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
-              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Escolha uma opção</h3>
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Selecione um ou mais serviços</h3>
               <div id="client-services-list" class="space-y-3">
                 <p class="text-xs text-slate-400 text-center py-6">Carregando serviços...</p>
               </div>
@@ -98,7 +97,7 @@
               <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Profissional e Data</h3>
               <div>
                 <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <p class="text-xs text-slate-400 col-span-3 py-2">Selecione um serviço primeiro.</p>
+                  <p class="text-xs text-slate-400 col-span-3 py-2">Selecione pelo menos um serviço primeiro.</p>
                 </div>
               </div>
 
@@ -138,20 +137,33 @@
             </div>
           </div>
 
+          <!-- RESUMO DO PEDIDO -->
           <div class="md:col-span-1">
             <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-100 sticky top-20 space-y-4">
-              <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Resumo</h3>
+              <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Resumo do Pedido</h3>
               <div class="space-y-2 text-xs">
-                <div class="flex justify-between"><span class="text-slate-400">Serviço:</span><span id="summary-service" class="font-bold text-right">Nenhum</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Qualquer</span></div>
+                <div>
+                  <span class="text-slate-400 block mb-1">Serviços Selecionados:</span>
+                  <div id="summary-services-container" class="space-y-1 font-bold text-slate-700 max-h-32 overflow-y-auto">
+                    <span class="text-slate-400 italic font-normal">Nenhum serviço selecionado</span>
+                  </div>
+                </div>
+                <div class="flex justify-between pt-2 border-t border-slate-100"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Qualquer</span></div>
                 <div id="summary-hair-container" class="flex justify-between hidden"><span class="text-slate-400">Cabelo:</span><span id="summary-hair" class="font-bold text-right">Não informado</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Data/Hora:</span><span id="summary-datetime" class="font-bold">--/-- --:--</span></div>
-                <div class="flex justify-between text-sm font-extrabold text-indigo-600 pt-2 border-t border-slate-100"><span>Total:</span><span id="summary-price">Sob Consulta</span></div>
+                <div class="flex justify-between text-sm font-extrabold text-indigo-600 pt-2 border-t border-slate-100"><span>Total:</span><span id="summary-price">R$ 0,00</span></div>
               </div>
 
-              <div class="space-y-3 pt-2">
-                <input type="text" id="client-name-input" placeholder="Seu Nome Completo" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
-                <input type="tel" id="client-phone" placeholder="Seu WhatsApp (com DDD)" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+              <!-- DADOS OBRIGATÓRIOS -->
+              <div class="space-y-3 pt-2 border-t border-slate-100">
+                <input type="text" id="client-name-input" placeholder="Seu Nome Completo *" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none font-semibold">
+                <input type="tel" id="client-phone" placeholder="Seu WhatsApp com DDD *" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none font-semibold">
+              </div>
+
+              <div id="client-payment-btn-container" class="hidden pt-1">
+                <a id="client-payment-link" href="#" target="_blank" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-credit-card"></i> Pagar Online (Pix/Cartão)
+                </a>
               </div>
 
               <button onclick="window.confirmBooking()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs cursor-pointer">
@@ -175,7 +187,7 @@
         </div>
       </div>
 
-      <!-- ABA 4: MAIS (Com Atalho para Tutoriais) -->
+      <!-- ABA 4: MAIS -->
       <div id="tab-mais" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
@@ -186,10 +198,8 @@
 
     </div>
 
-    <!-- PAINEL DO LOJISTA COM TUTORIAIS -->
+    <!-- PAINEL DO LOJISTA -->
     <div id="admin-view" class="hidden space-y-6">
-      
-      <!-- TELA DE LOGIN / CADASTRO DO LOJISTA -->
       <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-100 my-8 space-y-6">
         <div class="text-center">
           <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-lg">
@@ -220,7 +230,6 @@
           <button type="button" onclick="window.toggleAuthMode()" id="btn-toggle-auth" class="text-xs text-indigo-600 hover:underline font-semibold cursor-pointer">Não tem uma conta? Cadastre seu estabelecimento</button>
         </div>
 
-        <!-- BOTÕES DE TUTORIAIS NA TELA DO LOJISTA -->
         <div class="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
           <button type="button" onclick="window.openTutorial('merchant')" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
             <i class="fa-solid fa-book-open text-indigo-600"></i> Tutorial Lojista
@@ -231,7 +240,6 @@
         </div>
       </div>
 
-      <!-- PAINEL ADMINISTRATIVO (LOGADO) -->
       <div id="admin-dashboard" class="hidden space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-3">
           <div>
@@ -255,10 +263,8 @@
           </div>
         </div>
 
-        <!-- OPÇÕES EM PUSH (RETÁTEIS) PARA O LOJISTA -->
         <div class="space-y-4">
-          
-          <!-- BLOCO 0: NOVO AGENDAMENTO MANUAL PELO LOJISTA -->
+          <!-- BLOCO 0: AGENDAMENTO MANUAL -->
           <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-manual-booking')" class="w-full p-4 flex justify-between items-center bg-indigo-50/50 hover:bg-indigo-50 font-bold text-xs text-indigo-900 cursor-pointer">
               <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> Novo Agendamento Manual (Pelo Lojista)</span>
@@ -267,12 +273,12 @@
             <div id="section-manual-booking" class="p-5 hidden space-y-4">
               <form onsubmit="window.saveManualBooking(event)" class="space-y-3 text-xs">
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">Nome do Cliente</label>
-                  <input type="text" id="manual-client-name" placeholder="Nome Completo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  <label class="block font-bold text-slate-700 mb-1">Nome do Cliente *</label>
+                  <input type="text" id="manual-client-name" placeholder="Nome Completo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
                 </div>
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">WhatsApp do Cliente</label>
-                  <input type="tel" id="manual-client-phone" placeholder="(00) 00000-0000" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  <label class="block font-bold text-slate-700 mb-1">WhatsApp do Cliente *</label>
+                  <input type="tel" id="manual-client-phone" placeholder="(00) 00000-0000" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
                 </div>
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">Selecione o Serviço</label>
@@ -301,10 +307,10 @@
             </div>
           </div>
 
-          <!-- BLOCO 1: PERFIL E EXPEDIENTE -->
+          <!-- BLOCO 1: PERFIL, ENDEREÇO, LINK DE PAGAMENTO E EXPEDIENTE -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-profile')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-store mr-2 text-indigo-600"></i> Perfil, Endereço e Expediente</span>
+              <span><i class="fa-solid fa-store mr-2 text-indigo-600"></i> Perfil, Endereço, Pagamento e Expediente</span>
               <i id="icon-section-profile" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-profile" class="p-5 hidden space-y-4">
@@ -313,6 +319,7 @@
                 <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="store-whatsapp-input" placeholder="WhatsApp (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="url" id="store-payment-input" placeholder="Link de Pagamento / Pix (Mercado Pago, Stripe, etc.)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="store-logo-file" accept="image/*" class="w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700">
                 
                 <div class="pt-2 border-t border-slate-100 space-y-2">
@@ -325,7 +332,7 @@
             </div>
           </div>
 
-          <!-- BLOCO 2: CADASTRAR PROFISSIONAL -->
+          <!-- BLOCO 2: PROFISSIONAIS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
               <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais</span>
@@ -343,7 +350,7 @@
             </div>
           </div>
 
-          <!-- BLOCO 3: CADASTRAR / GERENCIAR SERVIÇOS -->
+          <!-- BLOCO 3: SERVIÇOS E INTERVALOS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-service')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
               <span><i class="fa-solid fa-scissors mr-2 text-indigo-600"></i> <span id="service-form-header-title">Gerenciar e Cadastrar Serviços</span></span>
@@ -359,13 +366,19 @@
                 <input type="text" id="service-category" placeholder="Categoria (ex: Cabelo, Unhas)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 
-                <div>
-                  <label class="block text-[10px] text-slate-500 mb-1">Ordem / Posição (Ex: 1, 2, 3 para ordenar na lista)</label>
-                  <input type="number" id="service-order" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Ordem / Posição</label>
+                    <input type="number" id="service-order" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Intervalo / Encaixe (min)</label>
+                    <input type="number" id="service-interval" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
                 </div>
 
                 <div>
-                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Profissionais que realizam este serviço:</label>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Profissionais que realizam:</label>
                   <div id="service-staff-checkboxes" class="space-y-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
                     <p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>
                   </div>
@@ -387,7 +400,7 @@
             </div>
           </div>
 
-          <!-- BLOCO 4: AGENDAMENTOS E HISTÓRICO POR NOME DO CLIENTE -->
+          <!-- BLOCO 4: HISTÓRICO DE AGENDAMENTOS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
               <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Acompanhamento de Agendamentos por Nome do Cliente</span>
@@ -464,13 +477,14 @@
 
     let currentUser = null;
     let isRegisterMode = false;
-    let selectedService = null;
+    let selectedServices = [];
     let selectedStaffObj = null;
     let selectedTime = null;
     let merchantWhatsapp = "5511999999999";
+    let merchantPaymentLink = "";
     let allServicesRaw = [];
     let allStaffRaw = [];
-    let currentCategoryFilter = 'Todos';
+    let currentCategoryFilter = '';
 
     let weeklySchedule = {
       0: { active: false, open: "08:00", close: "18:00" },
@@ -501,7 +515,6 @@
       window.scrollTo({ top: document.getElementById('client-container').offsetTop, behavior: 'smooth' });
     };
 
-    // Sistema de Tutoriais (Modais)
     window.openTutorial = function(type) {
       const modal = document.getElementById('tutorial-modal');
       const title = document.getElementById('tutorial-modal-title');
@@ -510,19 +523,18 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
-          <p><b>1. Configurar Perfil e Endereço:</b> Clique em <i>Perfil, Endereço e Expediente</i> para definir o nome do salão, endereço, link do Instagram, logo e os horários de funcionamento de cada dia da semana.</p>
-          <p><b>2. Cadastrar Profissionais:</b> Em <i>Cadastrar Profissionais</i>, adicione os colaboradores que atendem no espaço, com foto e WhatsApp direto.</p>
-          <p><b>3. Cadastrar Serviços:</b> Em <i>Gerenciar e Cadastrar Serviços</i>, crie os tratamentos, defina preços, duração, associe os profissionais e use o campo <b>Ordem</b> para definir qual aparece primeiro.</p>
-          <p><b>4. Agendamento Manual:</b> Se um cliente ligar ou aparecer no balcão, use o bloco <i>Novo Agendamento Manual</i> para bloquear o horário na hora.</p>
-          <p><b>5. Histórico e Link:</b> Copie o link exclusivo do seu salão no topo do painel para divulgar no WhatsApp ou Instagram dos seus clientes!</p>
+          <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
+          <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
+          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo/encaixe</b> para otimizar a agenda.</p>
+          <p><b>4. Agendamento Manual:</b> Faça agendamentos diretos pelo painel preenchendo o nome e o WhatsApp do cliente.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher o Serviço:</b> Na aba <i>Agendar</i>, escolha o serviço desejado (você pode filtrar por categorias). Serviços de cabelo solicitarão o tamanho e tipo dos fios.</p>
-          <p><b>2. Escolher Profissional e Data:</b> Selecione o profissional preferido e a data desejada na agenda. Os horários disponíveis aparecerão automaticamente.</p>
-          <p><b>3. Confirmar pelo WhatsApp:</b> Preencha seu nome e WhatsApp e clique em <i>Confirmar Agendamento</i>. O sistema enviará os detalhes direto para o WhatsApp do salão.</p>
-          <p><b>4. Consultar ou Cancelar:</b> Na aba <i>Minhas Reservas</i>, digite seu WhatsApp para ver seus horários marcados, avaliar o atendimento com estrelas ou cancelar caso precise.</p>
+          <p><b>1. Escolher Serviços:</b> Navegue pelas categorias e selecione **um ou mais serviços** para o seu atendimento.</p>
+          <p><b>2. Profissional e Data:</b> Escolha o profissional e o dia desejado.</p>
+          <p><b>3. Dados Obrigatórios:</b> É **obrigatório** preencher seu Nome Completo e WhatsApp para confirmar a reserva.</p>
+          <p><b>4. Pagamento Online:</b> Caso o salão tenha configurado, você poderá usar o botão de pagamento online gerado no resumo.</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -573,13 +585,13 @@
     window.forgotPassword = async function() {
       const email = document.getElementById('auth-email').value.trim();
       if (!email) {
-        alert("Por favor, digite o seu e-mail no campo acima antes de clicar em 'Esqueceu sua senha?'.");
+        alert("Por favor, digite o seu e-mail no campo acima.");
         document.getElementById('auth-email').focus();
         return;
       }
       try {
         await auth.sendPasswordResetEmail(email);
-        alert(`📧 E-mail de recuperação enviado para: ${email}\nVerifique sua caixa de entrada.`);
+        alert(`📧 E-mail de recuperação enviado para: ${email}`);
       } catch (error) {
         alert("Erro ao enviar e-mail: " + error.message);
       }
@@ -753,6 +765,7 @@
         const address = document.getElementById('store-address-input').value;
         const whatsapp = document.getElementById('store-whatsapp-input').value;
         const social = document.getElementById('store-social-input').value;
+        const paymentLink = document.getElementById('store-payment-input').value;
         const logoFile = document.getElementById('store-logo-file').files[0];
         
         let logoUrl = null;
@@ -766,11 +779,11 @@
           newSchedule[day] = { active, open, close };
         }
 
-        const updateData = { storeName: name, address, whatsapp, socialLink: social, weeklySchedule: newSchedule };
+        const updateData = { storeName: name, address, whatsapp, socialLink: social, paymentLink, weeklySchedule: newSchedule };
         if (logoUrl) updateData.logoUrl = logoUrl;
 
         await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
-        alert("Perfil e Endereço salvos!");
+        alert("Perfil, Endereço e Link de Pagamento salvos!");
         loadAdminData();
       } catch (e) { alert("Erro: " + e.message); }
     };
@@ -805,6 +818,7 @@
         const category = document.getElementById('service-category').value.trim() || "Geral";
         const name = document.getElementById('service-name').value;
         const order = parseInt(document.getElementById('service-order').value) || 0;
+        const interval = parseInt(document.getElementById('service-interval').value) || 0;
         
         const checkboxes = document.querySelectorAll('.staff-checkbox:checked');
         let assignedStaff = [];
@@ -818,7 +832,7 @@
         let photoData = null;
         if (photoFile) photoData = await convertImageToBase64(photoFile);
 
-        const servicePayload = { merchantId: currentUser.uid, category, name, order, assignedStaff, price, duration };
+        const servicePayload = { merchantId: currentUser.uid, category, name, order, interval, assignedStaff, price, duration };
         if (photoData) servicePayload.photo = photoData;
 
         if (serviceId) {
@@ -849,13 +863,19 @@
         const time = document.getElementById('manual-booking-time').value;
 
         if (!clientName || !clientPhone || !serviceName || !staffName || !date || !time) {
-          alert("Preencha todos os campos do agendamento manual.");
+          alert("⚠️ O preenchimento do NOME e do WHATSAPP é obrigatório para agendamento manual!");
           return;
         }
 
         let servicePrice = 0;
+        let serviceDuration = 30;
+        let serviceInterval = 0;
         const foundService = allServicesRaw.find(s => s.name === serviceName);
-        if (foundService) servicePrice = foundService.price || 0;
+        if (foundService) {
+          servicePrice = foundService.price || 0;
+          serviceDuration = foundService.duration || 30;
+          serviceInterval = foundService.interval || 0;
+        }
 
         await db.collection('bookings').add({
           merchantId: currentUser.uid,
@@ -863,6 +883,8 @@
           staffName,
           hairSpecs: 'Agendamento Manual',
           price: servicePrice,
+          duration: serviceDuration,
+          interval: serviceInterval,
           date,
           time,
           clientName,
@@ -882,13 +904,14 @@
       }
     };
 
-    window.editService = async function(id, name, category, price, duration, order, assignedStaffJson) {
+    window.editService = async function(id, name, category, price, duration, order, interval, assignedStaffJson) {
       document.getElementById('editing-service-id').value = id;
       document.getElementById('service-category').value = category;
       document.getElementById('service-name').value = name;
       document.getElementById('service-price').value = price > 0 ? price : '';
       document.getElementById('service-duration').value = duration;
       document.getElementById('service-order').value = order || 0;
+      document.getElementById('service-interval').value = interval || 0;
 
       let assignedArray = [];
       try { assignedArray = JSON.parse(assignedStaffJson || '[]'); } catch(err) { assignedArray = []; }
@@ -914,6 +937,7 @@
       document.getElementById('service-price').value = '';
       document.getElementById('service-duration').value = '';
       document.getElementById('service-order').value = '0';
+      document.getElementById('service-interval').value = '0';
       document.getElementById('service-photo-file').value = '';
       document.querySelectorAll('.staff-checkbox').forEach(cb => cb.checked = false);
 
@@ -932,6 +956,7 @@
         if (data.address) document.getElementById('store-address-input').value = data.address;
         if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
         if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
+        if (data.paymentLink) document.getElementById('store-payment-input').value = data.paymentLink;
         if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
       }
 
@@ -981,16 +1006,17 @@
           const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
           const staffListStr = JSON.stringify(data.assignedStaff || []).replace(/"/g, '&quot;');
           const assignedNames = (data.assignedStaff && data.assignedStaff.length > 0) ? data.assignedStaff.join(', ') : 'Qualquer profissional';
+          const intervalText = data.interval > 0 ? ` | Intervalo: ${data.interval} min` : '';
 
           servicesContainer.innerHTML += `
             <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
               <div class="space-y-0.5">
                 <p><b>[Ordem: ${data.order || 0}] ${data.name}</b> <span class="text-indigo-600">[${data.category}]</span></p>
-                <p class="text-slate-400">${data.duration} min • ${priceText}</p>
+                <p class="text-slate-400">${data.duration} min${intervalText} • ${priceText}</p>
                 <p class="text-emerald-600 font-bold">Prof: ${assignedNames}</p>
               </div>
               <div class="flex gap-2">
-                <button onclick="window.editService('${data.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, ${data.order || 0}, '${staffListStr}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+                <button onclick="window.editService('${data.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, ${data.order || 0}, ${data.interval || 0}, '${staffListStr}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
                 <button onclick="window.deleteService('${data.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
               </div>
             </div>
@@ -1005,7 +1031,7 @@
       bookingsContainer.innerHTML = '';
       bookingsSnap.forEach(doc => {
         const data = doc.data();
-        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName} (${data.clientPhone})</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço: ${data.serviceName} | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'}</p></div>`;
+        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName} (${data.clientPhone})</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço(s): ${data.serviceName} | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'}</p></div>`;
       });
     }
 
@@ -1046,7 +1072,7 @@
             totalAtendimentos++;
             htmlList += `<div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-0.5">
               <b>Cliente: ${d.clientName} (${d.clientPhone})</b><br>
-              <span>Serviço: <b>${d.serviceName}</b> com ${d.staffName}</span><br>
+              <span>Serviço(s): <b>${d.serviceName}</b> com ${d.staffName}</span><br>
               <span class="text-slate-500">Data: ${d.date} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
             </div>`;
           }
@@ -1087,6 +1113,14 @@
           document.getElementById('home-store-address').innerText = data.address;
         }
         if (data.whatsapp) merchantWhatsapp = data.whatsapp;
+        if (data.paymentLink) {
+          merchantPaymentLink = data.paymentLink;
+          document.getElementById('client-payment-link').href = data.paymentLink;
+          document.getElementById('client-payment-btn-container').classList.remove('hidden');
+        } else {
+          document.getElementById('client-payment-btn-container').classList.add('hidden');
+        }
+
         if (data.logoUrl) {
           const logoImg = document.getElementById('home-logo-img');
           logoImg.src = data.logoUrl;
@@ -1108,7 +1142,7 @@
       if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
 
       allServicesRaw = [];
-      const categoriesSet = new Set(['Todos']);
+      const categoriesSet = new Set();
       servicesSnap.forEach(doc => {
         allServicesRaw.push({ id: doc.id, ...doc.data() });
       });
@@ -1121,7 +1155,13 @@
 
       const catContainer = document.getElementById('category-filters');
       catContainer.innerHTML = '';
-      categoriesSet.forEach(cat => {
+      
+      const categoriesArray = Array.from(categoriesSet);
+      if (categoriesArray.length > 0 && !currentCategoryFilter) {
+        currentCategoryFilter = categoriesArray[0];
+      }
+
+      categoriesArray.forEach(cat => {
         const activeClass = cat === currentCategoryFilter ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200';
         catContainer.innerHTML += `<button onclick="window.filterCategory('${cat}')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer ${activeClass}">${cat}</button>`;
       });
@@ -1165,26 +1205,31 @@
     function renderServicesList() {
       const container = document.getElementById('client-services-list');
       container.innerHTML = '';
-      const filtered = currentCategoryFilter === 'Todos' ? allServicesRaw : allServicesRaw.filter(s => (s.category || 'Geral') === currentCategoryFilter);
+      const filtered = allServicesRaw.filter(s => (s.category || 'Geral') === currentCategoryFilter);
 
       if (filtered.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum serviço encontrado.</p>';
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum serviço nesta categoria.</p>';
         return;
       }
 
       filtered.forEach(data => {
         const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+        const isSelected = selectedServices.some(s => s.id === data.id);
+        const cardClass = isSelected ? 'service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs selected-card' : 'service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs';
+
         const serviceData = JSON.stringify({ 
           id: data.id, 
           name: data.name, 
           price: data.price, 
+          duration: data.duration,
+          interval: data.interval || 0,
           merchantId: data.merchantId,
           category: data.category || '',
           assignedStaff: data.assignedStaff || []
         }).replace(/"/g, '&quot;');
 
         container.innerHTML += `
-          <div onclick="window.selectService(${serviceData}, this)" class="service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs">
+          <div onclick="window.toggleServiceSelection(${serviceData}, this)" class="${cardClass}" data-service-id="${data.id}">
             <div class="flex items-center gap-3">
               <img src="${data.photo}" class="w-12 h-12 rounded-xl object-cover">
               <div>
@@ -1192,7 +1237,10 @@
                 <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1 text-indigo-600"></i>${data.duration} min</p>
               </div>
             </div>
-            <span class="font-extrabold text-indigo-600 text-xs sm:text-sm bg-indigo-50 px-3 py-1.5 rounded-xl">${priceDisplay}</span>
+            <div class="text-right">
+              <span class="font-extrabold text-indigo-600 text-xs sm:text-sm bg-indigo-50 px-3 py-1.5 rounded-xl block">${priceDisplay}</span>
+              <span class="text-[10px] text-slate-400 mt-1 block">${isSelected ? '✓ Selecionado' : 'Clique para selecionar'}</span>
+            </div>
           </div>
         `;
       });
@@ -1204,45 +1252,51 @@
       document.getElementById('summary-hair').innerText = `${length} | ${type}`;
     };
 
-    window.selectService = function(service, element) {
-      document.querySelectorAll('.service-card').forEach(card => card.classList.remove('selected-card'));
-      element.classList.add('selected-card');
-
-      selectedService = service;
-      document.getElementById('summary-service').innerText = service.name;
-      document.getElementById('summary-price').innerText = service.price > 0 ? `R$ ${service.price.toFixed(2)}` : 'Sob Consulta';
-
-      const catLower = (service.category || '').toLowerCase();
-      const nameLower = (service.name || '').toLowerCase();
-      const isHairService = catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova') || nameLower.includes('cauter') || nameLower.includes('reconstruc') || nameLower.includes('nutrição');
-
+    window.toggleServiceSelection = function(service, element) {
+      const index = selectedServices.findIndex(s => s.id === service.id);
       const hairSection = document.getElementById('hair-specs-section');
       const hairSummaryContainer = document.getElementById('summary-hair-container');
 
-      if (isHairService) {
+      if (index > -1) {
+        selectedServices.splice(index, 1);
+        element.classList.remove('selected-card');
+        element.querySelector('span.text-\\[10px\\]').innerText = 'Clique para selecionar';
+      } else {
+        selectedServices.push(service);
+        element.classList.add('selected-card');
+        element.querySelector('span.text-\\[10px\\]').innerText = '✓ Selecionado';
+      }
+
+      const summaryContainer = document.getElementById('summary-services-container');
+      let totalPrice = 0;
+      let hasHairService = false;
+
+      if (selectedServices.length === 0) {
+        summaryContainer.innerHTML = '<span class="text-slate-400 italic font-normal">Nenhum serviço selecionado</span>';
+        document.getElementById('summary-price').innerText = 'R$ 0,00';
+      } else {
+        let html = '';
+        selectedServices.forEach(s => {
+          totalPrice += (s.price || 0);
+          html += `<div>• ${s.name} (${s.price > 0 ? 'R$ ' + s.price.toFixed(2) : 'Sob Consulta'})</div>`;
+          
+          const catLower = (s.category || '').toLowerCase();
+          const nameLower = (s.name || '').toLowerCase();
+          if (catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova')) {
+            hasHairService = true;
+          }
+        });
+        summaryContainer.innerHTML = html;
+        document.getElementById('summary-price').innerText = totalPrice > 0 ? `R$ ${totalPrice.toFixed(2)}` : 'Sob Consulta';
+      }
+
+      if (hasHairService) {
         hairSection.classList.remove('hidden');
         hairSummaryContainer.classList.remove('hidden');
       } else {
         hairSection.classList.add('hidden');
         hairSummaryContainer.classList.add('hidden');
-        document.getElementById('hair-length').value = 'Não informado';
-        document.getElementById('hair-type').value = 'Não informado';
       }
-
-      const staffCards = document.querySelectorAll('.staff-card');
-      staffCards.forEach(card => {
-        const staffName = card.getAttribute('data-staff-name');
-        const assignedArray = service.assignedStaff || [];
-        
-        if (assignedArray.length === 0 || assignedArray.includes(staffName)) {
-          card.style.opacity = '1';
-          card.style.pointerEvents = 'auto';
-          card.style.borderColor = '#cbd5e1';
-        } else {
-          card.style.opacity = '0.3';
-          card.style.pointerEvents = 'none';
-        }
-      });
     };
 
     window.selectStaff = function(staff, element) {
@@ -1305,35 +1359,54 @@
     };
 
     window.confirmBooking = async function() {
-      const name = document.getElementById('client-name-input').value;
-      const phone = document.getElementById('client-phone').value;
+      const name = document.getElementById('client-name-input').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
       const date = document.getElementById('booking-date').value;
 
-      if (!selectedService || !selectedTime || !name || !phone || !date) {
-        alert("Preencha todos os campos do agendamento (Serviço, Profissional, Data, Horário, Nome e WhatsApp).");
+      // Validação obrigatória de Nome e WhatsApp
+      if (!name || !phone) {
+        alert("⚠️ ATENÇÃO: O preenchimento do NOME COMPLETO e do WHATSAPP é obrigatório para agendar!");
+        document.getElementById('client-name-input').focus();
         return;
       }
 
-      const catLower = (selectedService.category || '').toLowerCase();
-      const nameLower = (selectedService.name || '').toLowerCase();
-      const isHairService = catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova') || nameLower.includes('cauter') || nameLower.includes('reconstruc') || nameLower.includes('nutrição');
+      if (selectedServices.length === 0 || !selectedTime || !date) {
+        alert("Selecione pelo menos um serviço, data e horário.");
+        return;
+      }
+
+      let totalDuration = 0;
+      let totalInterval = 0;
+      let totalPrice = 0;
+      let serviceNamesArray = [];
+
+      selectedServices.forEach(s => {
+        totalDuration += (s.duration || 0);
+        totalInterval += (s.interval || 0);
+        totalPrice += (s.price || 0);
+        serviceNamesArray.push(s.name);
+      });
+
+      const servicesCombinedName = serviceNamesArray.join(' + ');
+      const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
 
       let hairSpecs = 'Não aplicável';
-      if (isHairService) {
+      const hasHair = selectedServices.some(s => (s.category || '').toLowerCase().includes('cabelo') || s.name.toLowerCase().includes('corte'));
+      if (hasHair) {
         const hairLength = document.getElementById('hair-length').value;
         const hairType = document.getElementById('hair-type').value;
         hairSpecs = `${hairLength} / ${hairType}`;
       }
 
-      const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
-
       try {
         await db.collection('bookings').add({
-          merchantId: selectedService.merchantId || window.currentSalonId,
-          serviceName: selectedService.name,
+          merchantId: selectedServices[0].merchantId || window.currentSalonId,
+          serviceName: servicesCombinedName,
           staffName,
           hairSpecs,
-          price: selectedService.price,
+          price: totalPrice,
+          duration: totalDuration,
+          interval: totalInterval,
           date,
           time: selectedTime,
           clientName: name,
@@ -1345,12 +1418,12 @@
         let targetWhatsapp = merchantWhatsapp;
         if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
 
-        const msg = encodeURIComponent(`Olá, ${staffName}! Novo agendamento confirmado:%0A*Cliente:* ${name}%0A*Serviço:* ${selectedService.name}%0A*Cabelo:* ${hairSpecs}%0A*Data:* ${date.split('-').reverse().join('/')} às ${selectedTime}`);
+        const msg = encodeURIComponent(`Olá, ${staffName}! Novo agendamento confirmado:%0A*Cliente:* ${name}%0A*Serviços:* ${servicesCombinedName}%0A*Cabelo:* ${hairSpecs}%0A*Data:* ${date.split('-').reverse().join('/')} às ${selectedTime}`);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
-        alert("Agendamento realizado com sucesso e notificação enviada!");
+        alert("✅ Agendamento realizado com sucesso!");
         window.switchTab('reservas');
-      } catch (e) { alert("Erro: " + e.message); }
+      } catch (e) { alert("Erro ao agendar: " + e.message); }
     };
 
     window.searchClientBookings = async function() {
