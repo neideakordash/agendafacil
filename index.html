@@ -247,7 +247,14 @@
             <p class="text-xs text-slate-500" id="merchant-email-display"></p>
             <div class="mt-2 flex flex-wrap items-center gap-2">
               <span class="text-[11px] text-indigo-600 font-bold" id="merchant-link-display">Link do salão: Carregando...</span>
-              <button onclick="window.copyMerchantLink()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+              <button onclick=window.shareOnWhatsApp = function() {
+      if (window.generatedMerchantLink) {
+        // Puxa automaticamente o nome cadastrado pelo lojista no campo de perfil
+        const storeName = document.getElementById('store-name-input').value || "nosso salão";
+        const text = encodeURIComponent(`Olá! Agende seu horário no *${storeName}* através do link exclusivo abaixo:\n${window.generatedMerchantLink}`);
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+      }
+    };
                 <i class="fa-solid fa-copy"></i> Copiar Link
               </button>
               <button onclick="window.shareOnWhatsApp()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
