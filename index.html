@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v56 - Ibi Agenda com Serviços Manuais Agrupados por Categoria e Horários Sincronizados -->
+<!-- v57 - Ibi Agenda com Ordenação por Horário e Atualização em Tempo Real (Real-time Sync) -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -87,6 +87,12 @@
             <button onclick="window.switchTab('reservas')" class="p-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition flex flex-col items-center justify-center gap-2 cursor-pointer">
               <i class="fa-solid fa-calendar-check text-lg text-indigo-600"></i>
               <span class="text-xs font-bold">Minhas Reservas</span>
+            </button>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100">
+            <button onclick="window.openRegisterMode()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rocket"></i> É lojista? Cadastre seu salão aqui
             </button>
           </div>
         </div>
@@ -205,6 +211,7 @@
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
           <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista (Entrar)</span><i class="fa-solid fa-store"></i></div>
+          <div onclick="window.openRegisterMode()" class="py-3.5 flex justify-between items-center text-emerald-600 cursor-pointer"><span>Cadastrar meu Salão / Negócio</span><i class="fa-solid fa-rocket"></i></div>
         </div>
       </div>
 
@@ -539,6 +546,7 @@
     let allStaffRaw = [];
     let allBookingsCache = [];
     let currentCategoryFilter = '';
+    let bookingsListener = null;
 
     let weeklySchedule = {
       0: { active: false, open: "08:00", close: "18:00" },
@@ -604,7 +612,7 @@
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, Facebook, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
           <p><b>3. Serviços e Categoria:</b> Organize seus serviços por categorias (ex: Cabelo, Unhas) definindo duração e o <b>tempo de intervalo</b> para encaixes.</p>
-          <p><b>4. Agendamento Manual Sincronizado:</b> Selecione vários serviços agrupados por categoria e o painel calcula automaticamente os horários livres sem conflitos.</p>
+          <p><b>4. Agendamento Sincronizado:</b> Os agendamentos atualizam instantaneamente e aparecem ordenados por horário.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
@@ -765,6 +773,7 @@
 
         loadAdminData();
       } else {
+        if (bookingsListener) { bookingsListener(); bookingsListener = null; }
         document.getElementById('admin-auth-screen').classList.remove('hidden');
         document.getElementById('admin-dashboard').classList.add('hidden');
       }
@@ -1282,13 +1291,15 @@
         }
       }
 
-      const bookingsSnap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
-      allBookingsCache = [];
-      bookingsSnap.forEach(doc => {
-        allBookingsCache.push({ id: doc.id, ...doc.data() });
+      // ESCUTA EM TEMPO REAL PARA AGENDAMENTOS (ATUALIZAÇÃO INSTANTÂNEA E REMOÇÃO DE CANCELADOS)
+      if (bookingsListener) bookingsListener();
+      bookingsListener = db.collection('bookings').where('merchantId', '==', currentUser.uid).onSnapshot(snapshot => {
+        allBookingsCache = [];
+        snapshot.forEach(doc => {
+          allBookingsCache.push({ id: doc.id, ...doc.data() });
+        });
+        renderAdminBookingsList(allBookingsCache, "Agendamentos Recentes");
       });
-
-      renderAdminBookingsList(allBookingsCache, "Agendamentos Recentes");
     }
 
     function renderAdminBookingsList(bookingsArray, title) {
@@ -1302,7 +1313,14 @@
         return;
       }
 
-      bookingsArray.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      // ORDENAÇÃO PERFEITA: Primeiro por Data (decrescente) e depois por Horário (crescente: 09:00, 10:00, 13:30...)
+      bookingsArray.sort((a, b) => {
+        if (a.date !== b.date) {
+          return (b.date || '').localeCompare(a.date || '');
+        }
+        return (a.time || '').localeCompare(b.time || '');
+      });
+
       bookingsArray.forEach(data => {
         bookingsContainer.innerHTML += `
           <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
