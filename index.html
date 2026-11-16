@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- v52 - Portal Marketplace Ibi Agenda com Listagem de Salões e Banner Principal -->
+<!-- v51 - AgendaFácil com Detecção Completa de Serviços de Cabelo (Hidratação, Escovas, Alisamentos e Coloração) -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ibi Agenda - Agenda Fácil para o seu Negócio</title>
+  <title>Raí Cabeleireiros - Sistema de Agendamento</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -34,16 +34,11 @@
   <!-- CABEÇALHO SUPERIOR -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.location.href='index.html'">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.switchTab('home')">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-sm">
-          <i class="fa-solid fa-calendar-days text-sm"></i>
+          <i class="fa-solid fa-scissors text-sm"></i>
         </div>
-        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Ibi Agenda</h1>
-      </div>
-      <div class="flex items-center gap-2">
-        <button onclick="window.toggleAdminView()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs transition cursor-pointer">
-          <i class="fa-solid fa-store mr-1"></i> Área do Lojista
-        </button>
+        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Raí Cabeleireiros</h1>
       </div>
     </div>
   </header>
@@ -51,45 +46,15 @@
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-6">
 
-    <!-- VISÃO DO CLIENTE / PORTAL -->
+    <!-- VISÃO DO CLIENTE -->
     <div id="client-container" class="space-y-6">
 
-      <!-- ABA 1: INÍCIO (DINÂMICA: MARKETPLACE OU SALÃO ESPECÍFICO) -->
+      <!-- ABA 1: INÍCIO -->
       <div id="tab-home" class="client-tab space-y-6">
-        
-        <!-- MODO PORTAL / MARKETPLACE (SE NENHUM SALÃO FOI SELECIONADO NA URL) -->
-        <div id="marketplace-home" class="space-y-6 hidden">
-          <!-- BANNER PRINCIPAL -->
-          <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 rounded-3xl p-8 sm:p-10 text-white text-center space-y-4 shadow-xl">
-            <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto text-white text-2xl backdrop-blur-md shadow-inner">
-              <i class="fa-solid fa-scissors"></i>
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Ibi Agenda</h2>
-            <p class="text-indigo-100 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">Agenda Fácil para o seu negócio. Encontre o seu salão favorito abaixo ou cadastre o seu estabelecimento para começar a receber agendamentos online.</p>
-            <div class="pt-2">
-              <button onclick="window.openRegisterMode()" class="px-7 py-3.5 bg-white hover:bg-slate-100 text-indigo-700 font-extrabold rounded-2xl text-xs sm:text-sm shadow-lg transition cursor-pointer inline-flex items-center gap-2">
-                <i class="fa-solid fa-rocket text-indigo-600"></i> Cadastrar Meu Salão / Negócio
-              </button>
-            </div>
-          </div>
-
-          <!-- LISTAGEM DOS SALÕES CADASTRADOS -->
-          <div class="space-y-4 pt-2">
-            <div class="flex justify-between items-center px-1">
-              <h3 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400">Salões e Negócios Disponíveis</h3>
-              <span id="salons-count" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">0 cadastrados</span>
-            </div>
-            <div id="platform-salons-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <p class="text-xs text-slate-400 col-span-2 text-center py-8">Carregando estabelecimentos...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- MODO SALÃO ESPECÍFICO (QUANDO ACESSA COM ?salao=ID) -->
-        <div id="single-salon-home" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-4 hidden">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-4">
           <img id="home-logo-img" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150" class="w-24 h-24 rounded-2xl mx-auto object-cover shadow-md border-2 border-slate-100 hidden" alt="Logo">
           <div>
-            <h2 class="text-2xl font-extrabold text-slate-900" id="home-store-name">Nome do Salão</h2>
+            <h2 class="text-2xl font-extrabold text-slate-900" id="home-store-name">Raí Cabeleireiros</h2>
             <p class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-location-dot text-indigo-600"></i> <span id="home-store-address">Atendimento com hora marcada</span>
             </p>
@@ -98,12 +63,6 @@
           <div id="home-instagram-container" class="pt-2 hidden">
             <a id="home-instagram-btn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-rose-500/20 transition">
               <i class="fa-brands fa-instagram text-base"></i> Visite nosso Instagram
-            </a>
-          </div>
-
-          <div id="home-facebook-container" class="pt-2 hidden">
-            <a id="home-facebook-btn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-blue-600/20 transition">
-              <i class="fa-brands fa-facebook text-base"></i> Visite nosso Facebook
             </a>
           </div>
 
@@ -118,7 +77,6 @@
             </button>
           </div>
         </div>
-
       </div>
 
       <!-- ABA 2: AGENDAR -->
@@ -361,7 +319,6 @@
                 <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="store-whatsapp-input" placeholder="WhatsApp (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="url" id="store-facebook-input" placeholder="Link do Facebook" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-payment-input" placeholder="Link de Pagamento / Pix (Mercado Pago, Stripe, etc.)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="store-logo-file" accept="image/*" class="w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700">
                 
@@ -583,6 +540,7 @@
       return `${hours}h ${remainingMins}min`;
     }
 
+    // Helper para detectar serviços de cabelo (Hidratação, Escovas, Alisamentos, Coloração, Cortes, etc.)
     function isHairRelated(category, name) {
       const cat = (category || '').toLowerCase();
       const n = (name || '').toLowerCase();
@@ -620,18 +578,17 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
-          <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, Facebook, link de pagamento/Pix e horários de funcionamento.</p>
+          <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços definindo duração e o <b>tempo de intervalo</b>. O intervalo começa 30 minutos após o início do atendimento e abre o espaço para encaixes.</p>
+          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços (como hidratações, escovas, alisamentos e colorações) definindo duração e o <b>tempo de intervalo</b>. O intervalo começa 30 minutos após o início do atendimento e abre o espaço para encaixes.</p>
           <p><b>4. Filtros e Fechamento:</b> Na gestão de agendamentos, use os botões para ver os horários do dia, filtrar por período ou calcular o fechamento financeiro do mês.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher Salão:</b> Na página inicial, clique no salão desejado para ver os serviços.</p>
-          <p><b>2. Escolher Serviços:</b> Selecione um ou mais serviços. Para serviços capilares, informe o tamanho e tipo do cabelo.</p>
-          <p><b>3. Horários Passados Bloqueados:</b> O sistema bloqueia automaticamente horários que já passaram no dia de hoje.</p>
-          <p><b>4. Dados Obrigatórios:</b> Preencha Nome e WhatsApp para confirmar.</p>
+          <p><b>1. Escolher Serviços:</b> Selecione um ou mais serviços nas categorias. Para serviços capilares (hidratação, escovas, alisamentos, coloração), informe o tamanho e tipo do cabelo.</p>
+          <p><b>2. Horários Passados Bloqueados:</b> O sistema bloqueia automaticamente horários que já passaram no dia de hoje.</p>
+          <p><b>3. Dados Obrigatórios:</b> Preencha Nome e WhatsApp para confirmar.</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -666,11 +623,7 @@
         adminView.classList.add('hidden');
         clientContainer.classList.remove('hidden');
         bottomNav.classList.remove('hidden');
-        if (!targetMerchantId) {
-          loadPlatformHome();
-        } else {
-          loadClientData();
-        }
+        loadClientData();
       }
     };
 
@@ -736,12 +689,7 @@
       if(dateInput) dateInput.setAttribute('min', today);
       if(manualDateInput) manualDateInput.setAttribute('min', today);
       renderScheduleInputs();
-
-      if (!targetMerchantId) {
-        loadPlatformHome();
-      } else {
-        loadClientData();
-      }
+      loadClientData();
     });
 
     function renderScheduleInputs(savedSchedule = null) {
@@ -801,11 +749,7 @@
         document.getElementById('admin-auth-screen').classList.remove('hidden');
         document.getElementById('admin-dashboard').classList.add('hidden');
       }
-      if (!targetMerchantId) {
-        loadPlatformHome();
-      } else {
-        loadClientData();
-      }
+      loadClientData();
     });
 
     window.copyMerchantLink = function() {
@@ -875,7 +819,6 @@
         const address = document.getElementById('store-address-input').value;
         const whatsapp = document.getElementById('store-whatsapp-input').value;
         const social = document.getElementById('store-social-input').value;
-        const facebook = document.getElementById('store-facebook-input').value;
         const paymentLink = document.getElementById('store-payment-input').value;
         const logoFile = document.getElementById('store-logo-file').files[0];
         
@@ -890,7 +833,7 @@
           newSchedule[day] = { active, open, close };
         }
 
-        const updateData = { storeName: name, address, whatsapp, socialLink: social, facebookLink: facebook, paymentLink, weeklySchedule: newSchedule };
+        const updateData = { storeName: name, address, whatsapp, socialLink: social, paymentLink, weeklySchedule: newSchedule };
         if (logoUrl) updateData.logoUrl = logoUrl;
 
         await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
@@ -1067,7 +1010,6 @@
         if (data.address) document.getElementById('store-address-input').value = data.address;
         if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
         if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
-        if (data.facebookLink) document.getElementById('store-facebook-input').value = data.facebookLink;
         if (data.paymentLink) document.getElementById('store-payment-input').value = data.paymentLink;
         if (data.weeklySchedule) renderScheduleInputs(data.weeklySchedule);
       }
@@ -1274,61 +1216,18 @@
     window.deleteStaff = async function(id) { await db.collection('staff').doc(id).delete(); loadAdminData(); };
     window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
 
-    // CARREGAR A PÁGINA INICIAL DA PLATAFORMA (MARKETPLACE)
-    async function loadPlatformHome() {
-      document.getElementById('marketplace-home').classList.remove('hidden');
-      document.getElementById('single-salon-home').classList.add('hidden');
-      document.getElementById('header-store-name').innerText = "Ibi Agenda";
-
-      const salonsContainer = document.getElementById('platform-salons-list');
-      salonsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-2 text-center py-8">Carregando estabelecimentos...</p>';
-
-      try {
-        const settingsSnap = await db.collection('settings').get();
-        salonsContainer.innerHTML = '';
-        
-        if (settingsSnap.empty) {
-          salonsContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-2 text-center py-8">Nenhum salão cadastrado no momento. Seja o primeiro a cadastrar!</p>';
-          document.getElementById('salons-count').innerText = "0 cadastrados";
-          return;
-        }
-
-        document.getElementById('salons-count').innerText = `${settingsSnap.size} cadastrado${settingsSnap.size > 1 ? 's' : ''}`;
-
-        settingsSnap.forEach(doc => {
-          const merchantId = doc.id;
-          const data = doc.data();
-          const storeName = data.storeName || "Salão sem Nome";
-          const address = data.address || "Atendimento com hora marcada";
-          const logoUrl = data.logoUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
-
-          salonsContainer.innerHTML += `
-            <div onclick="window.location.href='?salao=${merchantId}'" class="card-hover bg-white p-4 rounded-3xl border border-slate-100 shadow-sm cursor-pointer flex items-center gap-4">
-              <img src="${logoUrl}" class="w-16 h-16 rounded-2xl object-cover border border-slate-100 shadow-xs shrink-0">
-              <div class="flex-grow min-w-0">
-                <h4 class="font-bold text-slate-900 text-sm truncate">${storeName}</h4>
-                <p class="text-xs text-slate-500 truncate mt-0.5"><i class="fa-solid fa-location-dot text-indigo-600 mr-1"></i>${address}</p>
-                <span class="inline-block mt-2 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg">Agendar Horário →</span>
-              </div>
-            </div>
-          `;
-        });
-      } catch (e) {
-        console.error(e);
-        salonsContainer.innerHTML = '<p class="text-xs text-rose-500 col-span-2 text-center py-8">Erro ao carregar salões.</p>';
-      }
-    }
-
-    // CARREGAR DADOS DO SALÃO ESPECÍFICO (QUANDO HÁ ?salao=ID)
     async function loadClientData() {
       let salonId = targetMerchantId;
       if (!salonId) {
-        loadPlatformHome();
-        return;
+        const settingsSnap = await db.collection('settings').limit(1).get();
+        if (!settingsSnap.empty) {
+          salonId = settingsSnap.docs[0].id;
+        } else if (currentUser) {
+          salonId = currentUser.uid;
+        }
       }
 
-      document.getElementById('marketplace-home').classList.add('hidden');
-      document.getElementById('single-salon-home').classList.remove('hidden');
+      if (!salonId) return;
       window.currentSalonId = salonId;
 
       const settingsDoc = await db.collection('settings').doc(salonId).get();
@@ -1361,14 +1260,6 @@
           document.getElementById('home-instagram-container').classList.remove('hidden');
         } else {
           document.getElementById('home-instagram-container').classList.add('hidden');
-        }
-
-        if (data.facebookLink) {
-          const fbBtn = document.getElementById('home-facebook-btn');
-          fbBtn.href = data.facebookLink;
-          document.getElementById('home-facebook-container').classList.remove('hidden');
-        } else {
-          document.getElementById('home-facebook-container').classList.add('hidden');
         }
 
         if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
@@ -1585,12 +1476,13 @@
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
+    // INTERVALO CORRETO: BLOCO 1 (30 MIN) + INTERVALO LIVRE PARA ENCAIXE + BLOCO 2 (RESTANTE)
     function getBusyRanges(startMins, dur, inter) {
       if (!inter || inter <= 0 || dur <= 30) {
         return [{ start: startMins, end: startMins + dur }];
       }
-      const firstBlockEnd = startMins + 30;
-      const secondBlockStart = startMins + 30 + inter;
+      const firstBlockEnd = startMins + 30; // Primeiros 30 minutos ocupados
+      const secondBlockStart = startMins + 30 + inter; // O intervalo de 'inter' minutos fica LIVRE para encaixes!
       const secondBlockEnd = startMins + dur + inter;
       return [
         { start: startMins, end: firstBlockEnd },
@@ -1651,6 +1543,7 @@
 
       const totalSpan = totalServiceDuration + totalServiceInterval;
 
+      // Bloqueio de horários passados para o dia de hoje
       const todayDateStr = new Date().toISOString().split('T')[0];
       let currentHourNow = -1;
       let currentMinNow = -1;
@@ -1663,6 +1556,7 @@
       slotsContainer.innerHTML = '';
       let count = 0;
 
+      // Loop de 5 em 5 minutos
       for (let currentMins = openTotalMins; currentMins + totalSpan <= closeTotalMins; currentMins += 5) {
         const slotHour = Math.floor(currentMins / 60);
         const slotMin = currentMins % 60;
