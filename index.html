@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v48 - Intervalos Inteligentes a partir de 30 min, Encaixes, Múltiplos Serviços e WhatsApp Formatado -->
+<!-- v49 - Bloqueio de Passados, Filtros de Dia/Período e Fechamento do Mês -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -400,21 +400,50 @@
             </div>
           </div>
 
-          <!-- BLOCO 4: HISTÓRICO DE AGENDAMENTOS -->
+          <!-- BLOCO 4: HISTÓRICO, AGENDAMENTO DO DIA, PERÍODO E FECHAMENTO DO MÊS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Acompanhamento de Agendamentos por Nome do Cliente</span>
+              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Gestão de Agendamentos, Período e Fechamento</span>
               <i id="icon-section-bookings" class="fa-solid fa-chevron-down"></i>
             </button>
-            <div id="section-bookings" class="p-5 hidden space-y-4">
-              <div class="flex gap-2">
-                <input type="text" id="admin-search-client-name" placeholder="Digite o nome do cliente para buscar histórico..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
-                <button onclick="window.adminSearchClientHistory()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar Histórico</button>
+            <div id="section-bookings" class="p-5 hidden space-y-4 text-xs">
+              
+              <!-- FILTROS DE CONSULTA -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pb-3 border-b border-slate-100">
+                <button onclick="window.filterBookings('today')" class="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl cursor-pointer">📅 Agendamentos do Dia</button>
+                <button onclick="window.filterBookings('period')" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer">🔍 Por Período</button>
+                <button onclick="window.filterBookings('monthly')" class="py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl cursor-pointer">📊 Fechamento do Mês</button>
+              </div>
+
+              <!-- PAINEL DE FILTRO POR PERÍODO -->
+              <div id="filter-period-box" class="hidden p-3 bg-slate-50 rounded-xl space-y-2">
+                <span class="font-bold text-slate-700">Selecione o Período:</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="date" id="filter-start-date" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg">
+                  <input type="date" id="filter-end-date" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg">
+                </div>
+                <button onclick="window.applyPeriodFilter()" class="w-full py-1.5 bg-indigo-600 text-white font-bold rounded-lg cursor-pointer">Filtrar Período</button>
+              </div>
+
+              <!-- PAINEL DE FECHAMENTO DO MÊS -->
+              <div id="filter-monthly-box" class="hidden p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
+                <span class="font-bold text-emerald-900">Selecione o Mês e Ano:</span>
+                <div class="flex gap-2">
+                  <input type="month" id="filter-month-input" class="flex-grow px-2 py-1.5 bg-white border border-emerald-200 rounded-lg">
+                  <button onclick="window.applyMonthlyClosing()" class="px-4 py-1.5 bg-emerald-600 text-white font-bold rounded-lg cursor-pointer">Calcular Fechamento</button>
+                </div>
+                <div id="monthly-summary-result" class="pt-2 text-emerald-900 font-semibold"></div>
+              </div>
+
+              <!-- BUSCA POR NOME -->
+              <div class="flex gap-2 pt-2">
+                <input type="text" id="admin-search-client-name" placeholder="Ou digite o nome do cliente para histórico..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <button onclick="window.adminSearchClientHistory()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">Buscar Nome</button>
               </div>
               <div id="admin-client-history-result" class="space-y-2"></div>
 
               <div class="pt-4 border-t border-slate-100">
-                <h4 class="font-bold text-slate-900 mb-3 text-xs uppercase">Todos os Agendamentos Recentes</h4>
+                <h4 class="font-bold text-slate-900 mb-3 text-xs uppercase" id="admin-bookings-title">Agendamentos Recentes</h4>
                 <div id="admin-bookings-list" class="space-y-2"></div>
               </div>
             </div>
@@ -484,6 +513,7 @@
     let merchantPaymentLink = "";
     let allServicesRaw = [];
     let allStaffRaw = [];
+    let allBookingsCache = [];
     let currentCategoryFilter = '';
 
     let weeklySchedule = {
@@ -534,16 +564,15 @@
         content.innerHTML = `
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços, Intervalos e Encaixes:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo (em minutos)</b>. O intervalo começa 30 minutos após o início do atendimento e fica totalmente livre para encaixes!</p>
-          <p><b>4. Agendamento Manual:</b> Faça agendamentos diretos pelo painel preenchendo o nome e o WhatsApp obrigatórios do cliente.</p>
+          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços definindo duração e o <b>tempo de intervalo</b>. O intervalo começa 30 minutos após o início do atendimento e abre o espaço para encaixes.</p>
+          <p><b>4. Filtros e Fechamento:</b> Na gestão de agendamentos, use os botões para ver os horários do dia, filtrar por período ou calcular o fechamento financeiro do mês.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher Serviços:</b> Navegue pelas categorias e selecione **um ou mais serviços** para o seu atendimento. Serviços de 60 min ou mais aparecem representados em horas.</p>
-          <p><b>2. Profissional e Data:</b> Escolha o profissional compatível com os serviços e o dia desejado. Os horários são gerados de 5 em 5 minutos.</p>
-          <p><b>3. Dados Obrigatórios:</b> É **obrigatório** preencher seu Nome Completo e WhatsApp para confirmar a reserva.</p>
-          <p><b>4. Pagamento Online:</b> Utilize o botão de pagamento online gerado no resumo caso o salão disponibilize.</p>
+          <p><b>1. Escolher Serviços:</b> Selecione um ou mais serviços nas categorias.</p>
+          <p><b>2. Horários Passados Bloqueados:</b> O sistema bloqueia automaticamente horários que já passaram no dia de hoje.</p>
+          <p><b>3. Dados Obrigatórios:</b> Preencha Nome e WhatsApp para confirmar.</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -1037,13 +1066,86 @@
       loadAdminDropdowns();
 
       const bookingsSnap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
-      const bookingsContainer = document.getElementById('admin-bookings-list');
-      bookingsContainer.innerHTML = '';
+      allBookingsCache = [];
       bookingsSnap.forEach(doc => {
-        const data = doc.data();
-        bookingsContainer.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b>${data.clientName} (${data.clientPhone})</b><span class="text-emerald-600 font-bold">${data.date} às ${data.time}</span></div><p>Serviço(s): ${data.serviceName} | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'}</p></div>`;
+        allBookingsCache.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderAdminBookingsList(allBookingsCache, "Agendamentos Recentes");
+    }
+
+    function renderAdminBookingsList(bookingsArray, title) {
+      const bookingsContainer = document.getElementById('admin-bookings-list');
+      const titleEl = document.getElementById('admin-bookings-title');
+      if(titleEl) titleEl.innerText = title;
+      
+      bookingsContainer.innerHTML = '';
+      if (bookingsArray.length === 0) {
+        bookingsContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum agendamento encontrado.</p>';
+        return;
+      }
+
+      bookingsArray.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      bookingsArray.forEach(data => {
+        bookingsContainer.innerHTML += `
+          <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
+            <div class="flex justify-between">
+              <b>${data.clientName} (${data.clientPhone})</b>
+              <span class="text-emerald-600 font-bold">${data.date ? data.date.split('-').reverse().join('/') : ''} às ${data.time}</span>
+            </div>
+            <p class="text-slate-600">Serviço(s): <b>${data.serviceName}</b> | Prof: ${data.staffName} | Valor: ${data.price > 0 ? 'R$ ' + data.price.toFixed(2) : 'Sob Consulta'}</p>
+          </div>
+        `;
       });
     }
+
+    // FILTRAGEM DE AGENDAMENTOS NO PAINEL DO LOJISTA
+    window.filterBookings = function(type) {
+      document.getElementById('filter-period-box').classList.add('hidden');
+      document.getElementById('filter-monthly-box').classList.add('hidden');
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (type === 'today') {
+        const todayBookings = allBookingsCache.filter(b => b.date === todayStr);
+        renderAdminBookingsList(todayBookings, `Agendamentos do Dia (${todayStr.split('-').reverse().join('/')})`);
+      } else if (type === 'period') {
+        document.getElementById('filter-period-box').classList.remove('hidden');
+      } else if (type === 'monthly') {
+        document.getElementById('filter-monthly-box').classList.remove('hidden');
+      }
+    };
+
+    window.applyPeriodFilter = function() {
+      const start = document.getElementById('filter-start-date').value;
+      const end = document.getElementById('filter-end-date').value;
+      if (!start || !end) {
+        alert("Selecione a data inicial e final.");
+        return;
+      }
+      const filtered = allBookingsCache.filter(b => b.date >= start && b.date <= end);
+      renderAdminBookingsList(filtered, `Período: ${start.split('-').reverse().join('/')} até ${end.split('-').reverse().join('/')}`);
+    };
+
+    window.applyMonthlyClosing = function() {
+      const monthVal = document.getElementById('filter-month-input').value; // formato YYYY-MM
+      if (!monthVal) {
+        alert("Selecione o mês e o ano.");
+        return;
+      }
+      const filtered = allBookingsCache.filter(b => (b.date || '').startsWith(monthVal));
+      let totalRevenue = 0;
+      filtered.forEach(b => { totalRevenue += (b.price || 0); });
+
+      const summaryDiv = document.getElementById('monthly-summary-result');
+      summaryDiv.innerHTML = `
+        <div class="p-3 bg-white border border-emerald-200 rounded-xl space-y-1">
+          <p>📦 Total de Atendimentos: <b>${filtered.length}</b></p>
+          <p class="text-sm font-extrabold text-emerald-700">💰 Faturamento Total: R$ ${totalRevenue.toFixed(2)}</p>
+        </div>
+      `;
+      renderAdminBookingsList(filtered, `Fechamento do Mês (${monthVal.split('-').reverse().join('/')})`);
+    };
 
     function loadAdminDropdowns() {
       const serviceSelect = document.getElementById('manual-service-select');
@@ -1083,7 +1185,7 @@
             htmlList += `<div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-0.5">
               <b>Cliente: ${d.clientName} (${d.clientPhone})</b><br>
               <span>Serviço(s): <b>${d.serviceName}</b> com ${d.staffName}</span><br>
-              <span class="text-slate-500">Data: ${d.date} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
+              <span class="text-slate-500">Data: ${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
             </div>`;
           }
         });
@@ -1361,14 +1463,14 @@
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
-    // INTERVALO INTELIGENTE: COMEÇA 30 MIN APÓS O INÍCIO E LIBERA O ESPAÇO PARA ENCAIXES
+    // INTERVALO INTELIGENTE: COMEÇA 30 MIN APÓS O INÍCIO E O INTERVALO FICA LIVRE PARA ENCAIXES
     function getBusyRanges(startMins, dur, inter) {
       if (!inter || inter <= 0 || dur <= 30) {
         return [{ start: startMins, end: startMins + dur }];
       }
-      // Bloco 1: Primeiros 30 minutos (Profissional ocupado aplicando/iniciando)
-      // Intervalo: de startMins + 30 até startMins + 30 + inter (LIVRE PARA ENCAIXES)
-      // Bloco 2: Restante do procedimento (Profissional ocupado finalizando)
+      // Bloco 1: Primeiros 30 minutos (início do atendimento)
+      // O intervalo (de startMins + 30 até startMins + 30 + inter) NÃO É BLOQUEADO, permitindo ENCAIXES!
+      // Bloco 2: Finalização do atendimento (de startMins + 30 + inter até startMins + dur + inter)
       const firstBlockEnd = startMins + 30;
       const secondBlockStart = startMins + 30 + inter;
       const secondBlockEnd = startMins + dur + inter;
@@ -1431,11 +1533,31 @@
 
       const totalSpan = totalServiceDuration + totalServiceInterval;
 
+      // Verificação de horários passados para o dia de hoje
+      const todayDateStr = new Date().toISOString().split('T')[0];
+      let currentHourNow = -1;
+      let currentMinNow = -1;
+      if (dateVal === todayDateStr) {
+        const now = new Date();
+        currentHourNow = now.getHours();
+        currentMinNow = now.getMinutes();
+      }
+
       slotsContainer.innerHTML = '';
       let count = 0;
 
       // Loop de 5 em 5 minutos
       for (let currentMins = openTotalMins; currentMins + totalSpan <= closeTotalMins; currentMins += 5) {
+        const slotHour = Math.floor(currentMins / 60);
+        const slotMin = currentMins % 60;
+
+        // Se for hoje, bloqueia horários que já passaram
+        if (dateVal === todayDateStr) {
+          if (slotHour < currentHourNow || (slotHour === currentHourNow && slotMin <= currentMinNow)) {
+            continue;
+          }
+        }
+
         const newBookingRanges = getBusyRanges(currentMins, totalServiceDuration, totalServiceInterval);
 
         let isConflict = false;
@@ -1451,8 +1573,8 @@
 
         if (isConflict) continue;
 
-        const hourStr = Math.floor(currentMins / 60).toString().padStart(2, '0');
-        const minStr = (currentMins % 60).toString().padStart(2, '0');
+        const hourStr = slotHour.toString().padStart(2, '0');
+        const minStr = slotMin.toString().padStart(2, '0');
         const timeString = `${hourStr}:${minStr}`;
 
         count++;
@@ -1531,7 +1653,7 @@
         let targetWhatsapp = merchantWhatsapp;
         if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
 
-        // MENSAGEM DO WHATSAPP FORMATADA SEM CÓDIGOS ESTRANHOS
+        // MENSAGEM DO WHATSAPP FORMATADA LIMPA E PROFISSIONAL
         const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}`;
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
@@ -1558,7 +1680,7 @@
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-2">
               <div class="flex justify-between items-center">
                 <b>${d.serviceName}</b>
-                <span class="text-emerald-600 font-bold">${d.date.split('-').reverse().join('/')} às ${d.time}</span>
+                <span class="text-emerald-600 font-bold">${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time}</span>
               </div>
               <p class="text-slate-500">Profissional: ${d.staffName} | Cabelo: ${d.hairSpecs}</p>
               
