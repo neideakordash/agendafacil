@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v45 - Horários de 5 em 5 min com Intervalos/Encaixes e Duração Formatada em Horas -->
+<!-- v47 - Intervalos Inteligentes, Filtro de Profissionais por Serviço e WhatsApp Formatado -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -130,7 +130,7 @@
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1.5">Horários Disponíveis (5 em 5 min)</label>
                   <div id="time-slots-container" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
-                    <p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione data e profissional.</p>
+                    <p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione serviços e profissional.</p>
                   </div>
                 </div>
               </div>
@@ -148,7 +148,7 @@
                     <span class="text-slate-400 italic font-normal">Nenhum serviço selecionado</span>
                   </div>
                 </div>
-                <div class="flex justify-between pt-2 border-t border-slate-100"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Qualquer</span></div>
+                <div class="flex justify-between pt-2 border-t border-slate-100"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Nenhum</span></div>
                 <div id="summary-hair-container" class="flex justify-between hidden"><span class="text-slate-400">Cabelo:</span><span id="summary-hair" class="font-bold text-right">Não informado</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Data/Hora:</span><span id="summary-datetime" class="font-bold">--/-- --:--</span></div>
                 <div class="flex justify-between text-sm font-extrabold text-indigo-600 pt-2 border-t border-slate-100"><span>Total:</span><span id="summary-price">R$ 0,00</span></div>
@@ -501,7 +501,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     let targetMerchantId = urlParams.get('salao');
 
-    // Formata a duração: 60+ min vira horas (ex: 60 min -> 1h, 90 min -> 1h 30min)
     function formatDuration(mins) {
       if (!mins) return '0 min';
       if (mins < 60) return `${mins} min`;
@@ -535,14 +534,14 @@
         content.innerHTML = `
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços, Intervalos e Encaixes:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo (em minutos)</b>. O sistema calcula automaticamente as brechas para encaixes de 5 em 5 minutos.</p>
+          <p><b>3. Serviços, Intervalos e Encaixes:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo (em minutos)</b>. O intervalo sempre começa 30 minutos após o início do atendimento, e o sistema abre o intervalo para encaixes de 5 em 5 minutos.</p>
           <p><b>4. Agendamento Manual:</b> Faça agendamentos diretos pelo painel preenchendo o nome e o WhatsApp obrigatórios do cliente.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
           <p><b>1. Escolher Serviços:</b> Navegue pelas categorias e selecione **um ou mais serviços** para o seu atendimento. Serviços de 60 min ou mais aparecem representados em horas.</p>
-          <p><b>2. Profissional e Data:</b> Escolha o profissional e o dia desejado. Os horários são gerados de 5 em 5 minutos considerando os encaixes.</p>
+          <p><b>2. Profissional e Data:</b> Escolha o profissional (disponível para os serviços selecionados) e o dia desejado.</p>
           <p><b>3. Dados Obrigatórios:</b> É **obrigatório** preencher seu Nome Completo e WhatsApp para confirmar a reserva.</p>
           <p><b>4. Pagamento Online:</b> Utilize o botão de pagamento online gerado no resumo caso o salão disponibilize.</p>
         `;
@@ -1191,7 +1190,7 @@
           allStaffRaw.push({ id: doc.id, ...data });
           const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
           staffContainer.innerHTML += `
-            <div onclick="window.selectStaff(${staffData}, this)" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs" data-staff-name="${data.name}">
+            <div onclick="window.selectStaff(${staffData}, this)" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs opacity-30 pointer-events-none" data-staff-name="${data.name}">
               <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5 shadow-xs">
               <h4 class="font-bold text-slate-800 text-xs truncate">${data.name}</h4>
               <p class="text-[9px] text-slate-400 uppercase">${data.role}</p>
@@ -1264,6 +1263,46 @@
       document.getElementById('summary-hair').innerText = `${length} | ${type}`;
     };
 
+    // ATUALIZA A DISPONIBILIDADE DE PROFISSIONAIS COM BASE NOS SERVIÇOS SELECIONADOS
+    function updateStaffAvailability() {
+      const staffCards = document.querySelectorAll('.staff-card');
+      if (selectedServices.length === 0) {
+        staffCards.forEach(card => {
+          card.style.opacity = '0.3';
+          card.style.pointerEvents = 'none';
+          card.classList.remove('selected-card');
+        });
+        selectedStaffObj = null;
+        document.getElementById('summary-staff').innerText = 'Nenhum';
+        return;
+      }
+
+      staffCards.forEach(card => {
+        const staffName = card.getAttribute('data-staff-name');
+        let canPerformAll = true;
+
+        selectedServices.forEach(s => {
+          const assigned = s.assignedStaff || [];
+          if (assigned.length > 0 && !assigned.includes(staffName)) {
+            canPerformAll = false;
+          }
+        });
+
+        if (canPerformAll) {
+          card.style.opacity = '1';
+          card.style.pointerEvents = 'auto';
+        } else {
+          card.style.opacity = '0.3';
+          card.style.pointerEvents = 'none';
+          if (selectedStaffObj && selectedStaffObj.name === staffName) {
+            card.classList.remove('selected-card');
+            selectedStaffObj = null;
+            document.getElementById('summary-staff').innerText = 'Nenhum';
+          }
+        }
+      });
+    }
+
     window.toggleServiceSelection = function(service, element) {
       const index = selectedServices.findIndex(s => s.id === service.id);
       const hairSection = document.getElementById('hair-specs-section');
@@ -1278,6 +1317,8 @@
         element.classList.add('selected-card');
         element.querySelector('span.text-\\[10px\\]').innerText = '✓ Selecionado';
       }
+
+      updateStaffAvailability();
 
       const summaryContainer = document.getElementById('summary-services-container');
       let totalPrice = 0;
@@ -1309,7 +1350,7 @@
         hairSection.classList.add('hidden');
         hairSummaryContainer.classList.add('hidden');
       }
-      if (document.getElementById('booking-date').value) window.renderTimeSlots();
+      if (document.getElementById('booking-date').value && selectedStaffObj) window.renderTimeSlots();
     };
 
     window.selectStaff = function(staff, element) {
@@ -1321,10 +1362,25 @@
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
-    // GERAÇÃO DE HORÁRIOS DE 5 EM 5 MIN COM CÁLCULO DE INTERVALOS/ENCAIXES
+    // CALCULO PRECISO DE BLOCOS DE OCUPAÇÃO (INTERVALO 30 MIN APÓS O INÍCIO, LIBERANDO ENCAIXES)
+    function getBusyRanges(startMins, dur, inter) {
+      if (!inter || inter <= 0 || dur <= 30) {
+        return [{ start: startMins, end: startMins + dur }];
+      } else {
+        // Bloco 1: primeiros 30 min | Intervalo livre para encaixe | Bloco 2: restante
+        return [
+          { start: startMins, end: startMins + 30 },
+          { start: startMins + 30 + inter, end: startMins + dur }
+        ];
+      }
+    }
+
     window.renderTimeSlots = async function() {
       const dateVal = document.getElementById('booking-date').value;
-      if (!dateVal) return;
+      if (!dateVal || selectedServices.length === 0 || !selectedStaffObj) {
+        document.getElementById('time-slots-container').innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione serviços, profissional e data.</p>';
+        return;
+      }
       document.getElementById('summary-datetime').innerText = `${dateVal.split('-').reverse().join('/')}`;
 
       const slotsContainer = document.getElementById('time-slots-container');
@@ -1357,8 +1413,8 @@
           const startMins = h * 60 + m;
           const dur = d.duration || 30;
           const inter = d.interval || 0;
-          const endMins = startMins + dur + inter; // Considera duração + intervalo para bloquear encaixes indevidos
-          bookedRanges.push({ start: startMins, end: endMins });
+          const ranges = getBusyRanges(startMins, dur, inter);
+          bookedRanges.push(...ranges);
         });
       } catch (e) { console.error(e); }
 
@@ -1370,22 +1426,22 @@
       });
       if (totalServiceDuration === 0) totalServiceDuration = 30;
 
-      const neededTotalTime = totalServiceDuration + totalServiceInterval;
-
       slotsContainer.innerHTML = '';
       let count = 0;
 
       // Loop de 5 em 5 minutos
-      for (let currentMins = openTotalMins; currentMins + neededTotalTime <= closeTotalMins; currentMins += 5) {
-        const slotStart = currentMins;
-        const slotEnd = currentMins + neededTotalTime;
+      for (let currentMins = openTotalMins; currentMins + totalServiceDuration <= closeTotalMins; currentMins += 5) {
+        const newBookingRanges = getBusyRanges(currentMins, totalServiceDuration, totalServiceInterval);
 
         let isConflict = false;
-        for (let range of bookedRanges) {
-          if (slotStart < range.end && slotEnd > range.start) {
-            isConflict = true;
-            break;
+        for (let newR of newBookingRanges) {
+          for (let existingR of bookedRanges) {
+            if (newR.start < existingR.end && newR.end > existingR.start) {
+              isConflict = true;
+              break;
+            }
           }
+          if (isConflict) break;
         }
 
         if (isConflict) continue;
@@ -1422,8 +1478,8 @@
         return;
       }
 
-      if (selectedServices.length === 0 || !selectedTime || !date) {
-        alert("Selecione pelo menos um serviço, data e horário.");
+      if (selectedServices.length === 0 || !selectedTime || !date || !selectedStaffObj) {
+        alert("Selecione os serviços, o profissional, a data e o horário.");
         return;
       }
 
@@ -1440,7 +1496,7 @@
       });
 
       const servicesCombinedName = serviceNamesArray.join(' + ');
-      const staffName = selectedStaffObj ? selectedStaffObj.name : 'Qualquer Profissional';
+      const staffName = selectedStaffObj.name;
 
       let hairSpecs = 'Não aplicável';
       const hasHair = selectedServices.some(s => (s.category || '').toLowerCase().includes('cabelo') || s.name.toLowerCase().includes('corte'));
@@ -1470,7 +1526,9 @@
         let targetWhatsapp = merchantWhatsapp;
         if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
 
-        const msg = encodeURIComponent(`Olá, ${staffName}! Novo agendamento confirmado:%0A*Cliente:* ${name}%0A*Serviços:* ${servicesCombinedName}%0A*Cabelo:* ${hairSpecs}%0A*Data:* ${date.split('-').reverse().join('/')} às ${selectedTime}`);
+        // MENSAGEM DO WHATSAPP FORMATADA LIMPA E PROFISSIONAL (SEM CÓDIGOS ESTRANHOS)
+        const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}`;
+        const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
         alert("✅ Agendamento realizado com sucesso!");
