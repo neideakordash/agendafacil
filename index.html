@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v47 - Intervalos Inteligentes, Filtro de Profissionais por Serviço e WhatsApp Formatado -->
+<!-- v48 - Intervalos Inteligentes a partir de 30 min, Encaixes, Múltiplos Serviços e WhatsApp Formatado -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -534,14 +534,14 @@
         content.innerHTML = `
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços, Intervalos e Encaixes:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo (em minutos)</b>. O intervalo sempre começa 30 minutos após o início do atendimento, e o sistema abre o intervalo para encaixes de 5 em 5 minutos.</p>
+          <p><b>3. Serviços, Intervalos e Encaixes:</b> Cadastre serviços definindo ordem, preço, duração e o <b>tempo de intervalo (em minutos)</b>. O intervalo começa 30 minutos após o início do atendimento e fica totalmente livre para encaixes!</p>
           <p><b>4. Agendamento Manual:</b> Faça agendamentos diretos pelo painel preenchendo o nome e o WhatsApp obrigatórios do cliente.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
           <p><b>1. Escolher Serviços:</b> Navegue pelas categorias e selecione **um ou mais serviços** para o seu atendimento. Serviços de 60 min ou mais aparecem representados em horas.</p>
-          <p><b>2. Profissional e Data:</b> Escolha o profissional (disponível para os serviços selecionados) e o dia desejado.</p>
+          <p><b>2. Profissional e Data:</b> Escolha o profissional compatível com os serviços e o dia desejado. Os horários são gerados de 5 em 5 minutos.</p>
           <p><b>3. Dados Obrigatórios:</b> É **obrigatório** preencher seu Nome Completo e WhatsApp para confirmar a reserva.</p>
           <p><b>4. Pagamento Online:</b> Utilize o botão de pagamento online gerado no resumo caso o salão disponibilize.</p>
         `;
@@ -1263,7 +1263,6 @@
       document.getElementById('summary-hair').innerText = `${length} | ${type}`;
     };
 
-    // ATUALIZA A DISPONIBILIDADE DE PROFISSIONAIS COM BASE NOS SERVIÇOS SELECIONADOS
     function updateStaffAvailability() {
       const staffCards = document.querySelectorAll('.staff-card');
       if (selectedServices.length === 0) {
@@ -1362,17 +1361,21 @@
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
-    // CALCULO PRECISO DE BLOCOS DE OCUPAÇÃO (INTERVALO 30 MIN APÓS O INÍCIO, LIBERANDO ENCAIXES)
+    // INTERVALO INTELIGENTE: COMEÇA 30 MIN APÓS O INÍCIO E LIBERA O ESPAÇO PARA ENCAIXES
     function getBusyRanges(startMins, dur, inter) {
       if (!inter || inter <= 0 || dur <= 30) {
         return [{ start: startMins, end: startMins + dur }];
-      } else {
-        // Bloco 1: primeiros 30 min | Intervalo livre para encaixe | Bloco 2: restante
-        return [
-          { start: startMins, end: startMins + 30 },
-          { start: startMins + 30 + inter, end: startMins + dur }
-        ];
       }
+      // Bloco 1: Primeiros 30 minutos (Profissional ocupado aplicando/iniciando)
+      // Intervalo: de startMins + 30 até startMins + 30 + inter (LIVRE PARA ENCAIXES)
+      // Bloco 2: Restante do procedimento (Profissional ocupado finalizando)
+      const firstBlockEnd = startMins + 30;
+      const secondBlockStart = startMins + 30 + inter;
+      const secondBlockEnd = startMins + dur + inter;
+      return [
+        { start: startMins, end: firstBlockEnd },
+        { start: secondBlockStart, end: secondBlockEnd }
+      ];
     }
 
     window.renderTimeSlots = async function() {
@@ -1426,11 +1429,13 @@
       });
       if (totalServiceDuration === 0) totalServiceDuration = 30;
 
+      const totalSpan = totalServiceDuration + totalServiceInterval;
+
       slotsContainer.innerHTML = '';
       let count = 0;
 
       // Loop de 5 em 5 minutos
-      for (let currentMins = openTotalMins; currentMins + totalServiceDuration <= closeTotalMins; currentMins += 5) {
+      for (let currentMins = openTotalMins; currentMins + totalSpan <= closeTotalMins; currentMins += 5) {
         const newBookingRanges = getBusyRanges(currentMins, totalServiceDuration, totalServiceInterval);
 
         let isConflict = false;
@@ -1526,7 +1531,7 @@
         let targetWhatsapp = merchantWhatsapp;
         if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
 
-        // MENSAGEM DO WHATSAPP FORMATADA LIMPA E PROFISSIONAL (SEM CÓDIGOS ESTRANHOS)
+        // MENSAGEM DO WHATSAPP FORMATADA SEM CÓDIGOS ESTRANHOS
         const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}`;
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
