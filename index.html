@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v49 - Bloqueio de Passados, Filtros de Dia/Período e Fechamento do Mês -->
+<!-- v50 - AgendaFácil Completo com Intervalos e Encaixes Funcionais -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -575,7 +575,7 @@
           <p><b>3. Dados Obrigatórios:</b> Preencha Nome e WhatsApp para confirmar.</p>
         `;
       }
-      modal.classList.remove('hidden');
+      modal.classList.add('hidden');
     };
 
     window.closeTutorial = function() {
@@ -1099,7 +1099,6 @@
       });
     }
 
-    // FILTRAGEM DE AGENDAMENTOS NO PAINEL DO LOJISTA
     window.filterBookings = function(type) {
       document.getElementById('filter-period-box').classList.add('hidden');
       document.getElementById('filter-monthly-box').classList.add('hidden');
@@ -1128,7 +1127,7 @@
     };
 
     window.applyMonthlyClosing = function() {
-      const monthVal = document.getElementById('filter-month-input').value; // formato YYYY-MM
+      const monthVal = document.getElementById('filter-month-input').value;
       if (!monthVal) {
         alert("Selecione o mês e o ano.");
         return;
@@ -1463,16 +1462,13 @@
       if (document.getElementById('booking-date').value) window.renderTimeSlots();
     };
 
-    // INTERVALO INTELIGENTE: COMEÇA 30 MIN APÓS O INÍCIO E O INTERVALO FICA LIVRE PARA ENCAIXES
+    // INTERVALO CORRETO: BLOCO 1 (30 MIN) + INTERVALO LIVRE PARA ENCAIXE + BLOCO 2 (RESTANTE)
     function getBusyRanges(startMins, dur, inter) {
       if (!inter || inter <= 0 || dur <= 30) {
         return [{ start: startMins, end: startMins + dur }];
       }
-      // Bloco 1: Primeiros 30 minutos (início do atendimento)
-      // O intervalo (de startMins + 30 até startMins + 30 + inter) NÃO É BLOQUEADO, permitindo ENCAIXES!
-      // Bloco 2: Finalização do atendimento (de startMins + 30 + inter até startMins + dur + inter)
-      const firstBlockEnd = startMins + 30;
-      const secondBlockStart = startMins + 30 + inter;
+      const firstBlockEnd = startMins + 30; // Primeiros 30 minutos ocupados
+      const secondBlockStart = startMins + 30 + inter; // O intervalo de 'inter' minutos fica LIVRE para encaixes!
       const secondBlockEnd = startMins + dur + inter;
       return [
         { start: startMins, end: firstBlockEnd },
@@ -1533,7 +1529,7 @@
 
       const totalSpan = totalServiceDuration + totalServiceInterval;
 
-      // Verificação de horários passados para o dia de hoje
+      // Bloqueio de horários passados para o dia de hoje
       const todayDateStr = new Date().toISOString().split('T')[0];
       let currentHourNow = -1;
       let currentMinNow = -1;
@@ -1551,7 +1547,6 @@
         const slotHour = Math.floor(currentMins / 60);
         const slotMin = currentMins % 60;
 
-        // Se for hoje, bloqueia horários que já passaram
         if (dateVal === todayDateStr) {
           if (slotHour < currentHourNow || (slotHour === currentHourNow && slotMin <= currentMinNow)) {
             continue;
@@ -1598,7 +1593,6 @@
       const phone = document.getElementById('client-phone').value.trim();
       const date = document.getElementById('booking-date').value;
 
-      // Validação OBRIGATÓRIA de Nome e WhatsApp
       if (!name || !phone) {
         alert("⚠️ ATENÇÃO: O preenchimento do NOME COMPLETO e do WHATSAPP é obrigatório para agendar!");
         document.getElementById('client-name-input').focus();
@@ -1653,7 +1647,6 @@
         let targetWhatsapp = merchantWhatsapp;
         if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
 
-        // MENSAGEM DO WHATSAPP FORMATADA LIMPA E PROFISSIONAL
         const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}`;
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
