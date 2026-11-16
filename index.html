@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v50 - AgendaFácil Completo com Intervalos e Encaixes Funcionais -->
+<!-- v51 - AgendaFácil com Detecção Completa de Serviços de Cabelo (Hidratação, Escovas, Alisamentos e Coloração) -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -103,7 +103,7 @@
 
               <!-- ESPECIFICAÇÕES DO CABELO -->
               <div id="hair-specs-section" class="pt-3 border-t border-slate-100 hidden">
-                <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo</label>
+                <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo (Obrigatório para Cabelos)</label>
                 <div class="grid grid-cols-2 gap-2">
                   <select id="hair-length" onchange="window.updateHairSpecs()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
                     <option value="Não informado">Tamanho...</option>
@@ -400,7 +400,7 @@
             </div>
           </div>
 
-          <!-- BLOCO 4: HISTÓRICO, AGENDAMENTO DO DIA, PERÍODO E FECHAMENTO DO MÊS -->
+          <!-- BLOCO 4: HISTÓRICO DE AGENDAMENTOS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
               <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Gestão de Agendamentos, Período e Fechamento</span>
@@ -540,6 +540,22 @@
       return `${hours}h ${remainingMins}min`;
     }
 
+    // Helper para detectar serviços de cabelo (Hidratação, Escovas, Alisamentos, Coloração, Cortes, etc.)
+    function isHairRelated(category, name) {
+      const cat = (category || '').toLowerCase();
+      const n = (name || '').toLowerCase();
+      return cat.includes('cabelo') || 
+             n.includes('corte') || 
+             n.includes('hidrat') || 
+             n.includes('escova') || 
+             n.includes('alisament') || 
+             n.includes('coloraç') || 
+             n.includes('progressiv') || 
+             n.includes('reconstruç') || 
+             n.includes('nutriç') || 
+             n.includes('relaxament');
+    }
+
     window.switchTab = function(tabId) {
       document.querySelectorAll('.client-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -564,18 +580,18 @@
         content.innerHTML = `
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços definindo duração e o <b>tempo de intervalo</b>. O intervalo começa 30 minutos após o início do atendimento e abre o espaço para encaixes.</p>
+          <p><b>3. Serviços e Intervalos:</b> Cadastre serviços (como hidratações, escovas, alisamentos e colorações) definindo duração e o <b>tempo de intervalo</b>. O intervalo começa 30 minutos após o início do atendimento e abre o espaço para encaixes.</p>
           <p><b>4. Filtros e Fechamento:</b> Na gestão de agendamentos, use os botões para ver os horários do dia, filtrar por período ou calcular o fechamento financeiro do mês.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher Serviços:</b> Selecione um ou mais serviços nas categorias.</p>
+          <p><b>1. Escolher Serviços:</b> Selecione um ou mais serviços nas categorias. Para serviços capilares (hidratação, escovas, alisamentos, coloração), informe o tamanho e tipo do cabelo.</p>
           <p><b>2. Horários Passados Bloqueados:</b> O sistema bloqueia automaticamente horários que já passaram no dia de hoje.</p>
           <p><b>3. Dados Obrigatórios:</b> Preencha Nome e WhatsApp para confirmar.</p>
         `;
       }
-      modal.classList.add('hidden');
+      modal.classList.remove('hidden');
     };
 
     window.closeTutorial = function() {
@@ -1093,7 +1109,7 @@
               <b>${data.clientName} (${data.clientPhone})</b>
               <span class="text-emerald-600 font-bold">${data.date ? data.date.split('-').reverse().join('/') : ''} às ${data.time}</span>
             </div>
-            <p class="text-slate-600">Serviço(s): <b>${data.serviceName}</b> | Prof: ${data.staffName} | Valor: ${data.price > 0 ? 'R$ ' + data.price.toFixed(2) : 'Sob Consulta'}</p>
+            <p class="text-slate-600">Serviço(s): <b>${data.serviceName}</b> | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'} | Valor: ${data.price > 0 ? 'R$ ' + data.price.toFixed(2) : 'Sob Consulta'}</p>
           </div>
         `;
       });
@@ -1433,9 +1449,7 @@
           totalPrice += (s.price || 0);
           html += `<div>• ${s.name} (${s.price > 0 ? 'R$ ' + s.price.toFixed(2) : 'Sob Consulta'})</div>`;
           
-          const catLower = (s.category || '').toLowerCase();
-          const nameLower = (s.name || '').toLowerCase();
-          if (catLower.includes('cabelo') || nameLower.includes('corte') || nameLower.includes('coloração') || nameLower.includes('hidrat') || nameLower.includes('escova')) {
+          if (isHairRelated(s.category, s.name)) {
             hasHairService = true;
           }
         });
@@ -1620,7 +1634,7 @@
       const staffName = selectedStaffObj.name;
 
       let hairSpecs = 'Não aplicável';
-      const hasHair = selectedServices.some(s => (s.category || '').toLowerCase().includes('cabelo') || s.name.toLowerCase().includes('corte'));
+      const hasHair = selectedServices.some(s => isHairRelated(s.category, s.name));
       if (hasHair) {
         const hairLength = document.getElementById('hair-length').value;
         const hairType = document.getElementById('hair-type').value;
