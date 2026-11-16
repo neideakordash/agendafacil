@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v55 - Ibi Agenda com Agendamento Manual Sincronizado e Bloqueio de Horários Duplicados -->
+<!-- v56 - Ibi Agenda com Serviços Manuais Agrupados por Categoria e Horários Sincronizados -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -272,10 +272,10 @@
         </div>
 
         <div class="space-y-4">
-          <!-- BLOCO 0: AGENDAMENTO MANUAL COM SELETOR DE HORÁRIOS INTELIGENTE -->
+          <!-- BLOCO 0: AGENDAMENTO MANUAL COM SERVIÇOS POR CATEGORIA E HORÁRIOS SINCRONIZADOS -->
           <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-manual-booking')" class="w-full p-4 flex justify-between items-center bg-indigo-50/50 hover:bg-indigo-50 font-bold text-xs text-indigo-900 cursor-pointer">
-              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> Novo Agendamento Manual (Horários Sincronizados)</span>
+              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> Novo Agendamento Manual (Categorias e Horários Sincronizados)</span>
               <i id="icon-section-manual-booking" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-manual-booking" class="p-5 hidden space-y-4">
@@ -289,8 +289,8 @@
                   <input type="tel" id="manual-client-phone" placeholder="(00) 00000-0000" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
                 </div>
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1.5">Selecione o(s) Serviço(s) *</label>
-                  <div id="manual-services-checkboxes" class="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  <label class="block font-bold text-slate-700 mb-1.5">Selecione o(s) Serviço(s) por Categoria *</label>
+                  <div id="manual-services-checkboxes" class="space-y-2 max-h-48 overflow-y-auto p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                     <p class="text-[10px] text-slate-400">Carregando serviços...</p>
                   </div>
                 </div>
@@ -604,7 +604,7 @@
           <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, Facebook, link de pagamento/Pix e horários de funcionamento.</p>
           <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
           <p><b>3. Serviços e Categoria:</b> Organize seus serviços por categorias (ex: Cabelo, Unhas) definindo duração e o <b>tempo de intervalo</b> para encaixes.</p>
-          <p><b>4. Agendamento Manual Sincronizado:</b> O painel calcula automaticamente os horários livres, evitando qualquer duplicidade com os agendamentos online dos clientes.</p>
+          <p><b>4. Agendamento Manual Sincronizado:</b> Selecione vários serviços agrupados por categoria e o painel calcula automaticamente os horários livres sem conflitos.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
@@ -1191,34 +1191,49 @@
       servicesArray.sort((a, b) => (a.order || 0) - (b.order || 0));
       allServicesRaw = servicesArray;
 
-      // Renderizar checkboxes do agendamento manual com gatilho para atualizar horários
+      // Renderizar checkboxes do agendamento manual AGRUPADOS POR CATEGORIA
       const manualServicesDiv = document.getElementById('manual-services-checkboxes');
       if (manualServicesDiv) {
         manualServicesDiv.innerHTML = '';
         if (servicesArray.length === 0) {
           manualServicesDiv.innerHTML = '<p class="text-[10px] text-slate-400">Nenhum serviço cadastrado.</p>';
         } else {
+          const groupedManual = {};
           servicesArray.forEach(s => {
-            const priceText = s.price > 0 ? `R$ ${s.price.toFixed(2)}` : 'Sob Consulta';
-            const sData = JSON.stringify({ 
-              id: s.id, 
-              name: s.name, 
-              price: s.price || 0, 
-              duration: s.duration || 30, 
-              interval: s.interval || 0, 
-              category: s.category || '' 
-            }).replace(/"/g, '&quot;');
-
-            manualServicesDiv.innerHTML += `
-              <label class="flex items-center justify-between text-xs cursor-pointer text-slate-700 p-1.5 hover:bg-slate-100 rounded">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" value='${sData}' onchange="window.renderManualTimeSlots()" class="manual-service-checkbox rounded text-indigo-600">
-                  <span><b>${s.name}</b> <span class="text-indigo-600">[${s.category || 'Geral'}]</span> (${formatDuration(s.duration)})</span>
-                </div>
-                <span class="font-bold text-indigo-600">${priceText}</span>
-              </label>
-            `;
+            const cat = s.category || 'Geral';
+            if (!groupedManual[cat]) groupedManual[cat] = [];
+            groupedManual[cat].push(s);
           });
+
+          for (const cat in groupedManual) {
+            let catHtml = `<div class="space-y-1 pb-2 border-b border-slate-200 last:border-0">
+              <span class="font-extrabold text-indigo-700 text-[11px] uppercase tracking-wider block py-1">📂 ${cat}</span>
+              <div class="space-y-1">`;
+
+            groupedManual[cat].forEach(s => {
+              const priceText = s.price > 0 ? `R$ ${s.price.toFixed(2)}` : 'Sob Consulta';
+              const sData = JSON.stringify({ 
+                id: s.id, 
+                name: s.name, 
+                price: s.price || 0, 
+                duration: s.duration || 30, 
+                interval: s.interval || 0, 
+                category: s.category || '' 
+              }).replace(/"/g, '&quot;');
+
+              catHtml += `
+                <label class="flex items-center justify-between text-xs cursor-pointer text-slate-700 p-1.5 hover:bg-slate-100 rounded">
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" value='${sData}' onchange="window.renderManualTimeSlots()" class="manual-service-checkbox rounded text-indigo-600">
+                    <span><b>${s.name}</b> (${formatDuration(s.duration)})</span>
+                  </div>
+                  <span class="font-bold text-indigo-600">${priceText}</span>
+                </label>
+              `;
+            });
+            catHtml += `</div></div>`;
+            manualServicesDiv.innerHTML += catHtml;
+          }
         }
       }
 
