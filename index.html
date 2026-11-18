@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v57 - Ibi Agenda com Ordenação por Horário e Atualização em Tempo Real (Real-time Sync) -->
+<!-- v58 - Ibi Agenda com WhatsApp Específico por Profissional e Lógica de Cabelo Inteligente -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -120,7 +120,7 @@
                 </div>
               </div>
 
-              <!-- ESPECIFICAÇÕES DO CABELO -->
+              <!-- ESPECIFICAÇÕES DO CABELO (APARECE APENAS SE HOUVER SERVIÇO DE CABELO) -->
               <div id="hair-specs-section" class="pt-3 border-t border-slate-100 hidden">
                 <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo (Obrigatório para Cabelos)</label>
                 <div class="grid grid-cols-2 gap-2">
@@ -334,7 +334,7 @@
               <form onsubmit="window.saveStoreSettings(event)" class="space-y-3 text-xs">
                 <input type="text" id="store-name-input" placeholder="Nome do Salão" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="text" id="store-whatsapp-input" placeholder="WhatsApp (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="store-whatsapp-input" placeholder="WhatsApp Principal (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-facebook-input" placeholder="Link do Facebook" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-payment-input" placeholder="Link de Pagamento / Pix (Mercado Pago, Stripe, etc.)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
@@ -350,17 +350,17 @@
             </div>
           </div>
 
-          <!-- BLOCO 2: PROFISSIONAIS -->
+          <!-- BLOCO 2: PROFISSIONAIS (CADA UM COM SEU WHATSAPP) -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais</span>
+              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais (Manicure, Cabeleireiro, etc.)</span>
               <i id="icon-section-staff" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-staff" class="p-5 hidden space-y-4">
               <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
-                <input type="text" id="staff-name" placeholder="Nome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="text" id="staff-role" placeholder="Cargo/Especialidade" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-name" placeholder="Nome do Profissional" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-role" placeholder="Cargo/Especialidade (ex: Manicure, Cabeleireiro)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto do Profissional (55DD9XXXXXXXX)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
                 <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
               </form>
@@ -383,7 +383,7 @@
                 <input type="hidden" id="editing-service-id" value="">
                 <div>
                   <label class="block text-[10px] text-slate-500 mb-1">Categoria (ex: Cabelo, Unhas, Estética)</label>
-                  <input type="text" id="service-category" placeholder="Ex: Cabelo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  <input type="text" id="service-category" placeholder="Ex: Cabelo ou Unhas" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 </div>
                 <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 
@@ -609,17 +609,15 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
-          <p><b>1. Perfil e Expediente:</b> Defina nome, endereço, WhatsApp, Instagram, Facebook, link de pagamento/Pix e horários de funcionamento.</p>
-          <p><b>2. Profissionais:</b> Cadastre os colaboradores do salão.</p>
-          <p><b>3. Serviços e Categoria:</b> Organize seus serviços por categorias (ex: Cabelo, Unhas) definindo duração e o <b>tempo de intervalo</b> para encaixes.</p>
-          <p><b>4. Agendamento Sincronizado:</b> Os agendamentos atualizam instantaneamente e aparecem ordenados por horário.</p>
+          <p><b>1. Profissionais e WhatsApps Diferentes:</b> Cada colaborador (manicure, cabeleireiro) pode cadastrar o seu próprio WhatsApp para receber os disparos de agendamento dos seus clientes.</p>
+          <p><b>2. Serviços sem Cabelo:</b> Serviços que não sejam capilares (como unhas e estética) não exigem especificações de cabelo.</p>
+          <p><b>3. Agendamentos em Tempo Real:</b> Os agendamentos atualizam instantaneamente e aparecem ordenados por horário.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher Serviços:</b> Selecione um ou mais serviços nas categorias. Para serviços capilares, informe o tamanho e tipo do cabelo.</p>
-          <p><b>2. Horários Passados Bloqueados:</b> O sistema bloqueia automaticamente horários que já passaram no dia de hoje.</p>
-          <p><b>3. Dados Obrigatórios:</b> Preencha Nome e WhatsApp para confirmar.</p>
+          <p><b>1. Escolher Serviços:</b> Selecione seus serviços por categoria.</p>
+          <p><b>2. Confirmação Direta:</b> O agendamento é enviado para o WhatsApp do profissional específico escolhido.</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -876,7 +874,7 @@
         document.getElementById('staff-role').value = '';
         document.getElementById('staff-whatsapp').value = '';
         loadAdminData();
-        alert("Profissional cadastrado!");
+        alert("Profissional e WhatsApp direto cadastrados com sucesso!");
       } catch (e) { alert("Erro: " + e.message); }
     };
 
@@ -1167,6 +1165,7 @@
       staffCheckboxesDiv.innerHTML = '';
       if (manualStaffSelect) manualStaffSelect.innerHTML = '<option value="">Selecione o Profissional...</option>';
       
+      window.staffWhatsAppMap = {}; // Guarda o WhatsApp direto de cada profissional
       allStaffRaw = [];
       if (staffSnap.empty) {
         staffCheckboxesDiv.innerHTML = '<p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>';
@@ -1174,7 +1173,12 @@
         staffSnap.forEach(doc => {
           const data = doc.data();
           allStaffRaw.push({ id: doc.id, ...data });
-          staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role})</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
+          
+          if (data.name && data.whatsapp) {
+            window.staffWhatsAppMap[data.name] = data.whatsapp;
+          }
+
+          staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role}) - Wpp: ${data.whatsapp}</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
           
           staffCheckboxesDiv.innerHTML += `
             <label class="flex items-center gap-2 text-xs cursor-pointer text-slate-700">
@@ -1291,7 +1295,7 @@
         }
       }
 
-      // ESCUTA EM TEMPO REAL PARA AGENDAMENTOS (ATUALIZAÇÃO INSTANTÂNEA E REMOÇÃO DE CANCELADOS)
+      // ESCUTA EM TEMPO REAL PARA AGENDAMENTOS
       if (bookingsListener) bookingsListener();
       bookingsListener = db.collection('bookings').where('merchantId', '==', currentUser.uid).onSnapshot(snapshot => {
         allBookingsCache = [];
@@ -1313,7 +1317,7 @@
         return;
       }
 
-      // ORDENAÇÃO PERFEITA: Primeiro por Data (decrescente) e depois por Horário (crescente: 09:00, 10:00, 13:30...)
+      // ORDENAÇÃO PERFEITA: Primeiro por Data (decrescente) e depois por Horário (crescente)
       bookingsArray.sort((a, b) => {
         if (a.date !== b.date) {
           return (b.date || '').localeCompare(a.date || '');
@@ -1524,6 +1528,7 @@
       renderServicesList();
 
       const staffSnap = await db.collection('staff').where('merchantId', '==', salonId).get();
+      window.staffWhatsAppMap = {};
       allStaffRaw = [];
       const staffContainer = document.getElementById('client-staff-list');
       staffContainer.innerHTML = '';
@@ -1533,6 +1538,11 @@
         staffSnap.forEach(doc => {
           const data = doc.data();
           allStaffRaw.push({ id: doc.id, ...data });
+
+          if (data.name && data.whatsapp) {
+            window.staffWhatsAppMap[data.name] = data.whatsapp;
+          }
+
           const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
           staffContainer.innerHTML += `
             <div onclick="window.selectStaff(${staffData}, this)" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs opacity-30 pointer-events-none" data-staff-name="${data.name}">
@@ -1685,13 +1695,17 @@
         document.getElementById('summary-price').innerText = totalPrice > 0 ? `R$ ${totalPrice.toFixed(2)}` : 'Sob Consulta';
       }
 
+      // EXIBE OU OCULTA AS ESPECIFICAÇÕES DE CABELO COM BASE EXCLUSIVA NOS SERVIÇOS SELECIONADOS
       if (hasHairService) {
         hairSection.classList.remove('hidden');
         hairSummaryContainer.classList.remove('hidden');
       } else {
         hairSection.classList.add('hidden');
         hairSummaryContainer.classList.add('hidden');
+        document.getElementById('hair-length').value = 'Não informado';
+        document.getElementById('hair-type').value = 'Não informado';
       }
+
       if (document.getElementById('booking-date').value && selectedStaffObj) window.renderTimeSlots();
     };
 
@@ -1883,14 +1897,17 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // BUSCA O WHATSAPP ESPECÍFICO DO PROFISSIONAL ESCOLHIDO (SE CADASTRADO)
         let targetWhatsapp = merchantWhatsapp;
-        if (selectedStaffObj && selectedStaffObj.whatsapp) targetWhatsapp = selectedStaffObj.whatsapp;
+        if (window.staffWhatsAppMap && window.staffWhatsAppMap[staffName]) {
+          targetWhatsapp = window.staffWhatsAppMap[staffName];
+        }
 
         const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}`;
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
-        alert("✅ Agendamento realizado com sucesso!");
+        alert("✅ Agendamento realizado com sucesso e enviado para o WhatsApp do profissional!");
         window.switchTab('reservas');
       } catch (e) { alert("Erro ao agendar: " + e.message); }
     };
