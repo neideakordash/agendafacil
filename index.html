@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v58 - Ibi Agenda com WhatsApp Específico por Profissional e Lógica de Cabelo Inteligente -->
+<!-- v59 - Ibi Agenda com Lembrete Rápido no WhatsApp e Edição de Agendamento Manual -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -279,14 +279,19 @@
         </div>
 
         <div class="space-y-4">
-          <!-- BLOCO 0: AGENDAMENTO MANUAL COM SERVIÇOS POR CATEGORIA E HORÁRIOS SINCRONIZADOS -->
+          <!-- BLOCO 0: AGENDAMENTO MANUAL (CRIAR OU EDITAR) -->
           <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-manual-booking')" class="w-full p-4 flex justify-between items-center bg-indigo-50/50 hover:bg-indigo-50 font-bold text-xs text-indigo-900 cursor-pointer">
-              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> Novo Agendamento Manual (Categorias e Horários Sincronizados)</span>
+              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> <span id="manual-booking-header-title">Novo Agendamento Manual (Categorias e Horários Sincronizados)</span></span>
               <i id="icon-section-manual-booking" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-manual-booking" class="p-5 hidden space-y-4">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 id="manual-booking-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Novo Agendamento Manual</h3>
+                <button type="button" id="btn-cancel-edit-manual" onclick="window.cancelEditManualBooking()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
+              </div>
               <form onsubmit="window.saveManualBooking(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editing-manual-booking-id" value="">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">Nome do Cliente *</label>
                   <input type="text" id="manual-client-name" placeholder="Nome Completo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
@@ -319,7 +324,7 @@
                     </div>
                   </div>
                 </div>
-                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl cursor-pointer">Salvar Agendamento Manual</button>
+                <button type="submit" id="btn-save-manual-booking" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl cursor-pointer">Salvar Agendamento Manual</button>
               </form>
             </div>
           </div>
@@ -587,6 +592,10 @@
              n.includes('relaxament');
     }
 
+    function cleanPhoneDigits(phone) {
+      return (phone || '').replace(/\D/g, '');
+    }
+
     window.switchTab = function(tabId) {
       document.querySelectorAll('.client-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -610,8 +619,8 @@
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
           <p><b>1. Profissionais e WhatsApps Diferentes:</b> Cada colaborador (manicure, cabeleireiro) pode cadastrar o seu próprio WhatsApp para receber os disparos de agendamento dos seus clientes.</p>
-          <p><b>2. Serviços sem Cabelo:</b> Serviços que não sejam capilares (como unhas e estética) não exigem especificações de cabelo.</p>
-          <p><b>3. Agendamentos em Tempo Real:</b> Os agendamentos atualizam instantaneamente e aparecem ordenados por horário.</p>
+          <p><b>2. Lembrete Rápido no WhatsApp:</b> Na lista de agendamentos, clique em <b>Lembrar no WhatsApp</b> para enviar uma confirmação direta para a cliente.</p>
+          <p><b>3. Editar Agendamento Manual:</b> Em agendamentos manuais, clique em <b>Editar</b> para alterar serviços, profissional, data ou horário sem duplicar o registro.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
@@ -793,6 +802,22 @@
       }
     };
 
+    window.sendClientReminderWhatsApp = function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const digits = cleanPhoneDigits(booking.clientPhone);
+      if (!digits) {
+        alert("⚠️ Este agendamento não possui número de WhatsApp válido.");
+        return;
+      }
+      const formattedPhone = digits.startsWith('55') ? digits : `55${digits}`;
+      const storeName = document.getElementById('store-name-input').value || document.getElementById('header-store-name').innerText || "nosso salão";
+      const dateFormatted = booking.date ? booking.date.split('-').reverse().join('/') : 'hoje';
+      const msg = `Olá, ${booking.clientName}! Passando para confirmar seu agendamento no *${storeName}*:\n• Serviço(s): ${booking.serviceName}\n• Profissional: ${booking.staffName}\n• Data: ${dateFormatted} às ${booking.time}`;
+      window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
     window.handleAuth = async function(event) {
       event.preventDefault();
       const email = document.getElementById('auth-email').value;
@@ -918,9 +943,80 @@
       } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
     };
 
+    // EDITAR AGENDAMENTO MANUAL EXISTENTE
+    window.editManualBooking = async function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      document.getElementById('editing-manual-booking-id').value = booking.id;
+      document.getElementById('manual-client-name').value = booking.clientName || '';
+      document.getElementById('manual-client-phone').value = booking.clientPhone || '';
+      document.getElementById('manual-staff-select').value = booking.staffName || '';
+      if (booking.date) {
+        document.getElementById('manual-booking-date').value = booking.date;
+      }
+
+      const selectedNames = (booking.serviceName || '').split(' + ').map(s => s.trim());
+      document.querySelectorAll('.manual-service-checkbox').forEach(cb => {
+        try {
+          const parsed = JSON.parse(cb.value);
+          cb.checked = selectedNames.includes(parsed.name);
+        } catch(e) {
+          cb.checked = false;
+        }
+      });
+
+      manualSelectedTime = booking.time || null;
+
+      document.getElementById('manual-booking-form-title').innerText = "Editar Agendamento Manual";
+      document.getElementById('manual-booking-header-title').innerText = "Novo Agendamento Manual (Editando Registro)";
+      document.getElementById('btn-save-manual-booking').innerText = "Salvar Alterações do Agendamento";
+      document.getElementById('btn-cancel-edit-manual').classList.remove('hidden');
+
+      document.getElementById('section-manual-booking').classList.remove('hidden');
+      document.getElementById('icon-section-manual-booking').className = "fa-solid fa-chevron-up";
+
+      await window.renderManualTimeSlots(booking.id);
+
+      if (manualSelectedTime) {
+        const slotsContainer = document.getElementById('manual-time-slots-container');
+        let matched = false;
+        slotsContainer.querySelectorAll('.manual-time-btn').forEach(btn => {
+          if (btn.innerText === manualSelectedTime) {
+            btn.classList.add('bg-indigo-600', 'text-white');
+            matched = true;
+          }
+        });
+        if (!matched) {
+          slotsContainer.innerHTML = `<button type="button" onclick="window.selectManualTime('${manualSelectedTime}', this)" class="manual-time-btn py-1.5 px-1 text-[11px] font-bold rounded-xl border border-indigo-600 bg-indigo-600 text-white cursor-pointer">${manualSelectedTime}</button>` + slotsContainer.innerHTML;
+        }
+      }
+
+      window.scrollTo({ top: document.getElementById('section-manual-booking').offsetTop - 70, behavior: 'smooth' });
+    };
+
+    window.cancelEditManualBooking = function() {
+      document.getElementById('editing-manual-booking-id').value = '';
+      document.getElementById('manual-client-name').value = '';
+      document.getElementById('manual-client-phone').value = '';
+      document.getElementById('manual-staff-select').value = '';
+      document.getElementById('manual-booking-date').value = new Date().toISOString().split('T')[0];
+      document.querySelectorAll('.manual-service-checkbox').forEach(cb => cb.checked = false);
+      manualSelectedTime = null;
+      document.getElementById('manual-time-slots-container').innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>';
+
+      document.getElementById('manual-booking-form-title').innerText = "Novo Agendamento Manual";
+      document.getElementById('manual-booking-header-title').innerText = "Novo Agendamento Manual (Categorias e Horários Sincronizados)";
+      document.getElementById('btn-save-manual-booking').innerText = "Salvar Agendamento Manual";
+      document.getElementById('btn-cancel-edit-manual').classList.add('hidden');
+    };
+
     // RENDERIZAR HORÁRIOS DISPONÍVEIS NO AGENDAMENTO MANUAL
-    window.renderManualTimeSlots = async function() {
+    window.renderManualTimeSlots = async function(ignoreBookingId = null) {
       if (!currentUser) return;
+      const editingId = typeof ignoreBookingId === 'string'
+        ? ignoreBookingId
+        : document.getElementById('editing-manual-booking-id').value;
       const dateVal = document.getElementById('manual-booking-date').value;
       const staffName = document.getElementById('manual-staff-select').value;
       const checkboxes = document.querySelectorAll('.manual-service-checkbox:checked');
@@ -955,6 +1051,7 @@
         if (staffName) query = query.where('staffName', '==', staffName);
         const snapshot = await query.get();
         snapshot.forEach(doc => {
+          if (editingId && doc.id === editingId) return;
           const d = doc.data();
           const [h, m] = d.time.split(':').map(Number);
           const startMins = h * 60 + m;
@@ -1018,9 +1115,10 @@
         const hourStr = slotHour.toString().padStart(2, '0');
         const minStr = slotMin.toString().padStart(2, '0');
         const timeString = `${hourStr}:${minStr}`;
+        const activeBtnClass = manualSelectedTime === timeString ? 'bg-indigo-600 text-white' : 'bg-slate-50 hover:bg-indigo-600 hover:text-white';
 
         count++;
-        slotsContainer.innerHTML += `<button type="button" onclick="window.selectManualTime('${timeString}', this)" class="manual-time-btn py-1.5 px-1 text-[11px] font-bold rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
+        slotsContainer.innerHTML += `<button type="button" onclick="window.selectManualTime('${timeString}', this)" class="manual-time-btn py-1.5 px-1 text-[11px] font-bold rounded-xl border border-slate-200 ${activeBtnClass} cursor-pointer">${timeString}</button>`;
       }
 
       if (count === 0) slotsContainer.innerHTML = '<p class="text-[10px] text-rose-500 col-span-3 text-center py-2">Nenhum horário disponível.</p>';
@@ -1036,6 +1134,7 @@
       event.preventDefault();
       if (!currentUser) return;
       try {
+        const editingId = document.getElementById('editing-manual-booking-id').value;
         const clientName = document.getElementById('manual-client-name').value.trim();
         const clientPhone = document.getElementById('manual-client-phone').value.trim();
         const staffName = document.getElementById('manual-staff-select').value;
@@ -1067,7 +1166,7 @@
 
         const servicesCombinedName = serviceNamesArray.join(' + ');
 
-        await db.collection('bookings').add({
+        const payload = {
           merchantId: currentUser.uid,
           serviceName: servicesCombinedName,
           staffName,
@@ -1079,20 +1178,23 @@
           time: manualSelectedTime,
           clientName,
           clientPhone,
-          rating: 0,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+          isManual: true
+        };
 
-        alert("✅ Agendamento manual realizado e horários sincronizados com sucesso!");
-        document.getElementById('manual-client-name').value = '';
-        document.getElementById('manual-client-phone').value = '';
-        document.getElementById('manual-booking-date').value = new Date().toISOString().split('T')[0];
-        checkboxes.forEach(cb => cb.checked = false);
-        manualSelectedTime = null;
-        document.getElementById('manual-time-slots-container').innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>';
+        if (editingId) {
+          await db.collection('bookings').doc(editingId).update(payload);
+          alert("✅ Agendamento manual atualizado com sucesso!");
+        } else {
+          payload.rating = 0;
+          payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('bookings').add(payload);
+          alert("✅ Agendamento manual realizado e horários sincronizados com sucesso!");
+        }
+
+        window.cancelEditManualBooking();
         loadAdminData();
       } catch (e) {
-        alert("Erro ao realizar agendamento manual: " + e.message);
+        alert("Erro ao salvar agendamento manual: " + e.message);
       }
     };
 
@@ -1165,7 +1267,7 @@
       staffCheckboxesDiv.innerHTML = '';
       if (manualStaffSelect) manualStaffSelect.innerHTML = '<option value="">Selecione o Profissional...</option>';
       
-      window.staffWhatsAppMap = {}; // Guarda o WhatsApp direto de cada profissional
+      window.staffWhatsAppMap = {};
       allStaffRaw = [];
       if (staffSnap.empty) {
         staffCheckboxesDiv.innerHTML = '<p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>';
@@ -1317,7 +1419,6 @@
         return;
       }
 
-      // ORDENAÇÃO PERFEITA: Primeiro por Data (decrescente) e depois por Horário (crescente)
       bookingsArray.sort((a, b) => {
         if (a.date !== b.date) {
           return (b.date || '').localeCompare(a.date || '');
@@ -1326,13 +1427,24 @@
       });
 
       bookingsArray.forEach(data => {
+        const isManualBooking = data.isManual || (data.hairSpecs || '').toLowerCase().includes('manual');
+        const editBtnHtml = isManualBooking
+          ? `<button type="button" onclick="window.editManualBooking('${data.id}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg cursor-pointer flex items-center gap-1"><i class="fa-solid fa-pen"></i> Editar</button>`
+          : '';
+
         bookingsContainer.innerHTML += `
-          <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
+          <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-2 border border-slate-200">
             <div class="flex justify-between">
               <b>${data.clientName} (${data.clientPhone})</b>
               <span class="text-emerald-600 font-bold">${data.date ? data.date.split('-').reverse().join('/') : ''} às ${data.time}</span>
             </div>
             <p class="text-slate-600">Serviço(s): <b>${data.serviceName}</b> | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'} | Valor: ${data.price > 0 ? 'R$ ' + data.price.toFixed(2) : 'Sob Consulta'}</p>
+            <div class="flex flex-wrap gap-2 pt-1.5 border-t border-slate-200/80">
+              <button type="button" onclick="window.sendClientReminderWhatsApp('${data.id}')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer flex items-center gap-1">
+                <i class="fa-brands fa-whatsapp"></i> Lembrar no WhatsApp
+              </button>
+              ${editBtnHtml}
+            </div>
           </div>
         `;
       });
@@ -1695,7 +1807,6 @@
         document.getElementById('summary-price').innerText = totalPrice > 0 ? `R$ ${totalPrice.toFixed(2)}` : 'Sob Consulta';
       }
 
-      // EXIBE OU OCULTA AS ESPECIFICAÇÕES DE CABELO COM BASE EXCLUSIVA NOS SERVIÇOS SELECIONADOS
       if (hasHairService) {
         hairSection.classList.remove('hidden');
         hairSummaryContainer.classList.remove('hidden');
@@ -1897,7 +2008,6 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // BUSCA O WHATSAPP ESPECÍFICO DO PROFISSIONAL ESCOLHIDO (SE CADASTRADO)
         let targetWhatsapp = merchantWhatsapp;
         if (window.staffWhatsAppMap && window.staffWhatsAppMap[staffName]) {
           targetWhatsapp = window.staffWhatsAppMap[staffName];
