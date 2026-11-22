@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v59 - Ibi Agenda com Lembrete Rápido no WhatsApp e Edição de Agendamento Manual -->
+<!-- v60 - Ibi Agenda com Bloqueio de Clique Duplo, Google Agenda e Kit de Divulgação -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts: Inter -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
@@ -91,8 +93,8 @@
           </div>
 
           <div class="pt-3 border-t border-slate-100">
-            <button onclick="window.openRegisterMode()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
-              <i class="fa-solid fa-rocket"></i> É lojista? Cadastre seu salão aqui
+            <button onclick="window.toggleAdminView()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+              <i class="fa-solid fa-store"></i> É lojista? Acesse seu painel aqui
             </button>
           </div>
         </div>
@@ -100,7 +102,6 @@
 
       <!-- ABA 2: AGENDAR -->
       <div id="tab-agenda" class="client-tab hidden space-y-6">
-        <!-- SELETOR DE CATEGORIAS EXCLUSIVO -->
         <div id="category-filters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -120,7 +121,6 @@
                 </div>
               </div>
 
-              <!-- ESPECIFICAÇÕES DO CABELO (APARECE APENAS SE HOUVER SERVIÇO DE CABELO) -->
               <div id="hair-specs-section" class="pt-3 border-t border-slate-100 hidden">
                 <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo (Obrigatório para Cabelos)</label>
                 <div class="grid grid-cols-2 gap-2">
@@ -170,10 +170,10 @@
                 <div class="flex justify-between pt-2 border-t border-slate-100"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Nenhum</span></div>
                 <div id="summary-hair-container" class="flex justify-between hidden"><span class="text-slate-400">Cabelo:</span><span id="summary-hair" class="font-bold text-right">Não informado</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Data/Hora:</span><span id="summary-datetime" class="font-bold">--/-- --:--</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Término estimado:</span><span id="summary-end-time" class="font-bold">--:--</span></div>
                 <div class="flex justify-between text-sm font-extrabold text-indigo-600 pt-2 border-t border-slate-100"><span>Total:</span><span id="summary-price">R$ 0,00</span></div>
               </div>
 
-              <!-- DADOS OBRIGATÓRIOS -->
               <div class="space-y-3 pt-2 border-t border-slate-100">
                 <input type="text" id="client-name-input" placeholder="Seu Nome Completo *" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none font-semibold">
                 <input type="tel" id="client-phone" placeholder="Seu WhatsApp com DDD *" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none font-semibold">
@@ -185,9 +185,15 @@
                 </a>
               </div>
 
-              <button onclick="window.confirmBooking()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs cursor-pointer">
-                <i class="fa-brands fa-whatsapp text-base"></i> Confirmar Agendamento
+              <button id="btn-confirm-booking" onclick="window.confirmBooking()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs cursor-pointer">
+                <i class="fa-brands fa-whatsapp text-base"></i> <span>Confirmar Agendamento</span>
               </button>
+
+              <div id="post-booking-actions" class="hidden pt-2 border-t border-slate-100 space-y-2">
+                <a id="google-calendar-link" href="#" target="_blank" class="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5">
+                  <i class="fa-brands fa-google"></i> Adicionar ao Google Agenda
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -197,7 +203,7 @@
       <div id="tab-reservas" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 text-center">
           <h3 class="text-lg font-extrabold text-slate-900">Meus Agendamentos</h3>
-          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados e avaliar:</p>
+          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados, adicionar ao Google Agenda ou cancelar:</p>
           <div class="flex gap-2 max-w-md mx-auto">
             <input type="tel" id="search-phone" placeholder="(00) 00000-0000" class="flex-grow px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
             <button onclick="window.searchClientBookings()" class="px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar</button>
@@ -211,7 +217,6 @@
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
           <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista (Entrar)</span><i class="fa-solid fa-store"></i></div>
-          <div onclick="window.openRegisterMode()" class="py-3.5 flex justify-between items-center text-emerald-600 cursor-pointer"><span>Cadastrar meu Salão / Negócio</span><i class="fa-solid fa-rocket"></i></div>
         </div>
       </div>
 
@@ -268,6 +273,9 @@
               <button onclick="window.shareOnWhatsApp()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
                 <i class="fa-brands fa-whatsapp"></i> Compartilhar WhatsApp
               </button>
+              <button onclick="window.toggleSection('section-share-kit')" class="px-2.5 py-1 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-qrcode"></i> Kit de Divulgação
+              </button>
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -279,6 +287,34 @@
         </div>
 
         <div class="space-y-4">
+          <!-- KIT DE DIVULGAÇÃO (QR CODE + TEXTOS PRONTOS) -->
+          <div class="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-share-kit')" class="w-full p-4 flex justify-between items-center bg-violet-50/50 hover:bg-violet-50 font-bold text-xs text-violet-900 cursor-pointer">
+              <span><i class="fa-solid fa-qrcode mr-2 text-violet-600"></i> Divulgar Meu Link (QR Code, Bio do Instagram e WhatsApp)</span>
+              <i id="icon-section-share-kit" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-share-kit" class="p-5 hidden space-y-4 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                  <div id="salon-qrcode-box"></div>
+                  <span class="text-[10px] text-slate-500 text-center">Aponte a câmera para abrir a agenda</span>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Texto pronto para Bio do Instagram</label>
+                    <textarea id="promo-bio-text" rows="2" readonly class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-700 outline-none"></textarea>
+                    <button type="button" onclick="window.copyPromoText('promo-bio-text')" class="mt-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] cursor-pointer">Copiar Bio</button>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Texto pronto para WhatsApp / Clientes</label>
+                    <textarea id="promo-wpp-text" rows="3" readonly class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-700 outline-none"></textarea>
+                    <button type="button" onclick="window.copyPromoText('promo-wpp-text')" class="mt-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] cursor-pointer">Copiar Mensagem WhatsApp</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- BLOCO 0: AGENDAMENTO MANUAL (CRIAR OU EDITAR) -->
           <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-manual-booking')" class="w-full p-4 flex justify-between items-center bg-indigo-50/50 hover:bg-indigo-50 font-bold text-xs text-indigo-900 cursor-pointer">
@@ -297,8 +333,8 @@
                   <input type="text" id="manual-client-name" placeholder="Nome Completo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
                 </div>
                 <div>
-                  <label class="block font-bold text-slate-700 mb-1">WhatsApp do Cliente *</label>
-                  <input type="tel" id="manual-client-phone" placeholder="(00) 00000-0000" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
+                  <label class="block font-bold text-slate-700 mb-1">WhatsApp do Cliente</label>
+                  <input type="tel" id="manual-client-phone" placeholder="(00) 00000-0000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
                 </div>
                 <div>
                   <label class="block font-bold text-slate-700 mb-1.5">Selecione o(s) Serviço(s) por Categoria *</label>
@@ -355,7 +391,7 @@
             </div>
           </div>
 
-          <!-- BLOCO 2: PROFISSIONAIS (CADA UM COM SEU WHATSAPP) -->
+          <!-- BLOCO 2: PROFISSIONAIS -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
               <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais (Manicure, Cabeleireiro, etc.)</span>
@@ -434,7 +470,6 @@
             </button>
             <div id="section-bookings" class="p-5 hidden space-y-4 text-xs">
               
-              <!-- FILTROS DE CONSULTA -->
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pb-3 border-b border-slate-100">
                 <button onclick="window.filterBookings('today')" class="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl cursor-pointer">📅 Hoje</button>
                 <button onclick="window.filterBookings('single')" class="py-2 px-3 bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold rounded-xl cursor-pointer">🎯 Data Única</button>
@@ -442,7 +477,6 @@
                 <button onclick="window.filterBookings('monthly')" class="py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl cursor-pointer">📊 Mês</button>
               </div>
 
-              <!-- PAINEL DE DATA ÚNICA -->
               <div id="filter-single-box" class="hidden p-3 bg-violet-50/50 border border-violet-100 rounded-xl space-y-2">
                 <span class="font-bold text-violet-900">Selecione a Data Específica:</span>
                 <div class="flex gap-2">
@@ -451,7 +485,6 @@
                 </div>
               </div>
 
-              <!-- PAINEL DE FILTRO POR PERÍODO -->
               <div id="filter-period-box" class="hidden p-3 bg-slate-50 rounded-xl space-y-2">
                 <span class="font-bold text-slate-700">Selecione o Período:</span>
                 <div class="grid grid-cols-2 gap-2">
@@ -461,7 +494,6 @@
                 <button onclick="window.applyPeriodFilter()" class="w-full py-1.5 bg-indigo-600 text-white font-bold rounded-lg cursor-pointer">Filtrar Período</button>
               </div>
 
-              <!-- PAINEL DE FECHAMENTO DO MÊS -->
               <div id="filter-monthly-box" class="hidden p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
                 <span class="font-bold text-emerald-900">Selecione o Mês e Ano:</span>
                 <div class="flex gap-2">
@@ -471,7 +503,6 @@
                 <div id="monthly-summary-result" class="pt-2 text-emerald-900 font-semibold"></div>
               </div>
 
-              <!-- BUSCA POR NOME -->
               <div class="flex gap-2 pt-2">
                 <input type="text" id="admin-search-client-name" placeholder="Ou digite o nome do cliente para histórico..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <button onclick="window.adminSearchClientHistory()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">Buscar Nome</button>
@@ -547,11 +578,13 @@
     let manualSelectedTime = null;
     let merchantWhatsapp = "5511999999999";
     let merchantPaymentLink = "";
+    let salonAddress = "Atendimento com hora marcada";
     let allServicesRaw = [];
     let allStaffRaw = [];
     let allBookingsCache = [];
     let currentCategoryFilter = '';
     let bookingsListener = null;
+    let isSubmittingBooking = false;
 
     let weeklySchedule = {
       0: { active: false, open: "08:00", close: "18:00" },
@@ -575,6 +608,44 @@
       const remainingMins = mins % 60;
       if (remainingMins === 0) return `${hours}h`;
       return `${hours}h ${remainingMins}min`;
+    }
+
+    function minsToTimeStr(totalMins) {
+      const h = Math.floor(totalMins / 60) % 24;
+      const m = totalMins % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
+
+    function buildGoogleCalendarUrl(title, dateStr, timeStr, durationMins, details, location) {
+      const [y, m, d] = dateStr.split('-');
+      const [hh, mm] = timeStr.split(':');
+      const startDate = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), 0);
+      const endDate = new Date(startDate.getTime() + (durationMins || 30) * 60000);
+
+      const pad = (n) => n.toString().padStart(2, '0');
+      const fmt = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: title,
+        dates: `${fmt(startDate)}/${fmt(endDate)}`,
+        details: details || '',
+        location: location || ''
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+
+    function updateSummaryEndTime() {
+      const endEl = document.getElementById('summary-end-time');
+      if (!endEl) return;
+      const dateVal = document.getElementById('booking-date').value;
+      if (!selectedTime || !dateVal || selectedServices.length === 0) {
+        endEl.innerText = '--:--';
+        return;
+      }
+      const totalDur = selectedServices.reduce((acc, s) => acc + (s.duration || 30), 0);
+      const [h, m] = selectedTime.split(':').map(Number);
+      endEl.innerText = minsToTimeStr(h * 60 + m + totalDur);
     }
 
     function isHairRelated(category, name) {
@@ -618,15 +689,15 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
-          <p><b>1. Profissionais e WhatsApps Diferentes:</b> Cada colaborador (manicure, cabeleireiro) pode cadastrar o seu próprio WhatsApp para receber os disparos de agendamento dos seus clientes.</p>
-          <p><b>2. Lembrete Rápido no WhatsApp:</b> Na lista de agendamentos, clique em <b>Lembrar no WhatsApp</b> para enviar uma confirmação direta para a cliente.</p>
-          <p><b>3. Editar Agendamento Manual:</b> Em agendamentos manuais, clique em <b>Editar</b> para alterar serviços, profissional, data ou horário sem duplicar o registro.</p>
+          <p><b>1. Kit de Divulgação:</b> Acesse o QR Code do seu salão e copie textos prontos para a bio do Instagram e WhatsApp.</p>
+          <p><b>2. Lembrete Rápido no WhatsApp:</b> Na lista de agendamentos, clique em <b>Lembrar no WhatsApp</b> para enviar confirmação com 1 toque.</p>
+          <p><b>3. Editar Agendamento Manual:</b> Em agendamentos manuais, clique em <b>Editar</b> para alterar serviços, profissional, data ou horário sem duplicar.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
-          <p><b>1. Escolher Serviços:</b> Selecione seus serviços por categoria.</p>
-          <p><b>2. Confirmação Direta:</b> O agendamento é enviado para o WhatsApp do profissional específico escolhido.</p>
+          <p><b>1. Escolher Serviços:</b> Selecione seus serviços por categoria e veja o horário estimado de término.</p>
+          <p><b>2. Google Agenda e Reservas:</b> Após confirmar, você pode salvar no Google Agenda ou consultar/cancelar na aba Reservas.</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -641,10 +712,10 @@
       const icon = document.getElementById(`icon-${sectionId}`);
       if (el.classList.contains('hidden')) {
         el.classList.remove('hidden');
-        icon.className = "fa-solid fa-chevron-up";
+        if (icon) icon.className = "fa-solid fa-chevron-up";
       } else {
         el.classList.add('hidden');
-        icon.className = "fa-solid fa-chevron-down";
+        if (icon) icon.className = "fa-solid fa-chevron-down";
       }
     };
 
@@ -676,7 +747,7 @@
         await auth.sendPasswordResetEmail(email);
         alert(`📧 E-mail de recuperação enviado para: ${email}`);
       } catch (error) {
-        alert("Erro ao enviar e-mail: " + error.message);
+        alert("Conexão instável ou erro ao enviar e-mail. Tente novamente em instantes.");
       }
     };
 
@@ -767,6 +838,33 @@
       }
     };
 
+    function renderShareKit(linkUrl, storeName) {
+      const qrBox = document.getElementById('salon-qrcode-box');
+      if (qrBox && typeof QRCode !== 'undefined') {
+        qrBox.innerHTML = '';
+        new QRCode(qrBox, {
+          text: linkUrl,
+          width: 128,
+          height: 128
+        });
+      }
+      const bioInput = document.getElementById('promo-bio-text');
+      const wppInput = document.getElementById('promo-wpp-text');
+      if (bioInput) {
+        bioInput.value = `✨ Agende seu horário no ${storeName} sem fila:\n${linkUrl}`;
+      }
+      if (wppInput) {
+        wppInput.value = `Olá! Agora você pode agendar seu horário no *${storeName}* a qualquer hora pelo nosso link:\n${linkUrl}`;
+      }
+    }
+
+    window.copyPromoText = function(elementId) {
+      const el = document.getElementById(elementId);
+      if (!el || !el.value) return;
+      navigator.clipboard.writeText(el.value);
+      alert("📋 Texto copiado!");
+    };
+
     auth.onAuthStateChanged((user) => {
       currentUser = user;
       if (user) {
@@ -777,6 +875,7 @@
         const fullSalonLink = `${window.location.origin}${window.location.pathname}?salao=${user.uid}`;
         document.getElementById('merchant-link-display').innerHTML = `Link do salão: <a href="${fullSalonLink}" target="_blank" class="text-indigo-600 underline">${fullSalonLink}</a>`;
         window.generatedMerchantLink = fullSalonLink;
+        renderShareKit(fullSalonLink, document.getElementById('store-name-input').value || "nosso salão");
 
         loadAdminData();
       } else {
@@ -824,7 +923,7 @@
       const password = document.getElementById('auth-password').value;
       try {
         await auth.signInWithEmailAndPassword(email, password);
-      } catch (error) { alert("Erro: " + error.message); }
+      } catch (error) { alert("Erro ao entrar. Verifique seus dados ou tente novamente em instantes."); }
     };
 
     window.logoutMerchant = function() { auth.signOut(); };
@@ -833,18 +932,28 @@
       if (!currentUser) return;
       if (confirm("Tem certeza que deseja excluir sua conta e todos os dados associados? Esta ação é irreversível.")) {
         try {
-          const services = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
-          services.forEach(doc => doc.ref.delete());
-          const staff = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
-          staff.forEach(doc => doc.ref.delete());
+          const uid = currentUser.uid;
+          const services = await db.collection('services').where('merchantId', '==', uid).get();
+          const staff = await db.collection('staff').where('merchantId', '==', uid).get();
+          const bookings = await db.collection('bookings').where('merchantId', '==', uid).get();
+
+          const deletes = [
+            ...services.docs.map(doc => doc.ref.delete()),
+            ...staff.docs.map(doc => doc.ref.delete()),
+            ...bookings.docs.map(doc => doc.ref.delete()),
+            db.collection('settings').doc(uid).delete()
+          ];
+
+          await Promise.all(deletes);
           await currentUser.delete();
-          alert("Conta excluída com sucesso.");
+          alert("Conta e dados da loja excluídos com sucesso.");
+          window.location.href = window.location.pathname;
         } catch (error) {
           if (error.code === 'auth/requires-recent-login') {
             alert("Por segurança, faça login novamente antes de excluir a conta.");
             auth.signOut();
           } else {
-            alert("Erro: " + error.message);
+            alert("Conexão instável, tente novamente em instantes.");
           }
         }
       }
@@ -877,9 +986,10 @@
         if (logoUrl) updateData.logoUrl = logoUrl;
 
         await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
+        renderShareKit(window.generatedMerchantLink, name || "nosso salão");
         alert("Perfil, Endereço e Link de Pagamento salvos!");
         loadAdminData();
-      } catch (e) { alert("Erro: " + e.message); }
+      } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
 
     window.saveStaff = async function(event) {
@@ -900,7 +1010,7 @@
         document.getElementById('staff-whatsapp').value = '';
         loadAdminData();
         alert("Profissional e WhatsApp direto cadastrados com sucesso!");
-      } catch (e) { alert("Erro: " + e.message); }
+      } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
 
     window.saveService = async function(event) {
@@ -940,10 +1050,9 @@
 
         window.cancelEditService();
         loadAdminData();
-      } catch (e) { alert("Erro ao salvar serviço: " + e.message); }
+      } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
 
-    // EDITAR AGENDAMENTO MANUAL EXISTENTE
     window.editManualBooking = async function(bookingId) {
       const booking = allBookingsCache.find(b => b.id === bookingId);
       if (!booking) return;
@@ -1011,7 +1120,6 @@
       document.getElementById('btn-cancel-edit-manual').classList.add('hidden');
     };
 
-    // RENDERIZAR HORÁRIOS DISPONÍVEIS NO AGENDAMENTO MANUAL
     window.renderManualTimeSlots = async function(ignoreBookingId = null) {
       if (!currentUser) return;
       const editingId = typeof ignoreBookingId === 'string'
@@ -1142,8 +1250,8 @@
 
         const checkboxes = document.querySelectorAll('.manual-service-checkbox:checked');
 
-        if (!clientName || !clientPhone || checkboxes.length === 0 || !staffName || !date || !manualSelectedTime) {
-          alert("⚠️ Preencha o nome, WhatsApp, selecione os serviços, o profissional, a data e clique em um horário disponível!");
+        if (!clientName || checkboxes.length === 0 || !staffName || !date || !manualSelectedTime) {
+          alert("⚠️ Preencha o nome, selecione os serviços, o profissional, a data e clique em um horário disponível!");
           return;
         }
 
@@ -1166,6 +1274,13 @@
 
         const servicesCombinedName = serviceNamesArray.join(' + ');
 
+        const hasConflict = await checkSlotConflict(currentUser.uid, staffName, date, manualSelectedTime, totalDuration, totalInterval, editingId || null);
+        if (hasConflict) {
+          alert("⚠️ Esse horário acabou de ser ocupado. Escolha outro horário disponível.");
+          await window.renderManualTimeSlots(editingId || null);
+          return;
+        }
+
         const payload = {
           merchantId: currentUser.uid,
           serviceName: servicesCombinedName,
@@ -1177,7 +1292,7 @@
           date,
           time: manualSelectedTime,
           clientName,
-          clientPhone,
+          clientPhone: clientPhone || 'Não informado',
           isManual: true
         };
 
@@ -1194,7 +1309,7 @@
         window.cancelEditManualBooking();
         loadAdminData();
       } catch (e) {
-        alert("Erro ao salvar agendamento manual: " + e.message);
+        alert("Conexão instável, tente novamente em instantes.");
       }
     };
 
@@ -1256,6 +1371,7 @@
           window.salonSchedule = data.weeklySchedule;
           renderScheduleInputs(data.weeklySchedule);
         }
+        renderShareKit(window.generatedMerchantLink, data.storeName || "nosso salão");
       }
 
       const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
@@ -1306,7 +1422,6 @@
       servicesArray.sort((a, b) => (a.order || 0) - (b.order || 0));
       allServicesRaw = servicesArray;
 
-      // Renderizar checkboxes do agendamento manual AGRUPADOS POR CATEGORIA
       const manualServicesDiv = document.getElementById('manual-services-checkboxes');
       if (manualServicesDiv) {
         manualServicesDiv.innerHTML = '';
@@ -1352,7 +1467,6 @@
         }
       }
 
-      // Renderizar serviços agrupados por categoria no painel admin
       const servicesContainer = document.getElementById('admin-services-list');
       servicesContainer.innerHTML = '';
       
@@ -1397,7 +1511,6 @@
         }
       }
 
-      // ESCUTA EM TEMPO REAL PARA AGENDAMENTOS
       if (bookingsListener) bookingsListener();
       bookingsListener = db.collection('bookings').where('merchantId', '==', currentUser.uid).onSnapshot(snapshot => {
         allBookingsCache = [];
@@ -1542,13 +1655,12 @@
         } else {
           container.innerHTML = `<p class="text-xs font-bold text-slate-700 mb-2">Total de atendimentos encontrados: ${totalAtendimentos}</p>` + htmlList;
         }
-      } catch (e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro ao buscar histórico.</p>'; }
+      } catch (e) { container.innerHTML = '<p class="text-xs text-rose-500">Conexão instável, tente novamente em instantes.</p>'; }
     };
 
     window.deleteStaff = async function(id) { await db.collection('staff').doc(id).delete(); loadAdminData(); };
     window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
 
-    // CARREGAR DADOS DO CLIENTE / SALÃO
     async function loadClientData() {
       let salonId = targetMerchantId;
       if (!salonId) {
@@ -1573,6 +1685,7 @@
         document.getElementById('header-store-name').innerText = storeName;
         document.getElementById('home-store-name').innerText = storeName;
         if (data.address) {
+          salonAddress = data.address;
           document.getElementById('home-store-address').innerText = data.address;
         }
         if (data.whatsapp) merchantWhatsapp = data.whatsapp;
@@ -1785,6 +1898,7 @@
       }
 
       updateStaffAvailability();
+      updateSummaryEndTime();
 
       const summaryContainer = document.getElementById('summary-services-container');
       let totalPrice = 0;
@@ -1842,8 +1956,39 @@
       ];
     }
 
+    async function checkSlotConflict(merchantId, staffName, dateVal, timeVal, durationMins, intervalMins, ignoreDocId = null) {
+      const [h, m] = timeVal.split(':').map(Number);
+      const startMins = h * 60 + m;
+      const newRanges = getBusyRanges(startMins, durationMins || 30, intervalMins || 0);
+
+      const snapshot = await db.collection('bookings')
+        .where('merchantId', '==', merchantId)
+        .where('date', '==', dateVal)
+        .where('staffName', '==', staffName)
+        .get();
+
+      for (const doc of snapshot.docs) {
+        if (ignoreDocId && doc.id === ignoreDocId) continue;
+        const d = doc.data();
+        if (!d.time) continue;
+        const [eh, em] = d.time.split(':').map(Number);
+        const existingRanges = getBusyRanges(eh * 60 + em, d.duration || 30, d.interval || 0);
+        for (const nr of newRanges) {
+          for (const er of existingRanges) {
+            if (nr.start < er.end && nr.end > er.start) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
     window.renderTimeSlots = async function() {
       const dateVal = document.getElementById('booking-date').value;
+      selectedTime = null;
+      updateSummaryEndTime();
+
       if (!dateVal || selectedServices.length === 0 || !selectedStaffObj) {
         document.getElementById('time-slots-container').innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione serviços, profissional e data.</p>';
         return;
@@ -1950,9 +2095,12 @@
       selectedTime = time;
       const dateVal = document.getElementById('booking-date').value.split('-').reverse().join('/');
       document.getElementById('summary-datetime').innerText = `${dateVal} às ${time}`;
+      updateSummaryEndTime();
     };
 
     window.confirmBooking = async function() {
+      if (isSubmittingBooking) return;
+
       const name = document.getElementById('client-name-input').value.trim();
       const phone = document.getElementById('client-phone').value.trim();
       const date = document.getElementById('booking-date').value;
@@ -1968,13 +2116,19 @@
         return;
       }
 
+      const btn = document.getElementById('btn-confirm-booking');
+      const btnText = btn ? btn.querySelector('span') : null;
+      isSubmittingBooking = true;
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.innerText = "Confirmando horário...";
+
       let totalDuration = 0;
       let totalInterval = 0;
       let totalPrice = 0;
       let serviceNamesArray = [];
 
       selectedServices.forEach(s => {
-        totalDuration += (s.duration || 0);
+        totalDuration += (s.duration || 30);
         totalInterval += (s.interval || 0);
         totalPrice += (s.price || 0);
         serviceNamesArray.push(s.name);
@@ -1982,6 +2136,7 @@
 
       const servicesCombinedName = serviceNamesArray.join(' + ');
       const staffName = selectedStaffObj.name;
+      const mId = selectedServices[0].merchantId || window.currentSalonId;
 
       let hairSpecs = 'Não aplicável';
       const hasHair = selectedServices.some(s => isHairRelated(s.category, s.name));
@@ -1992,8 +2147,15 @@
       }
 
       try {
+        const conflict = await checkSlotConflict(mId, staffName, date, selectedTime, totalDuration, totalInterval);
+        if (conflict) {
+          alert("⚠️ Esse horário acabou de ser preenchido. Atualizamos os horários disponíveis para você escolher.");
+          await window.renderTimeSlots();
+          return;
+        }
+
         await db.collection('bookings').add({
-          merchantId: selectedServices[0].merchantId || window.currentSalonId,
+          merchantId: mId,
           serviceName: servicesCombinedName,
           staffName,
           hairSpecs,
@@ -2008,18 +2170,39 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        const storeName = document.getElementById('header-store-name').innerText || "Salão";
+        const gcalUrl = buildGoogleCalendarUrl(
+          `${servicesCombinedName} - ${storeName}`,
+          date,
+          selectedTime,
+          totalDuration,
+          `Profissional: ${staffName} | Cliente: ${name}`,
+          salonAddress
+        );
+        const gcalBtn = document.getElementById('google-calendar-link');
+        const postBox = document.getElementById('post-booking-actions');
+        if (gcalBtn && postBox) {
+          gcalBtn.href = gcalUrl;
+          postBox.classList.remove('hidden');
+        }
+
         let targetWhatsapp = merchantWhatsapp;
         if (window.staffWhatsAppMap && window.staffWhatsAppMap[staffName]) {
           targetWhatsapp = window.staffWhatsAppMap[staffName];
         }
 
-        const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}`;
+        const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}\n\nPrecisando desmarcar ou remarcar, avise com antecedência pela aba Reservas.`;
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
-        alert("✅ Agendamento realizado com sucesso e enviado para o WhatsApp do profissional!");
-        window.switchTab('reservas');
-      } catch (e) { alert("Erro ao agendar: " + e.message); }
+        alert("✅ Agendamento realizado com sucesso! Você também pode adicionar ao Google Agenda.");
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      } finally {
+        isSubmittingBooking = false;
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = "Confirmar Agendamento";
+      }
     };
 
     window.searchClientBookings = async function() {
@@ -2035,6 +2218,11 @@
         
         snap.forEach(doc => {
           const d = doc.data();
+          const storeName = document.getElementById('header-store-name').innerText || "Salão";
+          const gcalHref = (d.date && d.time)
+            ? buildGoogleCalendarUrl(`${d.serviceName} - ${storeName}`, d.date, d.time, d.duration || 30, `Profissional: ${d.staffName}`, salonAddress)
+            : '#';
+
           container.innerHTML += `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-2">
               <div class="flex justify-between items-center">
@@ -2043,15 +2231,18 @@
               </div>
               <p class="text-slate-500">Profissional: ${d.staffName} | Cabelo: ${d.hairSpecs}</p>
               
-              <div class="flex justify-between items-center pt-2 border-t border-slate-200">
-                <div class="flex gap-1 text-amber-500 text-sm cursor-pointer" onclick="window.rateBooking('${doc.id}', 5)">
-                  <span>${d.rating ? '★'.repeat(d.rating) : '☆☆☆☆☆ Avaliar'}</span>
+              <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-200">
+                <div class="flex gap-2 items-center">
+                  <div class="flex gap-1 text-amber-500 text-sm cursor-pointer" onclick="window.rateBooking('${doc.id}', 5)">
+                    <span>${d.rating ? '★'.repeat(d.rating) : '☆☆☆☆☆ Avaliar'}</span>
+                  </div>
+                  <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold rounded-lg">Google Agenda</a>
                 </div>
                 <button onclick="window.cancelBooking('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Cancelar Horário</button>
               </div>
             </div>`;
         });
-      } catch(e) { container.innerHTML = '<p class="text-xs text-rose-500">Erro na busca.</p>'; }
+      } catch(e) { container.innerHTML = '<p class="text-xs text-rose-500">Conexão instável, tente novamente em instantes.</p>'; }
     };
 
     window.cancelBooking = async function(bookingId) {
@@ -2061,7 +2252,7 @@
           alert("Agendamento cancelado com sucesso.");
           window.searchClientBookings();
         } catch (e) {
-          alert("Erro ao cancelar: " + e.message);
+          alert("Conexão instável, tente novamente em instantes.");
         }
       }
     };
@@ -2072,7 +2263,7 @@
         alert("Obrigado pela sua avaliação!");
         window.searchClientBookings();
       } catch (e) {
-        alert("Erro ao avaliar: " + e.message);
+        alert("Conexão instável, tente novamente em instantes.");
       }
     };
   </script>
