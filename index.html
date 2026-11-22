@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<!-- v60 - Ibi Agenda com Bloqueio de Clique Duplo, Google Agenda e Kit de Divulgação -->
+<!-- v61 - Ibi Agenda com Slug Amigável, Contagem de 7 Dias de Teste e Tela Inicial na Raiz -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- TÍTULO E META TAGS PARA O WHATSAPP -->
-  <title>Raí Cabeleireiros - Sistema de Agendamento</title>
-  <meta property="og:title" content="Raí Cabeleireiros - Sistema de Agendamento">
+  <title>Ibi Agenda - Agendamento Online para Salões e Estúdios</title>
+  <meta property="og:title" content="Ibi Agenda - Sistema de Agendamento">
   <meta property="og:description" content="Agende seu horário com facilidade e rapidez. Escolha seus serviços e profissionais.">
   <meta property="og:image" content="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500">
   <meta property="og:url" content="https://ibiagenda.com.br">
@@ -43,27 +43,71 @@
   <!-- CABEÇALHO SUPERIOR -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.switchTab('home')">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.handleHeaderBrandClick()">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-sm">
           <i class="fa-solid fa-scissors text-sm"></i>
         </div>
-        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Raí Cabeleireiros</h1>
+        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Ibi Agenda</h1>
       </div>
+      <button onclick="window.toggleAdminView()" class="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl cursor-pointer">
+        Área do Lojista
+      </button>
     </div>
   </header>
 
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-6">
 
+    <!-- LANDING / APRESENTAÇÃO NA RAIZ (QUANDO NÃO HÁ ?salao=) -->
+    <div id="landing-container" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-5">
+        <span class="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[11px] font-bold">
+          Agenda Online para Salões e Estúdios
+        </span>
+        <div class="space-y-2 max-w-xl mx-auto">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Seu salão organizado com hora marcada, sem depender só do WhatsApp
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500">
+            Clientes escolhem serviço, profissional, data e horário livre sozinhos. Você controla encaixes, folgas e atendimentos no painel.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+            <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-link mr-1"></i> Link Exclusivo</div>
+            <p class="text-[11px] text-slate-500">Compartilhe na bio do Instagram e no WhatsApp com link curto e QR Code.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+            <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-clock mr-1"></i> Grade Inteligente</div>
+            <p class="text-[11px] text-slate-500">Evita choque de horários, respeita intervalos e organiza a agenda do dia.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+            <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-gift mr-1"></i> 7 Dias Grátis</div>
+            <p class="text-[11px] text-slate-500">Teste na prática no seu salão antes da assinatura mensal de R$ 50.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <button onclick="window.openRegisterMode()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rocket"></i> Cadastrar Meu Salão (7 Dias Grátis)
+          </button>
+          <button onclick="window.toggleAdminView()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+            <i class="fa-solid fa-store"></i> Já Tenho Conta (Entrar)
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- VISÃO DO CLIENTE -->
-    <div id="client-container" class="space-y-6">
+    <div id="client-container" class="hidden space-y-6">
 
       <!-- ABA 1: INÍCIO -->
       <div id="tab-home" class="client-tab space-y-6">
         <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-4">
           <img id="home-logo-img" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150" class="w-24 h-24 rounded-2xl mx-auto object-cover shadow-md border-2 border-slate-100 hidden" alt="Logo">
           <div>
-            <h2 class="text-2xl font-extrabold text-slate-900" id="home-store-name">Raí Cabeleireiros</h2>
+            <h2 class="text-2xl font-extrabold text-slate-900" id="home-store-name">Salão</h2>
             <p class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-location-dot text-indigo-600"></i> <span id="home-store-address">Atendimento com hora marcada</span>
             </p>
@@ -93,8 +137,8 @@
           </div>
 
           <div class="pt-3 border-t border-slate-100">
-            <button onclick="window.toggleAdminView()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
-              <i class="fa-solid fa-store"></i> É lojista? Acesse seu painel aqui
+            <button onclick="window.openRegisterMode()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rocket"></i> É lojista? Cadastre seu salão (7 dias grátis)
             </button>
           </div>
         </div>
@@ -217,6 +261,7 @@
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
           <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista (Entrar)</span><i class="fa-solid fa-store"></i></div>
+          <div onclick="window.openRegisterMode()" class="py-3.5 flex justify-between items-center text-emerald-600 cursor-pointer"><span>Cadastrar meu Salão (7 dias grátis)</span><i class="fa-solid fa-rocket"></i></div>
         </div>
       </div>
 
@@ -230,7 +275,7 @@
             <i class="fa-solid fa-store"></i>
           </div>
           <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista</h2>
-          <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Gerencie seu estabelecimento.</p>
+          <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Gerencie seu estabelecimento (7 dias grátis para novos salões).</p>
         </div>
 
         <form id="auth-form" onsubmit="window.handleAuth(event)" class="space-y-4">
@@ -243,7 +288,8 @@
             <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
           </div>
 
-          <div class="text-right">
+          <div class="flex justify-between items-center">
+            <button type="button" id="btn-toggle-auth-mode" onclick="window.toggleAuthMode()" class="text-[11px] text-emerald-600 hover:underline font-bold cursor-pointer">Criar conta grátis (7 dias)</button>
             <button type="button" onclick="window.forgotPassword()" class="text-[11px] text-indigo-600 hover:underline font-semibold cursor-pointer">Esqueceu sua senha?</button>
           </div>
 
@@ -261,6 +307,12 @@
       </div>
 
       <div id="admin-dashboard" class="hidden space-y-6">
+        <!-- BANNER DE 7 DIAS DE TESTE -->
+        <div id="trial-status-banner" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div id="trial-status-text" class="font-bold"></div>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold text-[11px]">Mensalidade: R$ 50/mês</span>
+        </div>
+
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-3">
           <div>
             <h2 class="font-extrabold text-slate-900 text-base">Painel Administrativo</h2>
@@ -365,15 +417,16 @@
             </div>
           </div>
 
-          <!-- BLOCO 1: PERFIL, ENDEREÇO, LINK DE PAGAMENTO E EXPEDIENTE -->
+          <!-- BLOCO 1: PERFIL, SLUG AMIGÁVEL, ENDEREÇO, LINK DE PAGAMENTO E EXPEDIENTE -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-profile')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-store mr-2 text-indigo-600"></i> Perfil, Endereço, Pagamento e Expediente</span>
+              <span><i class="fa-solid fa-store mr-2 text-indigo-600"></i> Perfil, Slug Amigável, Endereço, Pagamento e Expediente</span>
               <i id="icon-section-profile" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-profile" class="p-5 hidden space-y-4">
               <form onsubmit="window.saveStoreSettings(event)" class="space-y-3 text-xs">
                 <input type="text" id="store-name-input" placeholder="Nome do Salão" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="store-slug-input" placeholder="Link Curto / Slug (ex: raicabeleireiros)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none lowercase">
                 <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="store-whatsapp-input" placeholder="WhatsApp Principal (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
@@ -535,8 +588,8 @@
     </div>
   </div>
 
-  <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
-  <nav class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-50 h-16 flex items-center justify-around px-2 shadow-lg">
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR (VISÍVEL QUANDO HÁ SALÃO ATIVO) -->
+  <nav id="client-bottom-nav" class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-50 h-16 hidden items-center justify-around px-2 shadow-lg">
     <button onclick="window.switchTab('home')" class="tab-btn flex flex-col items-center text-indigo-600 cursor-pointer" data-tab="home">
       <i class="fa-solid fa-house text-base"></i>
       <span class="text-[10px] font-bold mt-0.5">Início</span>
@@ -572,6 +625,7 @@
     const db = firebase.firestore();
 
     let currentUser = null;
+    let isRegisterMode = false;
     let selectedServices = [];
     let selectedStaffObj = null;
     let selectedTime = null;
@@ -600,6 +654,16 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     let targetMerchantId = urlParams.get('salao');
+
+    function normalizeSlug(text) {
+      return (text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    }
 
     function formatDuration(mins) {
       if (!mins) return '0 min';
@@ -667,6 +731,31 @@
       return (phone || '').replace(/\D/g, '');
     }
 
+    function showLandingScreen() {
+      document.getElementById('landing-container').classList.remove('hidden');
+      document.getElementById('client-container').classList.add('hidden');
+      document.getElementById('admin-view').classList.add('hidden');
+      document.getElementById('client-bottom-nav').classList.add('hidden');
+      document.getElementById('header-store-name').innerText = 'Ibi Agenda';
+      document.title = 'Ibi Agenda - Agendamento Online para Salões e Estúdios';
+    }
+
+    function showClientScreen() {
+      document.getElementById('landing-container').classList.add('hidden');
+      document.getElementById('client-container').classList.remove('hidden');
+      document.getElementById('admin-view').classList.add('hidden');
+      document.getElementById('client-bottom-nav').classList.remove('hidden');
+      document.getElementById('client-bottom-nav').classList.add('flex');
+    }
+
+    window.handleHeaderBrandClick = function() {
+      if (targetMerchantId) {
+        window.switchTab('home');
+      } else if (!currentUser) {
+        showLandingScreen();
+      }
+    };
+
     window.switchTab = function(tabId) {
       document.querySelectorAll('.client-tab').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -689,9 +778,9 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
-          <p><b>1. Kit de Divulgação:</b> Acesse o QR Code do seu salão e copie textos prontos para a bio do Instagram e WhatsApp.</p>
-          <p><b>2. Lembrete Rápido no WhatsApp:</b> Na lista de agendamentos, clique em <b>Lembrar no WhatsApp</b> para enviar confirmação com 1 toque.</p>
-          <p><b>3. Editar Agendamento Manual:</b> Em agendamentos manuais, clique em <b>Editar</b> para alterar serviços, profissional, data ou horário sem duplicar.</p>
+          <p><b>1. Link Curto / Slug:</b> Defina o link curto do seu salão no perfil para compartilhar facilmente (ex: <code>?salao=raicabeleireiros</code>).</p>
+          <p><b>2. 7 Dias Grátis:</b> Novos salões começam com 7 dias de teste exibidos no topo do painel antes da assinatura de R$ 50/mês.</p>
+          <p><b>3. Lembrete e Edição Manual:</b> Use o botão de lembrar no WhatsApp e edite agendamentos manuais sem duplicar registros.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
@@ -720,20 +809,45 @@
     };
 
     window.toggleAdminView = function() {
-      const clientContainer = document.getElementById('client-container');
       const adminView = document.getElementById('admin-view');
-      const bottomNav = document.querySelector('nav');
-
       if (adminView.classList.contains('hidden')) {
-        clientContainer.classList.add('hidden');
+        document.getElementById('landing-container').classList.add('hidden');
+        document.getElementById('client-container').classList.add('hidden');
         adminView.classList.remove('hidden');
-        bottomNav.classList.add('hidden');
+        document.getElementById('client-bottom-nav').classList.add('hidden');
+        document.getElementById('client-bottom-nav').classList.remove('flex');
       } else {
         adminView.classList.add('hidden');
-        clientContainer.classList.remove('hidden');
-        bottomNav.classList.remove('hidden');
-        loadClientData();
+        if (targetMerchantId) {
+          showClientScreen();
+          loadClientData();
+        } else {
+          showLandingScreen();
+        }
       }
+    };
+
+    window.toggleAuthMode = function() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta do Salão (7 Dias Grátis)" : "Painel do Lojista";
+      document.getElementById('auth-subtitle').innerText = isRegisterMode
+        ? "Comece seu teste gratuito de 7 dias agora mesmo."
+        : "Gerencie seu estabelecimento.";
+      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta Grátis (7 Dias)" : "Entrar";
+      document.getElementById('btn-toggle-auth-mode').innerText = isRegisterMode ? "Já tenho conta (Entrar)" : "Criar conta grátis (7 dias)";
+    };
+
+    window.openRegisterMode = function() {
+      isRegisterMode = true;
+      document.getElementById('auth-title').innerText = "Criar Conta do Salão (7 Dias Grátis)";
+      document.getElementById('auth-subtitle').innerText = "Comece seu teste gratuito de 7 dias agora mesmo.";
+      document.getElementById('btn-auth-submit').innerText = "Criar Conta Grátis (7 Dias)";
+      document.getElementById('btn-toggle-auth-mode').innerText = "Já tenho conta (Entrar)";
+      document.getElementById('landing-container').classList.add('hidden');
+      document.getElementById('client-container').classList.add('hidden');
+      document.getElementById('admin-view').classList.remove('hidden');
+      document.getElementById('client-bottom-nav').classList.add('hidden');
+      document.getElementById('client-bottom-nav').classList.remove('flex');
     };
 
     window.forgotPassword = async function() {
@@ -794,7 +908,13 @@
       }
       if(filterSingleInput) filterSingleInput.value = today;
       renderScheduleInputs();
-      loadClientData();
+
+      if (targetMerchantId) {
+        showClientScreen();
+        loadClientData();
+      } else {
+        showLandingScreen();
+      }
     });
 
     function renderScheduleInputs(savedSchedule = null) {
@@ -838,6 +958,45 @@
       }
     };
 
+    function updateMerchantShareLink(uid, slug = '') {
+      const cleanSlug = normalizeSlug(slug);
+      const paramValue = cleanSlug || uid;
+      const fullSalonLink = `${window.location.origin}${window.location.pathname}?salao=${paramValue}`;
+      document.getElementById('merchant-link-display').innerHTML = `Link do salão: <a href="${fullSalonLink}" target="_blank" class="text-indigo-600 underline">${fullSalonLink}</a>`;
+      window.generatedMerchantLink = fullSalonLink;
+      renderShareKit(fullSalonLink, document.getElementById('store-name-input').value || "nosso salão");
+    }
+
+    function renderTrialBanner(settingsData) {
+      const banner = document.getElementById('trial-status-banner');
+      const textEl = document.getElementById('trial-status-text');
+      if (!banner || !textEl) return;
+
+      const status = settingsData?.planoStatus || 'trial';
+      if (status === 'ativo') {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const endDate = settingsData?.dataFimTrial?.toDate ? settingsData.dataFimTrial.toDate() : null;
+      if (!endDate) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const now = new Date();
+      const diffMs = endDate.getTime() - now.getTime();
+      const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const formattedEnd = endDate.toLocaleDateString('pt-BR');
+
+      banner.classList.remove('hidden');
+      if (daysLeft > 0) {
+        textEl.innerText = `🎁 Teste gratuito ativo até ${formattedEnd} (${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}).`;
+      } else {
+        textEl.innerText = `⚠️ Período gratuito encerrado em ${formattedEnd}. Ative sua assinatura mensal de R$ 50 para manter o painel.`;
+      }
+    }
+
     function renderShareKit(linkUrl, storeName) {
       const qrBox = document.getElementById('salon-qrcode-box');
       if (qrBox && typeof QRCode !== 'undefined') {
@@ -865,25 +1024,40 @@
       alert("📋 Texto copiado!");
     };
 
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       if (user) {
         document.getElementById('admin-auth-screen').classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('merchant-email-display').innerText = `E-mail: ${user.email}`;
-        
-        const fullSalonLink = `${window.location.origin}${window.location.pathname}?salao=${user.uid}`;
-        document.getElementById('merchant-link-display').innerHTML = `Link do salão: <a href="${fullSalonLink}" target="_blank" class="text-indigo-600 underline">${fullSalonLink}</a>`;
-        window.generatedMerchantLink = fullSalonLink;
-        renderShareKit(fullSalonLink, document.getElementById('store-name-input').value || "nosso salão");
 
+        const docRef = db.collection('settings').doc(user.uid);
+        const snap = await docRef.get();
+        if (!snap.exists) {
+          const now = new Date();
+          const trialEnd = new Date();
+          trialEnd.setDate(now.getDate() + 7);
+          await docRef.set({
+            email: user.email,
+            planoStatus: 'trial',
+            dataInicioTrial: firebase.firestore.Timestamp.fromDate(now),
+            dataFimTrial: firebase.firestore.Timestamp.fromDate(trialEnd),
+            weeklySchedule
+          }, { merge: true });
+        }
+
+        updateMerchantShareLink(user.uid, snap.exists ? (snap.data().slug || '') : '');
         loadAdminData();
       } else {
         if (bookingsListener) { bookingsListener(); bookingsListener = null; }
         document.getElementById('admin-auth-screen').classList.remove('hidden');
         document.getElementById('admin-dashboard').classList.add('hidden');
       }
-      loadClientData();
+
+      if (targetMerchantId) {
+        showClientScreen();
+        loadClientData();
+      }
     });
 
     window.copyMerchantLink = function() {
@@ -919,11 +1093,28 @@
 
     window.handleAuth = async function(event) {
       event.preventDefault();
-      const email = document.getElementById('auth-email').value;
+      const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
       try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (error) { alert("Erro ao entrar. Verifique seus dados ou tente novamente em instantes."); }
+        if (isRegisterMode) {
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          const now = new Date();
+          const trialEnd = new Date();
+          trialEnd.setDate(now.getDate() + 7);
+          await db.collection('settings').doc(cred.user.uid).set({
+            email,
+            planoStatus: 'trial',
+            dataInicioTrial: firebase.firestore.Timestamp.fromDate(now),
+            dataFimTrial: firebase.firestore.Timestamp.fromDate(trialEnd),
+            weeklySchedule
+          }, { merge: true });
+          alert("🎉 Conta criada com 7 dias grátis! Configure o perfil e o slug do seu salão.");
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+      } catch (error) {
+        alert("Erro na autenticação. Verifique seu e-mail e senha ou tente novamente.");
+      }
     };
 
     window.logoutMerchant = function() { auth.signOut(); };
@@ -964,6 +1155,10 @@
       if (!currentUser) return;
       try {
         const name = document.getElementById('store-name-input').value;
+        const slug = normalizeSlug(document.getElementById('store-slug-input').value);
+        if (document.getElementById('store-slug-input')) {
+          document.getElementById('store-slug-input').value = slug;
+        }
         const address = document.getElementById('store-address-input').value;
         const whatsapp = document.getElementById('store-whatsapp-input').value;
         const social = document.getElementById('store-social-input').value;
@@ -982,12 +1177,12 @@
           newSchedule[day] = { active, open, close };
         }
 
-        const updateData = { storeName: name, address, whatsapp, socialLink: social, facebookLink: facebook, paymentLink, weeklySchedule: newSchedule };
+        const updateData = { storeName: name, slug, address, whatsapp, socialLink: social, facebookLink: facebook, paymentLink, weeklySchedule: newSchedule };
         if (logoUrl) updateData.logoUrl = logoUrl;
 
         await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
-        renderShareKit(window.generatedMerchantLink, name || "nosso salão");
-        alert("Perfil, Endereço e Link de Pagamento salvos!");
+        updateMerchantShareLink(currentUser.uid, slug);
+        alert("Perfil, Slug, Endereço e Link de Pagamento salvos!");
         loadAdminData();
       } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
@@ -1362,6 +1557,7 @@
       if (settingsDoc.exists) {
         const data = settingsDoc.data();
         if (data.storeName) document.getElementById('store-name-input').value = data.storeName;
+        if (data.slug) document.getElementById('store-slug-input').value = data.slug;
         if (data.address) document.getElementById('store-address-input').value = data.address;
         if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
         if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
@@ -1371,7 +1567,8 @@
           window.salonSchedule = data.weeklySchedule;
           renderScheduleInputs(data.weeklySchedule);
         }
-        renderShareKit(window.generatedMerchantLink, data.storeName || "nosso salão");
+        renderTrialBanner(data);
+        updateMerchantShareLink(currentUser.uid, data.slug || '');
       }
 
       const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
@@ -1662,23 +1859,22 @@
     window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
 
     async function loadClientData() {
+      if (!targetMerchantId) return;
+
       let salonId = targetMerchantId;
-      if (!salonId) {
-        const settingsSnap = await db.collection('settings').limit(1).get();
-        if (!settingsSnap.empty) {
-          salonId = settingsSnap.docs[0].id;
-        } else if (currentUser) {
-          salonId = currentUser.uid;
-        }
+      const slugSnap = await db.collection('settings').where('slug', '==', normalizeSlug(salonId)).limit(1).get();
+      if (!slugSnap.empty) {
+        salonId = slugSnap.docs[0].id;
       }
 
-      if (!salonId) return;
       window.currentSalonId = salonId;
+      showClientScreen();
+      window.switchTab('home');
 
       const settingsDoc = await db.collection('settings').doc(salonId).get();
       if (settingsDoc.exists) {
         const data = settingsDoc.data();
-        const storeName = data.storeName || "Raí Cabeleireiros";
+        const storeName = data.storeName || "Salão";
         
         document.title = `${storeName} - Sistema de Agendamento`;
 
@@ -1722,9 +1918,7 @@
         if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
       }
 
-      let servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
-      if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
-
+      const servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
       allServicesRaw = [];
       const categoriesSet = new Set();
       servicesSnap.forEach(doc => {
