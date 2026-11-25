@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v70 - Ibi Agenda com Diagnóstico de Primeiro Acesso de Profissional, Acesso via Aba Mais e Edição de Equipe -->
+<!-- v71 - Ibi Agenda com Código Real do Erro de Autenticação e Acesso da Equipe -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -1216,7 +1216,7 @@
     };
 
     window.forgotPassword = async function() {
-      const email = document.getElementById('auth-email').value.trim();
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
       if (!email) {
         alert("Por favor, digite o seu e-mail no campo acima.");
         document.getElementById('auth-email').focus();
@@ -1226,7 +1226,7 @@
         await auth.sendPasswordResetEmail(email);
         alert(`E-mail de recuperação enviado para: ${email}`);
       } catch (error) {
-        alert("Conexão instável ou erro ao enviar e-mail. Tente novamente em instantes.");
+        alert(`Não foi possível enviar o e-mail de recuperação (${error.code || 'erro'}).`);
       }
     };
 
@@ -1623,12 +1623,13 @@
                   return;
                 } catch (createErr) {
                   if (createErr.code === 'auth/email-already-in-use') {
-                    alert("Este e-mail já possui cadastro de senha anterior. Digite a senha já cadastrada ou clique em 'Esqueceu sua senha?'.");
+                    alert("Este e-mail já tem conta criada no sistema. Use a senha já cadastrada ou toque em 'Esqueceu sua senha?'.");
                     return;
                   }
+                  throw createErr;
                 }
               }
-              alert("E-mail ou senha incorretos. Se for o primeiro acesso, confirme a nova senha ou clique em 'Esqueceu sua senha?'.");
+              alert("E-mail ou senha incorretos. Se for o primeiro acesso, confirme a nova senha ou toque em 'Esqueceu sua senha?'.");
             } else {
               throw signInErr;
             }
@@ -1639,8 +1640,10 @@
       } catch (error) {
         if (error.code === 'auth/weak-password') {
           alert("A senha deve ter pelo menos 6 caracteres.");
+        } else if (error.code === 'auth/email-already-in-use') {
+          alert("Este e-mail já tem conta criada no sistema. Use a senha já cadastrada ou toque em 'Esqueceu sua senha?'.");
         } else {
-          alert("Erro na autenticação. Verifique seu e-mail e senha ou tente novamente.");
+          alert(`Erro na autenticação (${error.code || 'verifique os dados'}). Verifique seu e-mail e senha ou tente novamente.`);
         }
       }
     };
