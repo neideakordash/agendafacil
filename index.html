@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v67 - Ibi Agenda com Primeiro Acesso de Senha e Bloqueio Imediato ao Remover Profissional -->
+<!-- v68 - Ibi Agenda com Login Oculto no Rodapé e Edição Completa de Profissionais -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -49,9 +49,6 @@
         </div>
         <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Ibi Agenda</h1>
       </div>
-      <button onclick="window.toggleAdminView()" class="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl cursor-pointer">
-        Área do Lojista / Equipe
-      </button>
     </div>
   </header>
 
@@ -91,9 +88,6 @@
         <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button onclick="window.openRegisterMode()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2">
             <i class="fa-solid fa-rocket"></i> Cadastrar Meu Salão (7 Dias Grátis)
-          </button>
-          <button onclick="window.toggleAdminView()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
-            <i class="fa-solid fa-store"></i> Já Tenho Conta (Entrar)
           </button>
         </div>
       </div>
@@ -265,7 +259,6 @@
       <div id="tab-mais" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
-          <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista / Equipe</span><i class="fa-solid fa-store"></i></div>
           <div onclick="window.openRegisterMode()" class="py-3.5 flex justify-between items-center text-emerald-600 cursor-pointer"><span>Cadastrar meu Salão (7 dias grátis)</span><i class="fa-solid fa-rocket"></i></div>
         </div>
       </div>
@@ -540,20 +533,28 @@
             </div>
           </div>
 
-          <!-- BLOCO 2: PROFISSIONAIS (COM E-MAIL PARA LOGIN INDIVIDUAL) -->
+          <!-- BLOCO 2: PROFISSIONAIS (CRIAR OU EDITAR + LOGIN INDIVIDUAL) -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais (Manicure, Cabeleireiro e Login Individual)</span>
+              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> <span id="staff-form-header-title">Cadastrar e Editar Profissionais (Manicure, Cabeleireiro e Login Individual)</span></span>
               <i id="icon-section-staff" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-staff" class="p-5 hidden space-y-4">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 id="staff-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Novo Profissional</h3>
+                <button type="button" id="btn-cancel-edit-staff" onclick="window.cancelEditStaff()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
+              </div>
               <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editing-staff-id" value="">
                 <input type="text" id="staff-name" placeholder="Nome do Profissional" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-role" placeholder="Cargo/Especialidade (ex: Manicure, Cabeleireiro)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="email" id="staff-email" placeholder="E-mail de Login do Profissional (para agenda própria)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto do Profissional (55DD9XXXXXXXX)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
-                <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-1">Foto do Profissional (Opcional na edição)</label>
+                  <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
+                </div>
+                <button type="submit" id="btn-save-staff" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
               </form>
               <div class="pt-2 border-t border-slate-100"><div id="admin-staff-list" class="space-y-2"></div></div>
             </div>
@@ -703,6 +704,11 @@
       <span class="text-[10px] font-bold mt-0.5">Mais</span>
     </button>
   </nav>
+
+  <!-- GATILHO DISCRETO / OCULTO PARA ACESSO DO LOJISTA OU EQUIPE -->
+  <button type="button" onclick="window.toggleAdminView()" aria-label="Acesso restrito" title="Acesso restrito" class="fixed bottom-1 right-2 z-50 w-5 h-5 rounded-full text-[9px] text-slate-300/60 hover:text-indigo-500 hover:bg-white/80 flex items-center justify-center cursor-pointer transition">
+    •
+  </button>
 
   <!-- SCRIPT -->
   <script>
@@ -1699,37 +1705,94 @@
       } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
 
+    window.editStaff = function(staffId) {
+      const staff = allStaffRaw.find(s => s.id === staffId);
+      if (!staff) return;
+
+      document.getElementById('editing-staff-id').value = staff.id;
+      document.getElementById('staff-name').value = staff.name || '';
+      document.getElementById('staff-role').value = staff.role || '';
+      document.getElementById('staff-email').value = staff.email || '';
+      document.getElementById('staff-whatsapp').value = staff.whatsapp || '';
+      document.getElementById('staff-photo-file').value = '';
+
+      document.getElementById('staff-form-title').innerText = "Editar Profissional";
+      document.getElementById('staff-form-header-title').innerText = "Cadastrar e Editar Profissionais (Editando)";
+      document.getElementById('btn-save-staff').innerText = "Salvar Alterações do Profissional";
+      document.getElementById('btn-cancel-edit-staff').classList.remove('hidden');
+
+      document.getElementById('section-staff').classList.remove('hidden');
+      document.getElementById('icon-section-staff').className = "fa-solid fa-chevron-up";
+      window.scrollTo({ top: document.getElementById('section-staff').offsetTop - 70, behavior: 'smooth' });
+    };
+
+    window.cancelEditStaff = function() {
+      document.getElementById('editing-staff-id').value = '';
+      document.getElementById('staff-name').value = '';
+      document.getElementById('staff-role').value = '';
+      document.getElementById('staff-email').value = '';
+      document.getElementById('staff-whatsapp').value = '';
+      document.getElementById('staff-photo-file').value = '';
+
+      document.getElementById('staff-form-title').innerText = "Novo Profissional";
+      document.getElementById('staff-form-header-title').innerText = "Cadastrar e Editar Profissionais (Manicure, Cabeleireiro e Login Individual)";
+      document.getElementById('btn-save-staff').innerText = "+ Adicionar Profissional";
+      document.getElementById('btn-cancel-edit-staff').classList.add('hidden');
+    };
+
     window.saveStaff = async function(event) {
       event.preventDefault();
       if (!currentUser) return;
       try {
+        const editingId = document.getElementById('editing-staff-id').value;
         const name = document.getElementById('staff-name').value.trim();
         const role = document.getElementById('staff-role').value.trim();
         const email = document.getElementById('staff-email').value.trim().toLowerCase();
         const whatsapp = document.getElementById('staff-whatsapp').value.trim();
         const photoFile = document.getElementById('staff-photo-file').files[0];
         
-        let photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
-        if (photoFile) photo = await convertImageToBase64(photoFile);
+        let photoData = null;
+        if (photoFile) photoData = await convertImageToBase64(photoFile);
 
-        await db.collection('staff').add({
-          merchantId: currentUser.uid,
-          name,
-          role,
-          email,
-          whatsapp,
-          photo,
-          active: true,
-          firstAccessCompleted: false,
-          dateExceptions: {},
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        document.getElementById('staff-name').value = '';
-        document.getElementById('staff-role').value = '';
-        document.getElementById('staff-email').value = '';
-        document.getElementById('staff-whatsapp').value = '';
-        loadAdminData();
-        alert("Profissional cadastrado com sucesso!");
+        if (editingId) {
+          const previousStaff = allStaffRaw.find(s => s.id === editingId);
+          const payload = { name, role, email, whatsapp };
+          if (photoData) payload.photo = photoData;
+          await db.collection('staff').doc(editingId).update(payload);
+
+          if (previousStaff && previousStaff.name && previousStaff.name !== name) {
+            const linkedServices = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+            const serviceUpdates = [];
+            linkedServices.forEach(doc => {
+              const sData = doc.data();
+              if (Array.isArray(sData.assignedStaff) && sData.assignedStaff.includes(previousStaff.name)) {
+                const updatedAssigned = sData.assignedStaff.map(n => (n === previousStaff.name ? name : n));
+                serviceUpdates.push(doc.ref.update({ assignedStaff: updatedAssigned }));
+              }
+            });
+            await Promise.all(serviceUpdates);
+          }
+
+          window.cancelEditStaff();
+          loadAdminData();
+          alert("✅ Profissional atualizado com sucesso!");
+        } else {
+          await db.collection('staff').add({
+            merchantId: currentUser.uid,
+            name,
+            role,
+            email,
+            whatsapp,
+            photo: photoData || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+            active: true,
+            firstAccessCompleted: false,
+            dateExceptions: {},
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          window.cancelEditStaff();
+          loadAdminData();
+          alert("✅ Profissional cadastrado com sucesso!");
+        }
       } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
 
@@ -2125,7 +2188,14 @@
           }
 
           const emailInfo = data.email ? ` • Login: ${data.email}` : '';
-          staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role}) - Wpp: ${data.whatsapp}${emailInfo}</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
+          staffContainer.innerHTML += `
+            <div class="flex justify-between items-center gap-2 p-2.5 bg-slate-50 rounded-xl text-xs">
+              <span><b>${data.name}</b> (${data.role}) - Wpp: ${data.whatsapp}${emailInfo}</span>
+              <div class="flex gap-1.5 shrink-0">
+                <button type="button" onclick="window.editStaff('${doc.id}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+                <button type="button" onclick="window.deleteStaff('${doc.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
+              </div>
+            </div>`;
           
           staffCheckboxesDiv.innerHTML += `
             <label class="flex items-center gap-2 text-xs cursor-pointer text-slate-700">
@@ -2393,6 +2463,9 @@
     };
 
     window.deleteStaff = async function(id) {
+      if (document.getElementById('editing-staff-id').value === id) {
+        window.cancelEditStaff();
+      }
       await db.collection('staff').doc(id).delete();
       loadAdminData();
     };
