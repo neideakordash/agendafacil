@@ -1,5 +1,85 @@
+
+    function renderAdminBookingsList(bookingsArray, title) {
+      const bookingsContainer = document.getElementById('admin-bookings-list');
+      const titleEl = document.getElementById('admin-bookings-title');
+      if(titleEl) titleEl.innerText = title;
+      
+      bookingsContainer.innerHTML = '';
+      if (bookingsArray.length === 0) {
+        bookingsContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum agendamento encontrado.</p>';
+        return;
+      }
+
+      bookingsArray.sort((a, b) => {
+        if (a.date !== b.date) {
+          return (b.date || '').localeCompare(a.date || '');
+        }
+        return (a.time || '').localeCompare(b.time || '');
+      });
+
+      const storeName = document.getElementById('store-name-input')?.value || document.getElementById('header-store-name')?.innerText || "Salão";
+
+      bookingsArray.forEach(data => {
+        const isManualBooking = data.isManual || (data.hairSpecs || '').toLowerCase().includes('manual');
+        const editBtnHtml = isManualBooking
+          ? `<button type="button" onclick="window.editManualBooking('${data.id}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg cursor-pointer flex items-center gap-1"><i class="fa-solid fa-pen"></i> Editar</button>`
+          : '';
+
+        const gcalHref = (data.date && data.time)
+          ? buildGoogleCalendarUrl(
+              `${data.serviceName} - ${data.clientName} (${storeName})`,
+              data.date,
+              data.time,
+              data.duration || 30,
+              `Cliente: ${data.clientName} (${data.clientPhone}) | Profissional: ${data.staffName}`,
+              salonAddress
+            )
+          : '#';
+
+        const icsBtnHtml = (data.date && data.time)
+          ? `<button type="button" onclick="window.downloadAdminBookingIcsById('${data.id}')" class="px-2.5 py-1 bg-slate-200/80 hover:bg-slate-200 text-slate-800 font-bold rounded-lg cursor-pointer flex items-center gap-1"><i class="fa-solid fa-calendar-day text-indigo-600"></i> Agenda Celular (.ics)</button>`
+          : '';
+
+        bookingsContainer.innerHTML += `
+          <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-2 border border-slate-200">
+            <div class="flex justify-between">
+              <b>${data.clientName} (${data.clientPhone})</b>
+              <span class="text-emerald-600 font-bold">${data.date ? data.date.split('-').reverse().join('/') : ''} às ${data.time}</span>
+            </div>
+            <p class="text-slate-600">Serviço(s): <b>${data.serviceName}</b> | Prof: ${data.staffName} | Cabelo: ${data.hairSpecs || 'N/A'} | Valor: ${data.price > 0 ? 'R$ ' + data.price.toFixed(2) : 'Sob Consulta'}</p>
+            <div class="flex flex-wrap gap-2 pt-1.5 border-t border-slate-200/80">
+              <button type="button" onclick="window.sendClientReminderWhatsApp('${data.id}')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer flex items-center gap-1">
+                <i class="fa-brands fa-whatsapp"></i> Lembrar no WhatsApp
+              </button>
+              <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg flex items-center gap-1">
+                <i class="fa-brands fa-google"></i> Google Agenda
+              </a>
+              ${icsBtnHtml}
+              ${editBtnHtml}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    window.downloadAdminBookingIcsById = function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking || !booking.date || !booking.time) return;
+      const storeName = document.getElementById('store-name-input')?.value || document.getElementById('header-store-name')?.innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${booking.clientName} (${storeName})`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Cliente: ${booking.clientName} (${booking.clientPhone}) | Profissional: ${booking.staffName}`,
+        location: salonAddress
+      });
+    };
+
+Código Completo Atualizado (index.html - v74)
+Aqui está o código completo do index.html (v74) já com esses botões nos agendamentos já cadastrados na lista do painel:
 <!DOCTYPE html>
-<!-- v73 - Ibi Agenda com Sincronização na Agenda do Celular para Profissionais (WhatsApp + Painel da Equipe) -->
+<!-- v74 - Ibi Agenda com Botões de Agenda do Celular nos Agendamentos Já Cadastrados -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -1048,6 +1128,20 @@
       });
     };
 
+    window.downloadAdminBookingIcsById = function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking || !booking.date || !booking.time) return;
+      const storeName = document.getElementById('store-name-input')?.value || document.getElementById('header-store-name')?.innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${booking.clientName} (${storeName})`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Cliente: ${booking.clientName} (${booking.clientPhone}) | Profissional: ${booking.staffName}`,
+        location: salonAddress
+      });
+    };
+
     function updateSummaryEndTime() {
       const endEl = document.getElementById('summary-end-time');
       if (!endEl) return;
@@ -1127,7 +1221,7 @@
       if (type === 'merchant') {
         title.innerHTML = "Manual do Lojista / Equipe";
         content.innerHTML = `
-          <p><b>1. Agenda no Celular da Equipe:</b> Cada agendamento na agenda da profissional tem botões para adicionar ao Google Agenda ou baixar (.ics), além do link na mensagem do WhatsApp.</p>
+          <p><b>1. Agenda no Celular:</b> Cada agendamento na lista do painel e na agenda da profissional tem botões para adicionar ao Google Agenda ou baixar (.ics).</p>
           <p><b>2. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional cria/confirma sua senha pelo botão de primeiro acesso. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
           <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
         `;
@@ -2209,7 +2303,10 @@
           document.getElementById('store-slug-input').value = data.slug;
           currentSlug = data.slug;
         }
-        if (data.address) document.getElementById('store-address-input').value = data.address;
+        if (data.address) {
+          salonAddress = data.address;
+          document.getElementById('store-address-input').value = data.address;
+        }
         if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
         if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
         if (data.facebookLink) document.getElementById('store-facebook-input').value = data.facebookLink;
@@ -2404,10 +2501,27 @@
         return (a.time || '').localeCompare(b.time || '');
       });
 
+      const storeName = document.getElementById('store-name-input')?.value || document.getElementById('header-store-name')?.innerText || "Salão";
+
       bookingsArray.forEach(data => {
         const isManualBooking = data.isManual || (data.hairSpecs || '').toLowerCase().includes('manual');
         const editBtnHtml = isManualBooking
           ? `<button type="button" onclick="window.editManualBooking('${data.id}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg cursor-pointer flex items-center gap-1"><i class="fa-solid fa-pen"></i> Editar</button>`
+          : '';
+
+        const gcalHref = (data.date && data.time)
+          ? buildGoogleCalendarUrl(
+              `${data.serviceName} - ${data.clientName} (${storeName})`,
+              data.date,
+              data.time,
+              data.duration || 30,
+              `Cliente: ${data.clientName} (${data.clientPhone}) | Profissional: ${data.staffName}`,
+              salonAddress
+            )
+          : '#';
+
+        const icsBtnHtml = (data.date && data.time)
+          ? `<button type="button" onclick="window.downloadAdminBookingIcsById('${data.id}')" class="px-2.5 py-1 bg-slate-200/80 hover:bg-slate-200 text-slate-800 font-bold rounded-lg cursor-pointer flex items-center gap-1"><i class="fa-solid fa-calendar-day text-indigo-600"></i> Agenda Celular (.ics)</button>`
           : '';
 
         bookingsContainer.innerHTML += `
@@ -2421,6 +2535,10 @@
               <button type="button" onclick="window.sendClientReminderWhatsApp('${data.id}')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg cursor-pointer flex items-center gap-1">
                 <i class="fa-brands fa-whatsapp"></i> Lembrar no WhatsApp
               </button>
+              <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg flex items-center gap-1">
+                <i class="fa-brands fa-google"></i> Google Agenda
+              </a>
+              ${icsBtnHtml}
               ${editBtnHtml}
             </div>
           </div>
@@ -3158,3 +3276,4 @@
   </script>
 </body>
 </html>
+
