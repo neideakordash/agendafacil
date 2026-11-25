@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v61 - Ibi Agenda com Slug Amigável, Contagem de 7 Dias de Teste e Tela Inicial na Raiz -->
+<!-- v62 - Ibi Agenda com Integração Universal de Calendário (.ics + Google Agenda), Slug Amigável e Trial 7 Dias -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -233,10 +233,15 @@
                 <i class="fa-brands fa-whatsapp text-base"></i> <span>Confirmar Agendamento</span>
               </button>
 
+              <!-- INTEGRAÇÃO COM A AGENDA DO CELULAR (GOOGLE AGENDA + ARQUIVO .ICS UNIVERSAL) -->
               <div id="post-booking-actions" class="hidden pt-2 border-t border-slate-100 space-y-2">
+                <p class="text-[11px] font-bold text-slate-500 text-center">Salvar lembrete na agenda do celular:</p>
                 <a id="google-calendar-link" href="#" target="_blank" class="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5">
                   <i class="fa-brands fa-google"></i> Adicionar ao Google Agenda
                 </a>
+                <button type="button" id="download-ics-btn" onclick="window.downloadBookingIcs()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                  <i class="fa-solid fa-calendar-day text-indigo-600"></i> Salvar na Agenda do Celular (.ics)
+                </button>
               </div>
             </div>
           </div>
@@ -247,7 +252,7 @@
       <div id="tab-reservas" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 text-center">
           <h3 class="text-lg font-extrabold text-slate-900">Meus Agendamentos</h3>
-          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados, adicionar ao Google Agenda ou cancelar:</p>
+          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados, salvar na agenda do celular ou cancelar:</p>
           <div class="flex gap-2 max-w-md mx-auto">
             <input type="tel" id="search-phone" placeholder="(00) 00000-0000" class="flex-grow px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
             <button onclick="window.searchClientBookings()" class="px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar</button>
@@ -636,6 +641,7 @@
     let allServicesRaw = [];
     let allStaffRaw = [];
     let allBookingsCache = [];
+    let clientBookingsCache = {};
     let currentCategoryFilter = '';
     let bookingsListener = null;
     let isSubmittingBooking = false;
@@ -698,6 +704,72 @@
       });
       return `https://calendar.google.com/calendar/render?${params.toString()}`;
     }
+
+    function buildIcsDataUrl(title, dateStr, timeStr, durationMins, description, location) {
+      const [y, m, d] = dateStr.split('-');
+      const [hh, mm] = timeStr.split(':');
+      const startDate = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), 0);
+      const endDate = new Date(startDate.getTime() + (durationMins || 30) * 60000);
+
+      const pad = (n) => n.toString().padStart(2, '0');
+      const fmtLocal = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+      const escapeIcs = (str) => (str || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Ibi Agenda//PT',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        `UID:ibiagenda-${Date.now()}-${Math.random().toString(36).slice(2)}@ibiagenda.com.br`,
+        `DTSTAMP:${fmtLocal(new Date())}`,
+        `DTSTART:${fmtLocal(startDate)}`,
+        `DTEND:${fmtLocal(endDate)}`,
+        `SUMMARY:${escapeIcs(title)}`,
+        `DESCRIPTION:${escapeIcs(description)}`,
+        `LOCATION:${escapeIcs(location)}`,
+        'BEGIN:VALARM',
+        'TRIGGER:-PT60M',
+        'ACTION:DISPLAY',
+        `DESCRIPTION:Lembrete: ${escapeIcs(title)}`,
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsContent);
+    }
+
+    function triggerIcsDownload(calendarPayload) {
+      if (!calendarPayload || !calendarPayload.date || !calendarPayload.time) return;
+      const { title, date, time, duration, details, location } = calendarPayload;
+      const url = buildIcsDataUrl(title, date, time, duration, details, location);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `agendamento-${date}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    window.downloadBookingIcs = function() {
+      if (!window.lastBookingCalendarData) return;
+      triggerIcsDownload(window.lastBookingCalendarData);
+    };
+
+    window.downloadClientBookingIcsById = function(bookingId) {
+      const booking = clientBookingsCache[bookingId];
+      if (!booking) return;
+      const storeName = document.getElementById('header-store-name').innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${storeName}`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Profissional: ${booking.staffName} | Cliente: ${booking.clientName || ''}`,
+        location: salonAddress
+      });
+    };
 
     function updateSummaryEndTime() {
       const endEl = document.getElementById('summary-end-time');
@@ -786,7 +858,7 @@
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
         content.innerHTML = `
           <p><b>1. Escolher Serviços:</b> Selecione seus serviços por categoria e veja o horário estimado de término.</p>
-          <p><b>2. Google Agenda e Reservas:</b> Após confirmar, você pode salvar no Google Agenda ou consultar/cancelar na aba Reservas.</p>
+          <p><b>2. Agenda do Celular e Reservas:</b> Após confirmar, salve direto no Google Agenda ou baixe o evento (.ics) para o calendário do iPhone/Android (com lembrete de 1h antes).</p>
         `;
       }
       modal.classList.remove('hidden');
@@ -2365,12 +2437,24 @@
         });
 
         const storeName = document.getElementById('header-store-name').innerText || "Salão";
+        const calendarTitle = `${servicesCombinedName} - ${storeName}`;
+        const calendarDetails = `Profissional: ${staffName} | Cliente: ${name}`;
+
+        window.lastBookingCalendarData = {
+          title: calendarTitle,
+          date,
+          time: selectedTime,
+          duration: totalDuration,
+          details: calendarDetails,
+          location: salonAddress
+        };
+
         const gcalUrl = buildGoogleCalendarUrl(
-          `${servicesCombinedName} - ${storeName}`,
+          calendarTitle,
           date,
           selectedTime,
           totalDuration,
-          `Profissional: ${staffName} | Cliente: ${name}`,
+          calendarDetails,
           salonAddress
         );
         const gcalBtn = document.getElementById('google-calendar-link');
@@ -2389,7 +2473,7 @@
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
-        alert("✅ Agendamento realizado com sucesso! Você também pode adicionar ao Google Agenda.");
+        alert("✅ Agendamento realizado com sucesso! Você pode salvar o lembrete na agenda do celular.");
       } catch (e) {
         alert("Conexão instável, tente novamente em instantes.");
       } finally {
@@ -2408,10 +2492,12 @@
       try {
         const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
         container.innerHTML = '';
+        clientBookingsCache = {};
         if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado.</p>'; return; }
         
         snap.forEach(doc => {
           const d = doc.data();
+          clientBookingsCache[doc.id] = d;
           const storeName = document.getElementById('header-store-name').innerText || "Salão";
           const gcalHref = (d.date && d.time)
             ? buildGoogleCalendarUrl(`${d.serviceName} - ${storeName}`, d.date, d.time, d.duration || 30, `Profissional: ${d.staffName}`, salonAddress)
@@ -2426,11 +2512,12 @@
               <p class="text-slate-500">Profissional: ${d.staffName} | Cabelo: ${d.hairSpecs}</p>
               
               <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-200">
-                <div class="flex gap-2 items-center">
-                  <div class="flex gap-1 text-amber-500 text-sm cursor-pointer" onclick="window.rateBooking('${doc.id}', 5)">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <div class="flex gap-1 text-amber-500 text-sm cursor-pointer mr-1" onclick="window.rateBooking('${doc.id}', 5)">
                     <span>${d.rating ? '★'.repeat(d.rating) : '☆☆☆☆☆ Avaliar'}</span>
                   </div>
-                  <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold rounded-lg">Google Agenda</a>
+                  <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg">Google Agenda</a>
+                  <button type="button" onclick="window.downloadClientBookingIcsById('${doc.id}')" class="px-2.5 py-1 bg-slate-200/80 hover:bg-slate-200 text-slate-800 font-bold rounded-lg cursor-pointer">Agenda Celular (.ics)</button>
                 </div>
                 <button onclick="window.cancelBooking('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Cancelar Horário</button>
               </div>
