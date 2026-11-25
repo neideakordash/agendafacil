@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v69 - Ibi Agenda com Acesso do Lojista/Equipe Exclusivamente na Aba Mais -->
+<!-- v70 - Ibi Agenda com Diagnóstico de Primeiro Acesso de Profissional, Acesso via Aba Mais e Edição de Equipe -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -836,7 +836,7 @@
         currentMap[dateVal] = { active, open, close };
         await db.collection('staff').doc(staffId).set({ dateExceptions: currentMap }, { merge: true });
         document.getElementById('exception-date-input').value = '';
-        alert("✅ Exceção salva para o profissional selecionado!");
+        alert("Exceção salva para o profissional selecionado!");
         loadAdminData();
       } catch (e) {
         alert("Conexão instável, tente novamente em instantes.");
@@ -902,7 +902,7 @@
         loggedStaffProfile.dateExceptions = currentMap;
         renderStaffOwnExceptionsList(loggedStaffProfile);
         document.getElementById('staff-own-exc-date').value = '';
-        alert("✅ Sua exceção de horário foi salva!");
+        alert("Sua exceção de horário foi salva!");
       } catch (e) {
         alert("Conexão instável, tente novamente em instantes.");
       }
@@ -1109,14 +1109,14 @@
       const content = document.getElementById('tutorial-modal-content');
 
       if (type === 'merchant') {
-        title.innerHTML = "📖 Manual do Lojista / Equipe";
+        title.innerHTML = "Manual do Lojista / Equipe";
         content.innerHTML = `
           <p><b>1. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional define/confirma sua senha. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
           <p><b>2. Link de Divulgação:</b> Profissionais e donos podem copiar e compartilhar o link do salão.</p>
           <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
         `;
       } else {
-        title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
+        title.innerHTML = "Manual do Cliente (Como Agendar)";
         content.innerHTML = `
           <p><b>1. Escolher Serviços:</b> Selecione seus serviços por categoria e veja o horário estimado de término.</p>
           <p><b>2. Agenda do Celular e Reservas:</b> Após confirmar, salve direto no Google Agenda ou baixe o evento (.ics) para o calendário do iPhone/Android (com lembrete de 1h antes).</p>
@@ -1224,7 +1224,7 @@
       }
       try {
         await auth.sendPasswordResetEmail(email);
-        alert(`📧 E-mail de recuperação enviado para: ${email}`);
+        alert(`E-mail de recuperação enviado para: ${email}`);
       } catch (error) {
         alert("Conexão instável ou erro ao enviar e-mail. Tente novamente em instantes.");
       }
@@ -1358,9 +1358,9 @@
 
       banner.classList.remove('hidden');
       if (daysLeft > 0) {
-        textEl.innerText = `🎁 Teste gratuito ativo até ${formattedEnd} (${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}).`;
+        textEl.innerText = `Teste gratuito ativo até ${formattedEnd} (${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}).`;
       } else {
-        textEl.innerText = `⚠️ Período gratuito encerrado em ${formattedEnd}. Ative sua assinatura mensal de R$ 50 para manter o painel.`;
+        textEl.innerText = `Período gratuito encerrado em ${formattedEnd}. Ative sua assinatura mensal de R$ 50 para manter o painel.`;
       }
     }
 
@@ -1377,7 +1377,7 @@
       const bioInput = document.getElementById('promo-bio-text');
       const wppInput = document.getElementById('promo-wpp-text');
       if (bioInput) {
-        bioInput.value = `✨ Agende seu horário no ${storeName} sem fila:\n${linkUrl}`;
+        bioInput.value = `Agende seu horário no ${storeName} sem fila:\n${linkUrl}`;
       }
       if (wppInput) {
         wppInput.value = `Olá! Agora você pode agendar seu horário no *${storeName}* a qualquer hora pelo nosso link:\n${linkUrl}`;
@@ -1388,7 +1388,7 @@
       const el = document.getElementById(elementId);
       if (!el || !el.value) return;
       navigator.clipboard.writeText(el.value);
-      alert("📋 Texto copiado!");
+      alert("Texto copiado!");
     };
 
     async function resolveSalonIdFromRef(refValue) {
@@ -1412,7 +1412,7 @@
       }
 
       if (!salonId) {
-        alert("⚠️ Informe o ID ou Slug do salão para acessar a sua agenda profissional.");
+        alert("Informe o ID ou Slug do salão para acessar a sua agenda profissional.");
         await auth.signOut();
         return;
       }
@@ -1424,7 +1424,7 @@
         .get();
 
       if (staffSnap.empty || staffSnap.docs[0].data().active === false) {
-        alert("⚠️ Este e-mail não está mais ativo neste salão. O acesso foi encerrado.");
+        alert("Este e-mail não está mais ativo neste salão. O acesso foi encerrado.");
         await auth.signOut();
         return;
       }
@@ -1551,7 +1551,7 @@
     window.copyMerchantLink = function() {
       if (window.generatedMerchantLink) {
         navigator.clipboard.writeText(window.generatedMerchantLink);
-        alert("📋 Link do salão copiado para a área de transferência!");
+        alert("Link do salão copiado para a área de transferência!");
       }
     };
 
@@ -1569,7 +1569,7 @@
 
       const digits = cleanPhoneDigits(booking.clientPhone);
       if (!digits) {
-        alert("⚠️ Este agendamento não possui número de WhatsApp válido.");
+        alert("Este agendamento não possui número de WhatsApp válido.");
         return;
       }
       const formattedPhone = digits.startsWith('55') ? digits : `55${digits}`;
@@ -1581,12 +1581,12 @@
 
     window.handleAuth = async function(event) {
       event.preventDefault();
-      const email = document.getElementById('auth-email').value.trim();
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
       const password = document.getElementById('auth-password').value;
       const confirmPass = document.getElementById('auth-password-confirm').value;
 
       if (isStaffLoginMode && confirmPass && password !== confirmPass) {
-        alert("⚠️ As senhas digitadas não conferem. Digite a mesma senha nos dois campos.");
+        alert("As senhas digitadas não conferem. Digite a mesma senha nos dois campos.");
         return;
       }
 
@@ -1603,18 +1603,32 @@
             dataFimTrial: firebase.firestore.Timestamp.fromDate(trialEnd),
             weeklySchedule
           }, { merge: true });
-          alert("🎉 Conta criada com 7 dias grátis! Configure o perfil e o slug do seu salão.");
+          alert("Conta criada com 7 dias grátis! Configure o perfil e o slug do seu salão.");
         } else if (isStaffLoginMode) {
           try {
             await auth.signInWithEmailAndPassword(email, password);
           } catch (signInErr) {
-            if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
+            if (signInErr.code === 'auth/user-not-found') {
               if (!confirmPass) {
-                alert("⚠️ Primeiro acesso: confirme a sua senha no campo de confirmação para criar seu acesso.");
+                alert("Primeiro acesso: confirme a sua senha no campo de confirmação para criar seu acesso.");
                 return;
               }
               await auth.createUserWithEmailAndPassword(email, password);
-              alert("✅ Senha confirmada e primeiro acesso concluído!");
+              alert("Senha confirmada e primeiro acesso concluído!");
+            } else if (signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/invalid-credential') {
+              if (confirmPass) {
+                try {
+                  await auth.createUserWithEmailAndPassword(email, password);
+                  alert("Senha confirmada e primeiro acesso concluído!");
+                  return;
+                } catch (createErr) {
+                  if (createErr.code === 'auth/email-already-in-use') {
+                    alert("Este e-mail já possui cadastro de senha anterior. Digite a senha já cadastrada ou clique em 'Esqueceu sua senha?'.");
+                    return;
+                  }
+                }
+              }
+              alert("E-mail ou senha incorretos. Se for o primeiro acesso, confirme a nova senha ou clique em 'Esqueceu sua senha?'.");
             } else {
               throw signInErr;
             }
@@ -1623,7 +1637,11 @@
           await auth.signInWithEmailAndPassword(email, password);
         }
       } catch (error) {
-        alert("Erro na autenticação. Verifique seu e-mail e senha ou tente novamente.");
+        if (error.code === 'auth/weak-password') {
+          alert("A senha deve ter pelo menos 6 caracteres.");
+        } else {
+          alert("Erro na autenticação. Verifique seu e-mail e senha ou tente novamente.");
+        }
       }
     };
 
@@ -1771,7 +1789,7 @@
 
           window.cancelEditStaff();
           loadAdminData();
-          alert("✅ Profissional atualizado com sucesso!");
+          alert("Profissional atualizado com sucesso!");
         } else {
           await db.collection('staff').add({
             merchantId: currentUser.uid,
@@ -1787,7 +1805,7 @@
           });
           window.cancelEditStaff();
           loadAdminData();
-          alert("✅ Profissional cadastrado com sucesso!");
+          alert("Profissional cadastrado com sucesso!");
         }
       } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
@@ -2024,7 +2042,7 @@
         const checkboxes = document.querySelectorAll('.manual-service-checkbox:checked');
 
         if (!clientName || checkboxes.length === 0 || !staffName || !date || !manualSelectedTime) {
-          alert("⚠️ Preencha o nome, selecione os serviços, o profissional, a data e clique em um horário disponível!");
+          alert("Preencha o nome, selecione os serviços, o profissional, a data e clique em um horário disponível!");
           return;
         }
 
@@ -2049,7 +2067,7 @@
 
         const hasConflict = await checkSlotConflict(currentUser.uid, staffName, date, manualSelectedTime, totalDuration, totalInterval, editingId || null);
         if (hasConflict) {
-          alert("⚠️ Esse horário acabou de ser ocupado. Escolha outro horário disponível.");
+          alert("Esse horário acabou de ser ocupado. Escolha outro horário disponível.");
           await window.renderManualTimeSlots(editingId || null);
           return;
         }
@@ -2071,12 +2089,12 @@
 
         if (editingId) {
           await db.collection('bookings').doc(editingId).update(payload);
-          alert("✅ Agendamento manual atualizado com sucesso!");
+          alert("Agendamento manual atualizado com sucesso!");
         } else {
           payload.rating = 0;
           payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
           await db.collection('bookings').add(payload);
-          alert("✅ Agendamento manual realizado e horários sincronizados com sucesso!");
+          alert("Agendamento manual realizado e horários sincronizados com sucesso!");
         }
 
         window.cancelEditManualBooking();
@@ -2416,8 +2434,8 @@
       const summaryDiv = document.getElementById('monthly-summary-result');
       summaryDiv.innerHTML = `
         <div class="p-3 bg-white border border-emerald-200 rounded-xl space-y-1">
-          <p>📦 Total de Atendimentos: <b>${filtered.length}</b></p>
-          <p class="text-sm font-extrabold text-emerald-700">💰 Faturamento Total: R$ ${totalRevenue.toFixed(2)}</p>
+          <p>Total de Atendimentos: <b>${filtered.length}</b></p>
+          <p class="text-sm font-extrabold text-emerald-700">Faturamento Total: R$ ${totalRevenue.toFixed(2)}</p>
         </div>
       `;
       renderAdminBookingsList(filtered, `Fechamento do Mês (${monthVal.split('-').reverse().join('/')})`);
@@ -2906,7 +2924,7 @@
       const date = document.getElementById('booking-date').value;
 
       if (!name || !phone) {
-        alert("⚠️ ATENÇÃO: O preenchimento do NOME COMPLETO e do WHATSAPP é obrigatório para agendar!");
+        alert("ATENÇÃO: O preenchimento do NOME COMPLETO e do WHATSAPP é obrigatório para agendar!");
         document.getElementById('client-name-input').focus();
         return;
       }
@@ -2949,7 +2967,7 @@
       try {
         const conflict = await checkSlotConflict(mId, staffName, date, selectedTime, totalDuration, totalInterval);
         if (conflict) {
-          alert("⚠️ Esse horário acabou de ser preenchido. Atualizamos os horários disponíveis para você escolher.");
+          alert("Esse horário acabou de ser preenchido. Atualizamos os horários disponíveis para você escolher.");
           await window.renderTimeSlots();
           return;
         }
@@ -3007,7 +3025,7 @@
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
-        alert("✅ Agendamento realizado com sucesso! Você pode salvar o lembrete na agenda do celular.");
+        alert("Agendamento realizado com sucesso! Você pode salvar o lembrete na agenda do celular.");
       } catch (e) {
         alert("Conexão instável, tente novamente em instantes.");
       } finally {
