@@ -1,3 +1,2408 @@
+<!DOCTYPE html>
+<!-- v74 - Ibi Agenda com Botões de Agenda do Celular nos Agendamentos Já Cadastrados -->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- TÍTULO E META TAGS PARA O WHATSAPP -->
+  <title>Ibi Agenda - Agendamento Online para Salões e Estúdios</title>
+  <meta property="og:title" content="Ibi Agenda - Sistema de Agendamento">
+  <meta property="og:description" content="Agende seu horário com facilidade e rapidez. Escolha seus serviços e profissionais.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500">
+  <meta property="og:url" content="https://ibiagenda.com.br">
+  <meta property="og:type" content="website">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .card-hover { transition: all 0.2s ease-in-out; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+    .selected-card { border: 2px solid #4f46e5 !important; background-color: #eef2ff !important; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+
+  <!-- Firebase Scripts (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body class="text-slate-800 min-h-screen flex flex-col antialiased pb-16 selection:bg-indigo-600 selection:text-white">
+
+  <!-- CABEÇALHO SUPERIOR -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.handleHeaderBrandClick()">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-sm">
+          <i class="fa-solid fa-scissors text-sm"></i>
+        </div>
+        <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Ibi Agenda</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-6">
+
+    <!-- LANDING / APRESENTAÇÃO NA RAIZ (QUANDO NÃO HÁ ?salao=) -->
+    <div id="landing-container" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-5">
+        <span class="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[11px] font-bold">
+          Agenda Online para Salões e Estúdios
+        </span>
+        <div class="space-y-2 max-w-xl mx-auto">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Seu salão organizado com hora marcada, sem depender só do WhatsApp
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500">
+            Clientes escolhem serviço, profissional, data e horário livre sozinhos. Você controla encaixes, folgas, exceções por profissional e atendimentos no painel.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+            <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-link mr-1"></i> Link Exclusivo</div>
+            <p class="text-[11px] text-slate-500">Compartilhe na bio do Instagram e no WhatsApp com link curto e QR Code.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+            <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-clock mr-1"></i> Grade Inteligente</div>
+            <p class="text-[11px] text-slate-500">Evita choque de horários, respeita intervalos e aplica exceções por profissional.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+            <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-gift mr-1"></i> 7 Dias Grátis</div>
+            <p class="text-[11px] text-slate-500">Teste na prática no seu salão antes da assinatura mensal de R$ 50.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <button onclick="window.openRegisterMode()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rocket"></i> Cadastrar Meu Salão (7 Dias Grátis)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISÃO DO CLIENTE -->
+    <div id="client-container" class="hidden space-y-6">
+
+      <!-- ABA 1: INÍCIO -->
+      <div id="tab-home" class="client-tab space-y-6">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center space-y-4">
+          <img id="home-logo-img" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150" class="w-24 h-24 rounded-2xl mx-auto object-cover shadow-md border-2 border-slate-100 hidden" alt="Logo">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900" id="home-store-name">Salão</h2>
+            <p class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-location-dot text-indigo-600"></i> <span id="home-store-address">Atendimento com hora marcada</span>
+            </p>
+          </div>
+
+          <div id="home-instagram-container" class="pt-2 hidden">
+            <a id="home-instagram-btn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-rose-500/20 transition">
+              <i class="fa-brands fa-instagram text-base"></i> Visite nosso Instagram
+            </a>
+          </div>
+
+          <div id="home-facebook-container" class="pt-2 hidden">
+            <a id="home-facebook-btn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-blue-600/20 transition">
+              <i class="fa-brands fa-facebook text-base"></i> Visite nosso Facebook
+            </a>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-4">
+            <button onclick="window.switchTab('agenda')" class="p-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-md transition flex flex-col items-center justify-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-calendar-plus text-lg text-indigo-400"></i>
+              <span class="text-xs font-bold">Novo Agendamento</span>
+            </button>
+            <button onclick="window.switchTab('reservas')" class="p-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition flex flex-col items-center justify-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-calendar-check text-lg text-indigo-600"></i>
+              <span class="text-xs font-bold">Minhas Reservas</span>
+            </button>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100">
+            <button onclick="window.openRegisterMode()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-2xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rocket"></i> É lojista? Cadastre seu salão (7 dias grátis)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 2: AGENDAR -->
+      <div id="tab-agenda" class="client-tab hidden space-y-6">
+        <div id="category-filters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div class="md:col-span-2 space-y-6">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Selecione um ou mais serviços</h3>
+              <div id="client-services-list" class="space-y-3">
+                <p class="text-xs text-slate-400 text-center py-6">Carregando serviços...</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-5">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Profissional e Data</h3>
+              <div>
+                <div id="client-staff-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <p class="text-xs text-slate-400 col-span-3 py-2">Selecione pelo menos um serviço primeiro.</p>
+                </div>
+              </div>
+
+              <div id="hair-specs-section" class="pt-3 border-t border-slate-100 hidden">
+                <label class="block text-xs font-bold text-slate-600 mb-2">Especificações do Cabelo (Obrigatório para Cabelos)</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <select id="hair-length" onchange="window.updateHairSpecs()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+                    <option value="Não informado">Tamanho...</option>
+                    <option value="Curto">Curto</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Longo">Longo</option>
+                    <option value="Extra Longo">Extra Longo</option>
+                  </select>
+                  <select id="hair-type" onchange="window.updateHairSpecs()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+                    <option value="Não informado">Tipo...</option>
+                    <option value="Liso">Liso</option>
+                    <option value="Ondulado">Ondulado</option>
+                    <option value="Cacheado">Cacheado</option>
+                    <option value="Crespo">Crespo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1.5">Data</label>
+                  <input type="date" id="booking-date" onchange="window.renderTimeSlots()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1.5">Horários Disponíveis (5 em 5 min)</label>
+                  <div id="time-slots-container" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+                    <p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione serviços e profissional.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESUMO DO PEDIDO -->
+          <div class="md:col-span-1">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-100 sticky top-20 space-y-4">
+              <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Resumo do Pedido</h3>
+              <div class="space-y-2 text-xs">
+                <div>
+                  <span class="text-slate-400 block mb-1">Serviços Selecionados:</span>
+                  <div id="summary-services-container" class="space-y-1 font-bold text-slate-700 max-h-32 overflow-y-auto">
+                    <span class="text-slate-400 italic font-normal">Nenhum serviço selecionado</span>
+                  </div>
+                </div>
+                <div class="flex justify-between pt-2 border-t border-slate-100"><span class="text-slate-400">Profissional:</span><span id="summary-staff" class="font-bold">Nenhum</span></div>
+                <div id="summary-hair-container" class="flex justify-between hidden"><span class="text-slate-400">Cabelo:</span><span id="summary-hair" class="font-bold text-right">Não informado</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Data/Hora:</span><span id="summary-datetime" class="font-bold">--/-- --:--</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Término estimado:</span><span id="summary-end-time" class="font-bold">--:--</span></div>
+                <div class="flex justify-between text-sm font-extrabold text-indigo-600 pt-2 border-t border-slate-100"><span>Total:</span><span id="summary-price">R$ 0,00</span></div>
+              </div>
+
+              <div class="space-y-3 pt-2 border-t border-slate-100">
+                <input type="text" id="client-name-input" placeholder="Seu Nome Completo *" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none font-semibold">
+                <input type="tel" id="client-phone" placeholder="Seu WhatsApp com DDD *" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none font-semibold">
+              </div>
+
+              <div id="client-payment-btn-container" class="hidden pt-1">
+                <a id="client-payment-link" href="#" target="_blank" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-credit-card"></i> Pagar Online (Pix/Cartão)
+                </a>
+              </div>
+
+              <button id="btn-confirm-booking" onclick="window.confirmBooking()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs cursor-pointer">
+                <i class="fa-brands fa-whatsapp text-base"></i> <span>Confirmar Agendamento</span>
+              </button>
+
+              <!-- INTEGRAÇÃO COM A AGENDA DO CELULAR (GOOGLE AGENDA + ARQUIVO .ICS UNIVERSAL) -->
+              <div id="post-booking-actions" class="hidden pt-2 border-t border-slate-100 space-y-2">
+                <p class="text-[11px] font-bold text-slate-500 text-center">Salvar lembrete na agenda do celular:</p>
+                <a id="google-calendar-link" href="#" target="_blank" class="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5">
+                  <i class="fa-brands fa-google"></i> Adicionar ao Google Agenda
+                </a>
+                <button type="button" id="download-ics-btn" onclick="window.downloadBookingIcs()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                  <i class="fa-solid fa-calendar-day text-indigo-600"></i> Salvar na Agenda do Celular (.ics)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 3: RESERVAS -->
+      <div id="tab-reservas" class="client-tab hidden space-y-4">
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 text-center">
+          <h3 class="text-lg font-extrabold text-slate-900">Meus Agendamentos</h3>
+          <p class="text-xs text-slate-500">Informe seu WhatsApp para consultar seus horários marcados, salvar na agenda do celular ou cancelar:</p>
+          <div class="flex gap-2 max-w-md mx-auto">
+            <input type="tel" id="search-phone" placeholder="(00) 00000-0000" class="flex-grow px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+            <button onclick="window.searchClientBookings()" class="px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs cursor-pointer">Buscar</button>
+          </div>
+          <div id="client-bookings-result" class="space-y-3 pt-4 text-left"></div>
+        </div>
+      </div>
+
+      <!-- ABA 4: MAIS -->
+      <div id="tab-mais" class="client-tab hidden space-y-4">
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
+          <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
+          <div onclick="window.openRegisterMode()" class="py-3.5 flex justify-between items-center text-emerald-600 cursor-pointer"><span>Cadastrar meu Salão (7 dias grátis)</span><i class="fa-solid fa-rocket"></i></div>
+          <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista / Equipe</span><i class="fa-solid fa-lock"></i></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PAINEL DO LOJISTA / PROFISSIONAL -->
+    <div id="admin-view" class="hidden space-y-6">
+      <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-100 my-8 space-y-6">
+        <div class="text-center">
+          <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-lg">
+            <i class="fa-solid fa-store"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista / Equipe</h2>
+          <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Dono vê todos os agendamentos; profissionais veem apenas os seus.</p>
+        </div>
+
+        <form id="auth-form" onsubmit="window.handleAuth(event)" class="space-y-4">
+          <div id="staff-salon-id-box" class="hidden">
+            <label class="block text-xs font-bold text-slate-700 mb-1">ID ou Slug do Salão (para login de profissional)</label>
+            <input type="text" id="login-salon-ref" placeholder="Ex: raicabeleireiros ou UID do salão" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">E-mail</label>
+            <input type="email" id="auth-email" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Senha</label>
+            <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+          <div id="staff-confirm-password-box" class="hidden">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Confirme a Senha (Primeiro Acesso)</label>
+            <input type="password" id="auth-password-confirm" minlength="6" placeholder="Digite a senha novamente para confirmar" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
+
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <button type="button" id="btn-toggle-staff-login" onclick="window.toggleStaffLoginMode()" class="text-[11px] text-violet-700 hover:underline font-bold cursor-pointer">Sou profissional (ver só minha agenda)</button>
+            <button type="button" id="btn-toggle-auth-mode" onclick="window.toggleAuthMode()" class="text-[11px] text-emerald-600 hover:underline font-bold cursor-pointer">Criar conta grátis (7 dias)</button>
+          </div>
+          <div class="text-right">
+            <button type="button" onclick="window.forgotPassword()" class="text-[11px] text-indigo-600 hover:underline font-semibold cursor-pointer">Esqueceu sua senha?</button>
+          </div>
+
+          <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Entrar</button>
+          <button type="button" id="btn-staff-first-access" onclick="window.handleStaffFirstAccess()" class="hidden w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Primeiro acesso (Criar minha senha)</button>
+        </form>
+
+        <div class="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+          <button type="button" onclick="window.openTutorial('merchant')" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-book-open text-indigo-600"></i> Tutorial Lojista
+          </button>
+          <button type="button" onclick="window.openTutorial('client')" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-book-open text-emerald-600"></i> Tutorial Cliente
+          </button>
+        </div>
+      </div>
+
+      <div id="admin-dashboard" class="hidden space-y-6">
+        <!-- BANNER DE 7 DIAS DE TESTE (APENAS PARA DONO) -->
+        <div id="trial-status-banner" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div id="trial-status-text" class="font-bold"></div>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold text-[11px]">Mensalidade: R$ 50/mês</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-3">
+          <div>
+            <h2 class="font-extrabold text-slate-900 text-base" id="dashboard-role-title">Painel Administrativo</h2>
+            <p class="text-xs text-slate-500" id="merchant-email-display"></p>
+            <div id="share-link-controls" class="mt-2 flex flex-wrap items-center gap-2">
+              <span class="text-[11px] text-indigo-600 font-bold" id="merchant-link-display">Link do salão: Carregando...</span>
+              <button onclick="window.copyMerchantLink()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-copy"></i> Copiar Link
+              </button>
+              <button onclick="window.shareOnWhatsApp()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                <i class="fa-brands fa-whatsapp"></i> Compartilhar WhatsApp
+              </button>
+              <button id="btn-owner-share-kit" onclick="window.toggleSection('section-share-kit')" class="px-2.5 py-1 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-qrcode"></i> Kit de Divulgação
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="window.openTutorial('merchant')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-xl cursor-pointer">Manual</button>
+            <button onclick="window.toggleAdminView()" class="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl cursor-pointer">Ver Cliente</button>
+            <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl cursor-pointer">Sair</button>
+            <button id="btn-delete-owner-account" onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded-xl cursor-pointer">Excluir</button>
+          </div>
+        </div>
+
+        <!-- PAINEL EXCLUSIVO DO PROFISSIONAL LOGADO (SOMENTE SUA AGENDA E SUAS EXCEÇÕES DE DATA) -->
+        <div id="staff-restricted-panel" class="hidden space-y-4">
+          <div class="bg-white rounded-2xl border border-violet-100 shadow-sm p-5 space-y-3 text-xs">
+            <h3 class="font-bold text-violet-900 text-sm"><i class="fa-solid fa-calendar-day mr-1.5 text-violet-600"></i> Minhas Exceções de Horário por Data</h3>
+            <p class="text-[11px] text-slate-500">Defina exceções apenas para a sua agenda (ex.: dia 26 atendendo só à tarde) sem afetar o restante da equipe.</p>
+            <form onsubmit="window.saveStaffOwnException(event)" class="p-3 bg-violet-50/50 border border-violet-100 rounded-xl space-y-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Data *</label>
+                  <input type="date" id="staff-own-exc-date" required class="w-full px-2.5 py-1.5 bg-white border border-violet-200 rounded-lg">
+                </div>
+                <div class="flex items-end pb-1">
+                  <label class="font-bold text-slate-800 flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="staff-own-exc-active" checked onchange="window.toggleStaffOwnExcTimes()" class="rounded text-indigo-600">
+                    Atendo nesta data
+                  </label>
+                </div>
+              </div>
+              <div id="staff-own-exc-times" class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">Início</label>
+                  <input type="time" id="staff-own-exc-open" value="13:00" class="w-full px-2 py-1 bg-white border border-violet-200 rounded-lg text-[11px]">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">Fim</label>
+                  <input type="time" id="staff-own-exc-close" value="18:00" class="w-full px-2 py-1 bg-white border border-violet-200 rounded-lg text-[11px]">
+                </div>
+              </div>
+              <button type="submit" class="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl cursor-pointer">+ Salvar Minha Exceção</button>
+            </form>
+            <div id="staff-own-exc-list" class="space-y-1.5"></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-3 text-xs">
+            <h3 class="font-bold text-slate-900 text-sm">Meus Agendamentos</h3>
+            <div id="staff-own-bookings-list" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- PAINEL COMPLETO DO DONO DO SALÃO -->
+        <div id="owner-full-panel" class="space-y-4">
+          <!-- KIT DE DIVULGAÇÃO (QR CODE + TEXTOS PRONTOS) -->
+          <div class="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-share-kit')" class="w-full p-4 flex justify-between items-center bg-violet-50/50 hover:bg-violet-50 font-bold text-xs text-violet-900 cursor-pointer">
+              <span><i class="fa-solid fa-qrcode mr-2 text-violet-600"></i> Divulgar Meu Link (QR Code, Bio do Instagram e WhatsApp)</span>
+              <i id="icon-section-share-kit" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-share-kit" class="p-5 hidden space-y-4 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                  <div id="salon-qrcode-box"></div>
+                  <span class="text-[10px] text-slate-500 text-center">Aponte a câmera para abrir a agenda</span>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Texto pronto para Bio do Instagram</label>
+                    <textarea id="promo-bio-text" rows="2" readonly class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-700 outline-none"></textarea>
+                    <button type="button" onclick="window.copyPromoText('promo-bio-text')" class="mt-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-[10px] cursor-pointer">Copiar Bio</button>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Texto pronto para WhatsApp / Clientes</label>
+                    <textarea id="promo-wpp-text" rows="3" readonly class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-700 outline-none"></textarea>
+                    <button type="button" onclick="window.copyPromoText('promo-wpp-text')" class="mt-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg text-[10px] cursor-pointer">Copiar Mensagem WhatsApp</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCO 0: AGENDAMENTO MANUAL (CRIAR OU EDITAR) -->
+          <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-manual-booking')" class="w-full p-4 flex justify-between items-center bg-indigo-50/50 hover:bg-indigo-50 font-bold text-xs text-indigo-900 cursor-pointer">
+              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> <span id="manual-booking-header-title">Novo Agendamento Manual (Qualquer Serviço Até o Fechamento)</span></span>
+              <i id="icon-section-manual-booking" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-manual-booking" class="p-5 hidden space-y-4">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 id="manual-booking-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Novo Agendamento Manual</h3>
+                <button type="button" id="btn-cancel-edit-manual" onclick="window.cancelEditManualBooking()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
+              </div>
+              <form onsubmit="window.saveManualBooking(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editing-manual-booking-id" value="">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Nome do Cliente *</label>
+                  <input type="text" id="manual-client-name" placeholder="Nome Completo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">WhatsApp do Cliente</label>
+                  <input type="tel" id="manual-client-phone" placeholder="(00) 00000-0000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1.5">Selecione o(s) Serviço(s) por Categoria *</label>
+                  <div id="manual-services-checkboxes" class="space-y-2 max-h-48 overflow-y-auto p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <p class="text-[10px] text-slate-400">Carregando serviços...</p>
+                  </div>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Selecione o Profissional</label>
+                  <select id="manual-staff-select" required onchange="window.renderManualTimeSlots()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="">Carregando profissionais...</option>
+                  </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Data</label>
+                    <input type="date" id="manual-booking-date" required onchange="window.renderManualTimeSlots()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Horários Disponíveis (Até o Fechamento)</label>
+                    <div id="manual-time-slots-container" class="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                      <p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" id="btn-save-manual-booking" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl cursor-pointer">Salvar Agendamento Manual</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- BLOCO 1: PERFIL, SLUG AMIGÁVEL, ENDEREÇO, LINK DE PAGAMENTO E EXPEDIENTE -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-profile')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-store mr-2 text-indigo-600"></i> Perfil, Slug Amigável, Endereço, Pagamento e Expediente</span>
+              <i id="icon-section-profile" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-profile" class="p-5 hidden space-y-4">
+              <form onsubmit="window.saveStoreSettings(event)" class="space-y-3 text-xs">
+                <input type="text" id="store-name-input" placeholder="Nome do Salão" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="store-slug-input" placeholder="Link Curto / Slug (ex: raicabeleireiros)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none lowercase">
+                <input type="text" id="store-address-input" placeholder="Endereço Completo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="store-whatsapp-input" placeholder="WhatsApp Principal (5511999999999)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="url" id="store-social-input" placeholder="Link Instagram" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="url" id="store-facebook-input" placeholder="Link do Facebook" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="url" id="store-payment-input" placeholder="Link de Pagamento / Pix (Mercado Pago, Stripe, etc.)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="file" id="store-logo-file" accept="image/*" class="w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                
+                <div class="pt-2 border-t border-slate-100 space-y-2">
+                  <span class="font-bold text-indigo-600">Horários Padrão por Dia da Semana</span>
+                  <div id="schedule-config-container" class="space-y-2"></div>
+                </div>
+
+                <button type="submit" class="w-full py-2 bg-slate-900 text-white font-bold rounded-xl cursor-pointer">Salvar Perfil</button>
+              </form>
+
+              <!-- EXCEÇÕES DE HORÁRIO POR DATA E POR PROFISSIONAL -->
+              <div class="pt-4 border-t border-slate-200 space-y-3">
+                <div>
+                  <h4 class="font-bold text-amber-800 text-xs">Exceções de Horário por Data e Profissional</h4>
+                  <p class="text-[11px] text-slate-500">Ex.: manicure ou cabeleireiro atendendo só à tarde no dia 26, sem alterar outros dias ou colegas.</p>
+                </div>
+                <form onsubmit="window.saveDateException(event)" class="p-3 bg-amber-50/60 border border-amber-200 rounded-xl space-y-2 text-xs">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Profissional *</label>
+                      <select id="exception-staff-select" required class="w-full px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg">
+                        <option value="">Selecione...</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Data da Exceção *</label>
+                      <input type="date" id="exception-date-input" required class="w-full px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg">
+                    </div>
+                    <div class="flex items-end pb-1">
+                      <label class="font-bold text-slate-800 flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" id="exception-active-input" checked onchange="window.toggleExceptionTimeInputs()" class="rounded text-indigo-600">
+                        Atende nesta data
+                      </label>
+                    </div>
+                  </div>
+                  <div id="exception-times-box" class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] text-slate-600 mb-0.5">Início</label>
+                      <input type="time" id="exception-open-input" value="13:00" class="w-full px-2 py-1 bg-white border border-amber-200 rounded-lg text-[11px]">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] text-slate-600 mb-0.5">Fim</label>
+                      <input type="time" id="exception-close-input" value="18:00" class="w-full px-2 py-1 bg-white border border-amber-200 rounded-lg text-[11px]">
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl cursor-pointer">+ Salvar Exceção do Profissional</button>
+                </form>
+                <div id="date-exceptions-list" class="space-y-1.5"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCO 2: PROFISSIONAIS (CRIAR OU EDITAR + LOGIN INDIVIDUAL) -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> <span id="staff-form-header-title">Cadastrar e Editar Profissionais (Manicure, Cabeleireiro e Login Individual)</span></span>
+              <i id="icon-section-staff" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-staff" class="p-5 hidden space-y-4">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 id="staff-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Novo Profissional</h3>
+                <button type="button" id="btn-cancel-edit-staff" onclick="window.cancelEditStaff()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
+              </div>
+              <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editing-staff-id" value="">
+                <input type="text" id="staff-name" placeholder="Nome do Profissional" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-role" placeholder="Cargo/Especialidade (ex: Manicure, Cabeleireiro)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="email" id="staff-email" placeholder="E-mail de Login do Profissional (para agenda própria)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto do Profissional (55DD9XXXXXXXX)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-1">Foto do Profissional (Opcional na edição)</label>
+                  <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
+                </div>
+                <button type="submit" id="btn-save-staff" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
+              </form>
+              <div class="pt-2 border-t border-slate-100"><div id="admin-staff-list" class="space-y-2"></div></div>
+            </div>
+          </div>
+
+          <!-- BLOCO 3: SERVIÇOS POR CATEGORIA E INTERVALOS -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-service')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-scissors mr-2 text-indigo-600"></i> <span id="service-form-header-title">Gerenciar e Cadastrar Serviços por Categoria</span></span>
+              <i id="icon-section-service" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-service" class="p-5 hidden space-y-4">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 id="service-form-title" class="font-bold text-slate-900 text-xs uppercase tracking-wider">Novo Serviço</h3>
+                <button type="button" id="btn-cancel-edit" onclick="window.cancelEditService()" class="hidden text-[10px] text-rose-500 font-bold underline cursor-pointer">Cancelar Edição</button>
+              </div>
+              <form onsubmit="window.saveService(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editing-service-id" value="">
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">Categoria (ex: Cabelo, Unhas, Estética)</label>
+                  <input type="text" id="service-category" placeholder="Ex: Cabelo ou Unhas" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                </div>
+                <input type="text" id="service-name" placeholder="Nome do Serviço" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Ordem / Posição</label>
+                    <input type="number" id="service-order" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Intervalo / Encaixe (min)</label>
+                    <input type="number" id="service-interval" placeholder="0" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Profissionais que realizam:</label>
+                  <div id="service-staff-checkboxes" class="space-y-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    <p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>
+                  </div>
+                </div>
+
+                <input type="number" step="0.01" id="service-price" placeholder="Preço R$ (Vazio = Sob Consulta)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="number" id="service-duration" placeholder="Duração (minutos)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-1">Foto do Serviço (Opcional)</label>
+                  <input type="file" id="service-photo-file" accept="image/*" class="w-full text-slate-500">
+                </div>
+                <button type="submit" id="btn-save-service" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Serviço</button>
+              </form>
+
+              <div class="pt-4 border-t border-slate-100">
+                <h4 class="font-bold text-slate-900 mb-3 text-xs uppercase">Serviços Cadastrados (Agrupados por Categoria)</h4>
+                <div id="admin-services-list" class="space-y-3"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCO 4: HISTÓRICO DE AGENDAMENTOS E DATA ÚNICA -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
+              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Gestão de Agendamentos (Todos os Profissionais, Data Única e Fechamento)</span>
+              <i id="icon-section-bookings" class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div id="section-bookings" class="p-5 hidden space-y-4 text-xs">
+              
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pb-3 border-b border-slate-100">
+                <button onclick="window.filterBookings('today')" class="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl cursor-pointer">📅 Hoje</button>
+                <button onclick="window.filterBookings('single')" class="py-2 px-3 bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold rounded-xl cursor-pointer">🎯 Data Única</button>
+                <button onclick="window.filterBookings('period')" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer">🔍 Período</button>
+                <button onclick="window.filterBookings('monthly')" class="py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl cursor-pointer">📊 Mês</button>
+              </div>
+
+              <div id="filter-single-box" class="hidden p-3 bg-violet-50/50 border border-violet-100 rounded-xl space-y-2">
+                <span class="font-bold text-violet-900">Selecione a Data Específica:</span>
+                <div class="flex gap-2">
+                  <input type="date" id="filter-single-date" class="flex-grow px-2 py-1.5 bg-white border border-violet-200 rounded-lg">
+                  <button onclick="window.applySingleDateFilter()" class="px-4 py-1.5 bg-violet-600 text-white font-bold rounded-lg cursor-pointer">Filtrar Data</button>
+                </div>
+              </div>
+
+              <div id="filter-period-box" class="hidden p-3 bg-slate-50 rounded-xl space-y-2">
+                <span class="font-bold text-slate-700">Selecione o Período:</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="date" id="filter-start-date" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg">
+                  <input type="date" id="filter-end-date" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg">
+                </div>
+                <button onclick="window.applyPeriodFilter()" class="w-full py-1.5 bg-indigo-600 text-white font-bold rounded-lg cursor-pointer">Filtrar Período</button>
+              </div>
+
+              <div id="filter-monthly-box" class="hidden p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
+                <span class="font-bold text-emerald-900">Selecione o Mês e Ano:</span>
+                <div class="flex gap-2">
+                  <input type="month" id="filter-month-input" class="flex-grow px-2 py-1.5 bg-white border border-emerald-200 rounded-lg">
+                  <button onclick="window.applyMonthlyClosing()" class="px-4 py-1.5 bg-emerald-600 text-white font-bold rounded-lg cursor-pointer">Calcular Fechamento</button>
+                </div>
+                <div id="monthly-summary-result" class="pt-2 text-emerald-900 font-semibold"></div>
+              </div>
+
+              <div class="flex gap-2 pt-2">
+                <input type="text" id="admin-search-client-name" placeholder="Ou digite o nome do cliente para histórico..." class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <button onclick="window.adminSearchClientHistory()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">Buscar Nome</button>
+              </div>
+              <div id="admin-client-history-result" class="space-y-2"></div>
+
+              <div class="pt-4 border-t border-slate-100">
+                <h4 class="font-bold text-slate-900 mb-3 text-xs uppercase" id="admin-bookings-title">Agendamentos Recentes</h4>
+                <div id="admin-bookings-list" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL DE TUTORIAL -->
+  <div id="tutorial-modal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="tutorial-modal-title" class="font-extrabold text-base text-slate-900">Manual de Uso</h3>
+        <button onclick="window.closeTutorial()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="tutorial-modal-content" class="text-xs text-slate-600 space-y-3 leading-relaxed"></div>
+      <button onclick="window.closeTutorial()" class="w-full py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs cursor-pointer">Entendi</button>
+    </div>
+  </div>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR (VISÍVEL QUANDO HÁ SALÃO ATIVO) -->
+  <nav id="client-bottom-nav" class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-50 h-16 hidden items-center justify-around px-2 shadow-lg">
+    <button onclick="window.switchTab('home')" class="tab-btn flex flex-col items-center text-indigo-600 cursor-pointer" data-tab="home">
+      <i class="fa-solid fa-house text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Início</span>
+    </button>
+    <button onclick="window.switchTab('agenda')" class="tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer" data-tab="agenda">
+      <i class="fa-solid fa-calendar-plus text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Agendar</span>
+    </button>
+    <button onclick="window.switchTab('reservas')" class="tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer" data-tab="reservas">
+      <i class="fa-solid fa-calendar-check text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Reservas</span>
+    </button>
+    <button onclick="window.switchTab('mais')" class="tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer" data-tab="mais">
+      <i class="fa-solid fa-ellipsis text-base"></i>
+      <span class="text-[10px] font-bold mt-0.5">Mais</span>
+    </button>
+  </nav>
+
+  <!-- SCRIPT -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1nBIQcgwihnDk5MgbiGk0_8QXoNO2I-I",
+      authDomain: "agendafacil-20e04.firebaseapp.com",
+      projectId: "agendafacil-20e04",
+      storageBucket: "agendafacil-20e04.appspot.com",
+      messagingSenderId: "236064027235",
+      appId: "1:236064027235:web:dd6869f55206fc496c3e56",
+      measurementId: "G-9WNTJND5X1"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let isRegisterMode = false;
+    let isStaffLoginMode = false;
+    let loggedStaffProfile = null;
+    let selectedServices = [];
+    let selectedStaffObj = null;
+    let selectedTime = null;
+    let manualSelectedTime = null;
+    let merchantWhatsapp = "5511999999999";
+    let merchantPaymentLink = "";
+    let salonAddress = "Atendimento com hora marcada";
+    let allServicesRaw = [];
+    let allStaffRaw = [];
+    let allBookingsCache = [];
+    let staffBookingsCache = {};
+    let clientBookingsCache = {};
+    let currentCategoryFilter = '';
+    let bookingsListener = null;
+    let isSubmittingBooking = false;
+
+    let weeklySchedule = {
+      0: { active: false, open: "08:00", close: "18:00" },
+      1: { active: true, open: "08:00", close: "18:00" },
+      2: { active: true, open: "08:00", close: "18:00" },
+      3: { active: true, open: "08:00", close: "18:00" },
+      4: { active: true, open: "08:00", close: "18:00" },
+      5: { active: true, open: "08:00", close: "18:00" },
+      6: { active: true, open: "08:00", close: "14:00" }
+    };
+
+    const dayNames = { 0: "Domingo", 1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado" };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetMerchantId = urlParams.get('salao');
+
+    function getStaffByName(staffName) {
+      return allStaffRaw.find(st => st.name === staffName) || null;
+    }
+
+    function getScheduleForStaffAndDate(staffName, dateVal, scheduleMap = null) {
+      const activeSchedule = scheduleMap || window.salonSchedule || weeklySchedule;
+      const staffObj = getStaffByName(staffName);
+      if (dateVal && staffObj && staffObj.dateExceptions && staffObj.dateExceptions[dateVal]) {
+        return staffObj.dateExceptions[dateVal];
+      }
+      if (!dateVal) return null;
+      const parts = dateVal.split('-');
+      const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = selectedObjDate.getDay();
+      return activeSchedule[dayOfWeek] || null;
+    }
+
+    function renderDateExceptionsList(staffList = []) {
+      const container = document.getElementById('date-exceptions-list');
+      if (!container) return;
+
+      const items = [];
+      staffList.forEach(st => {
+        const excMap = st.dateExceptions || {};
+        Object.entries(excMap).forEach(([dateStr, cfg]) => {
+          items.push({ staffId: st.id, staffName: st.name, dateStr, cfg });
+        });
+      });
+
+      items.sort((a, b) => a.dateStr.localeCompare(b.dateStr) || a.staffName.localeCompare(b.staffName));
+
+      if (items.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-400">Nenhuma exceção por profissional cadastrada.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      items.forEach(({ staffId, staffName, dateStr, cfg }) => {
+        const dateBr = dateStr.split('-').reverse().join('/');
+        const desc = cfg.active
+          ? `Atende das <b>${cfg.open}</b> às <b>${cfg.close}</b>`
+          : `<b>Não atende</b> nesta data`;
+        container.innerHTML += `
+          <div class="flex justify-between items-center p-2.5 bg-white border border-amber-200 rounded-xl text-[11px]">
+            <div>
+              <span class="font-bold text-amber-900">${staffName}</span> • <span class="font-bold text-slate-800">${dateBr}</span> — <span>${desc}</span>
+            </div>
+            <button type="button" onclick="window.deleteStaffDateException('${staffId}', '${dateStr}')" class="text-rose-600 font-bold cursor-pointer">Remover</button>
+          </div>
+        `;
+      });
+    }
+
+    window.toggleExceptionTimeInputs = function() {
+      const active = document.getElementById('exception-active-input').checked;
+      const box = document.getElementById('exception-times-box');
+      if (!box) return;
+      if (active) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    };
+
+    window.saveDateException = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      const staffId = document.getElementById('exception-staff-select').value;
+      const dateVal = document.getElementById('exception-date-input').value;
+      if (!staffId || !dateVal) {
+        alert("Selecione o profissional e a data da exceção.");
+        return;
+      }
+      const active = document.getElementById('exception-active-input').checked;
+      const open = document.getElementById('exception-open-input').value || "08:00";
+      const close = document.getElementById('exception-close-input').value || "18:00";
+
+      try {
+        const staffObj = allStaffRaw.find(s => s.id === staffId);
+        const currentMap = { ...(staffObj?.dateExceptions || {}) };
+        currentMap[dateVal] = { active, open, close };
+        await db.collection('staff').doc(staffId).set({ dateExceptions: currentMap }, { merge: true });
+        document.getElementById('exception-date-input').value = '';
+        alert("Exceção salva para o profissional selecionado!");
+        loadAdminData();
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.deleteStaffDateException = async function(staffId, dateStr) {
+      if (!currentUser) return;
+      try {
+        const staffObj = allStaffRaw.find(s => s.id === staffId);
+        const currentMap = { ...(staffObj?.dateExceptions || {}) };
+        delete currentMap[dateStr];
+        await db.collection('staff').doc(staffId).set({ dateExceptions: currentMap }, { merge: true });
+        alert("Exceção removida.");
+        loadAdminData();
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.toggleStaffOwnExcTimes = function() {
+      const active = document.getElementById('staff-own-exc-active').checked;
+      const box = document.getElementById('staff-own-exc-times');
+      if (!box) return;
+      if (active) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    };
+
+    function renderStaffOwnExceptionsList(staffObj) {
+      const container = document.getElementById('staff-own-exc-list');
+      if (!container || !staffObj) return;
+      const entries = Object.entries(staffObj.dateExceptions || {}).sort((a, b) => a[0].localeCompare(b[0]));
+      if (entries.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-400">Nenhuma exceção cadastrada na sua agenda.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      entries.forEach(([dateStr, cfg]) => {
+        const dateBr = dateStr.split('-').reverse().join('/');
+        const desc = cfg.active ? `Das <b>${cfg.open}</b> às <b>${cfg.close}</b>` : `<b>Não atende</b>`;
+        container.innerHTML += `
+          <div class="flex justify-between items-center p-2 bg-white border border-violet-200 rounded-xl text-[11px]">
+            <span><b>${dateBr}</b> — ${desc}</span>
+            <button type="button" onclick="window.deleteStaffOwnException('${dateStr}')" class="text-rose-600 font-bold cursor-pointer">Remover</button>
+          </div>
+        `;
+      });
+    }
+
+    window.saveStaffOwnException = async function(event) {
+      event.preventDefault();
+      if (!loggedStaffProfile) return;
+      const dateVal = document.getElementById('staff-own-exc-date').value;
+      if (!dateVal) return;
+      const active = document.getElementById('staff-own-exc-active').checked;
+      const open = document.getElementById('staff-own-exc-open').value || "13:00";
+      const close = document.getElementById('staff-own-exc-close').value || "18:00";
+
+      try {
+        const currentMap = { ...(loggedStaffProfile.dateExceptions || {}) };
+        currentMap[dateVal] = { active, open, close };
+        await db.collection('staff').doc(loggedStaffProfile.id).set({ dateExceptions: currentMap }, { merge: true });
+        loggedStaffProfile.dateExceptions = currentMap;
+        renderStaffOwnExceptionsList(loggedStaffProfile);
+        document.getElementById('staff-own-exc-date').value = '';
+        alert("Sua exceção de horário foi salva!");
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.deleteStaffOwnException = async function(dateStr) {
+      if (!loggedStaffProfile) return;
+      try {
+        const currentMap = { ...(loggedStaffProfile.dateExceptions || {}) };
+        delete currentMap[dateStr];
+        await db.collection('staff').doc(loggedStaffProfile.id).set({ dateExceptions: currentMap }, { merge: true });
+        loggedStaffProfile.dateExceptions = currentMap;
+        renderStaffOwnExceptionsList(loggedStaffProfile);
+        alert("Exceção removida.");
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    function normalizeSlug(text) {
+      return (text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    }
+
+    function formatDuration(mins) {
+      if (!mins) return '0 min';
+      if (mins < 60) return `${mins} min`;
+      const hours = Math.floor(mins / 60);
+      const remainingMins = mins % 60;
+      if (remainingMins === 0) return `${hours}h`;
+      return `${hours}h ${remainingMins}min`;
+    }
+
+    function minsToTimeStr(totalMins) {
+      const h = Math.floor(totalMins / 60) % 24;
+      const m = totalMins % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
+
+    function buildGoogleCalendarUrl(title, dateStr, timeStr, durationMins, details, location) {
+      const [y, m, d] = dateStr.split('-');
+      const [hh, mm] = timeStr.split(':');
+      const startDate = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), 0);
+      const endDate = new Date(startDate.getTime() + (durationMins || 30) * 60000);
+
+      const pad = (n) => n.toString().padStart(2, '0');
+      const fmt = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: title,
+        dates: `${fmt(startDate)}/${fmt(endDate)}`,
+        details: details || '',
+        location: location || ''
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+
+    function buildIcsDataUrl(title, dateStr, timeStr, durationMins, description, location) {
+      const [y, m, d] = dateStr.split('-');
+      const [hh, mm] = timeStr.split(':');
+      const startDate = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), 0);
+      const endDate = new Date(startDate.getTime() + (durationMins || 30) * 60000);
+
+      const pad = (n) => n.toString().padStart(2, '0');
+      const fmtLocal = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+      const escapeIcs = (str) => (str || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Ibi Agenda//PT',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        `UID:ibiagenda-${Date.now()}-${Math.random().toString(36).slice(2)}@ibiagenda.com.br`,
+        `DTSTAMP:${fmtLocal(new Date())}`,
+        `DTSTART:${fmtLocal(startDate)}`,
+        `DTEND:${fmtLocal(endDate)}`,
+        `SUMMARY:${escapeIcs(title)}`,
+        `DESCRIPTION:${escapeIcs(description)}`,
+        `LOCATION:${escapeIcs(location)}`,
+        'BEGIN:VALARM',
+        'TRIGGER:-PT60M',
+        'ACTION:DISPLAY',
+        `DESCRIPTION:Lembrete: ${escapeIcs(title)}`,
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsContent);
+    }
+
+    function triggerIcsDownload(calendarPayload) {
+      if (!calendarPayload || !calendarPayload.date || !calendarPayload.time) return;
+      const { title, date, time, duration, details, location } = calendarPayload;
+      const url = buildIcsDataUrl(title, date, time, duration, details, location);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `agendamento-${date}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    window.downloadBookingIcs = function() {
+      if (!window.lastBookingCalendarData) return;
+      triggerIcsDownload(window.lastBookingCalendarData);
+    };
+
+    window.downloadClientBookingIcsById = function(bookingId) {
+      const booking = clientBookingsCache[bookingId];
+      if (!booking) return;
+      const storeName = document.getElementById('header-store-name').innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${storeName}`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Profissional: ${booking.staffName} | Cliente: ${booking.clientName || ''}`,
+        location: salonAddress
+      });
+    };
+
+    window.downloadStaffBookingIcsById = function(bookingId) {
+      const booking = staffBookingsCache[bookingId];
+      if (!booking) return;
+      const storeName = document.getElementById('header-store-name').innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${booking.clientName} (${storeName})`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Cliente: ${booking.clientName} (${booking.clientPhone}) | Serviço: ${booking.serviceName}`,
+        location: salonAddress
+      });
+    };
+
+    window.downloadAdminBookingIcsById = function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking || !booking.date || !booking.time) return;
+      const storeName = document.getElementById('store-name-input')?.value || document.getElementById('header-store-name')?.innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${booking.clientName} (${storeName})`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Cliente: ${booking.clientName} (${booking.clientPhone}) | Profissional: ${booking.staffName}`,
+        location: salonAddress
+      });
+    };
+
+    function updateSummaryEndTime() {
+      const endEl = document.getElementById('summary-end-time');
+      if (!endEl) return;
+      const dateVal = document.getElementById('booking-date').value;
+      if (!selectedTime || !dateVal || selectedServices.length === 0) {
+        endEl.innerText = '--:--';
+        return;
+      }
+      const totalDur = selectedServices.reduce((acc, s) => acc + (s.duration || 30), 0);
+      const [h, m] = selectedTime.split(':').map(Number);
+      endEl.innerText = minsToTimeStr(h * 60 + m + totalDur);
+    }
+
+    function isHairRelated(category, name) {
+      const cat = (category || '').toLowerCase();
+      const n = (name || '').toLowerCase();
+      return cat.includes('cabelo') || 
+             n.includes('corte') || 
+             n.includes('hidrat') || 
+             n.includes('escova') || 
+             n.includes('alisament') || 
+             n.includes('coloraç') || 
+             n.includes('progressiv') || 
+             n.includes('reconstruç') || 
+             n.includes('nutriç') || 
+             n.includes('relaxament');
+    }
+
+    function cleanPhoneDigits(phone) {
+      return (phone || '').replace(/\D/g, '');
+    }
+
+    function showLandingScreen() {
+      document.getElementById('landing-container').classList.remove('hidden');
+      document.getElementById('client-container').classList.add('hidden');
+      document.getElementById('admin-view').classList.add('hidden');
+      document.getElementById('client-bottom-nav').classList.add('hidden');
+      document.getElementById('header-store-name').innerText = 'Ibi Agenda';
+      document.title = 'Ibi Agenda - Agendamento Online para Salões e Estúdios';
+    }
+
+    function showClientScreen() {
+      document.getElementById('landing-container').classList.add('hidden');
+      document.getElementById('client-container').classList.remove('hidden');
+      document.getElementById('admin-view').classList.add('hidden');
+      document.getElementById('client-bottom-nav').classList.remove('hidden');
+      document.getElementById('client-bottom-nav').classList.add('flex');
+    }
+
+    window.handleHeaderBrandClick = function() {
+      if (targetMerchantId) {
+        window.switchTab('home');
+      } else if (!currentUser) {
+        showLandingScreen();
+      }
+    };
+
+    window.switchTab = function(tabId) {
+      document.querySelectorAll('.client-tab').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if(btn.dataset.tab === tabId) {
+          btn.className = "tab-btn flex flex-col items-center text-indigo-600 cursor-pointer";
+        } else {
+          btn.className = "tab-btn flex flex-col items-center text-slate-400 hover:text-indigo-600 cursor-pointer";
+        }
+      });
+      window.scrollTo({ top: document.getElementById('client-container').offsetTop, behavior: 'smooth' });
+    };
+
+    window.openTutorial = function(type) {
+      const modal = document.getElementById('tutorial-modal');
+      const title = document.getElementById('tutorial-modal-title');
+      const content = document.getElementById('tutorial-modal-content');
+
+      if (type === 'merchant') {
+        title.innerHTML = "Manual do Lojista / Equipe";
+        content.innerHTML = `
+          <p><b>1. Agenda no Celular:</b> Cada agendamento na lista do painel e na agenda da profissional tem botões para adicionar ao Google Agenda ou baixar (.ics).</p>
+          <p><b>2. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional cria/confirma sua senha pelo botão de primeiro acesso. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
+          <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
+        `;
+      } else {
+        title.innerHTML = "Manual do Cliente (Como Agendar)";
+        content.innerHTML = `
+          <p><b>1. Escolher Serviços:</b> Selecione seus serviços por categoria e veja o horário estimado de término.</p>
+          <p><b>2. Agenda do Celular e Reservas:</b> Após confirmar, salve direto no Google Agenda ou baixe o evento (.ics) para o calendário do iPhone/Android (com lembrete de 1h antes).</p>
+        `;
+      }
+      modal.classList.remove('hidden');
+    };
+
+    window.closeTutorial = function() {
+      document.getElementById('tutorial-modal').classList.add('hidden');
+    };
+
+    window.toggleSection = function(sectionId) {
+      const el = document.getElementById(sectionId);
+      const icon = document.getElementById(`icon-${sectionId}`);
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        if (icon) icon.className = "fa-solid fa-chevron-up";
+      } else {
+        el.classList.add('hidden');
+        if (icon) icon.className = "fa-solid fa-chevron-down";
+      }
+    };
+
+    window.toggleAdminView = function() {
+      const adminView = document.getElementById('admin-view');
+      if (adminView.classList.contains('hidden')) {
+        document.getElementById('landing-container').classList.add('hidden');
+        document.getElementById('client-container').classList.add('hidden');
+        adminView.classList.remove('hidden');
+        document.getElementById('client-bottom-nav').classList.add('hidden');
+        document.getElementById('client-bottom-nav').classList.remove('flex');
+      } else {
+        adminView.classList.add('hidden');
+        if (targetMerchantId) {
+          showClientScreen();
+          loadClientData();
+        } else {
+          showLandingScreen();
+        }
+      }
+    };
+
+    window.toggleStaffLoginMode = function() {
+      isStaffLoginMode = !isStaffLoginMode;
+      isRegisterMode = false;
+      const salonBox = document.getElementById('staff-salon-id-box');
+      const confirmPassBox = document.getElementById('staff-confirm-password-box');
+      const firstAccessBtn = document.getElementById('btn-staff-first-access');
+      const salonInput = document.getElementById('login-salon-ref');
+      if (isStaffLoginMode) {
+        salonBox.classList.remove('hidden');
+        confirmPassBox.classList.remove('hidden');
+        firstAccessBtn.classList.remove('hidden');
+        if (salonInput && !salonInput.value && targetMerchantId) {
+          salonInput.value = targetMerchantId;
+        }
+        document.getElementById('auth-title').innerText = "Acesso do Profissional";
+        document.getElementById('auth-subtitle').innerText = "Já tem senha? Toque em Entrar. Primeiro acesso? Confirme a senha e toque em Primeiro acesso.";
+        document.getElementById('btn-toggle-staff-login').innerText = "Voltar para login do Dono do Salão";
+      } else {
+        salonBox.classList.add('hidden');
+        confirmPassBox.classList.add('hidden');
+        firstAccessBtn.classList.add('hidden');
+        document.getElementById('auth-title').innerText = "Painel do Lojista / Equipe";
+        document.getElementById('auth-subtitle').innerText = "Dono vê todos os agendamentos; profissionais veem apenas os seus.";
+        document.getElementById('btn-toggle-staff-login').innerText = "Sou profissional (ver só minha agenda)";
+      }
+      document.getElementById('btn-auth-submit').innerText = "Entrar";
+      document.getElementById('btn-toggle-auth-mode').innerText = "Criar conta grátis (7 dias)";
+    };
+
+    window.toggleAuthMode = function() {
+      isRegisterMode = !isRegisterMode;
+      isStaffLoginMode = false;
+      document.getElementById('staff-salon-id-box').classList.add('hidden');
+      document.getElementById('staff-confirm-password-box').classList.add('hidden');
+      document.getElementById('btn-staff-first-access').classList.add('hidden');
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta do Salão (7 Dias Grátis)" : "Painel do Lojista / Equipe";
+      document.getElementById('auth-subtitle').innerText = isRegisterMode
+        ? "Comece seu teste gratuito de 7 dias agora mesmo."
+        : "Dono vê todos os agendamentos; profissionais veem apenas os seus.";
+      document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta Grátis (7 Dias)" : "Entrar";
+      document.getElementById('btn-toggle-auth-mode').innerText = isRegisterMode ? "Já tenho conta (Entrar)" : "Criar conta grátis (7 dias)";
+    };
+
+    window.openRegisterMode = function() {
+      isRegisterMode = true;
+      isStaffLoginMode = false;
+      document.getElementById('staff-salon-id-box').classList.add('hidden');
+      document.getElementById('staff-confirm-password-box').classList.add('hidden');
+      document.getElementById('btn-staff-first-access').classList.add('hidden');
+      document.getElementById('auth-title').innerText = "Criar Conta do Salão (7 Dias Grátis)";
+      document.getElementById('auth-subtitle').innerText = "Comece seu teste gratuito de 7 dias agora mesmo.";
+      document.getElementById('btn-auth-submit').innerText = "Criar Conta Grátis (7 Dias)";
+      document.getElementById('btn-toggle-auth-mode').innerText = "Já tenho conta (Entrar)";
+      document.getElementById('landing-container').classList.add('hidden');
+      document.getElementById('client-container').classList.add('hidden');
+      document.getElementById('admin-view').classList.remove('hidden');
+      document.getElementById('client-bottom-nav').classList.add('hidden');
+      document.getElementById('client-bottom-nav').classList.remove('flex');
+    };
+
+    window.forgotPassword = async function() {
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
+      if (!email) {
+        alert("Por favor, digite o seu e-mail no campo acima.");
+        document.getElementById('auth-email').focus();
+        return;
+      }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        alert(`E-mail de recuperação enviado para: ${email}`);
+      } catch (error) {
+        alert(`Não foi possível enviar o e-mail de recuperação (${error.code || 'erro'}).`);
+      }
+    };
+
+    function convertImageToBase64(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) { resolve(null); return; }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 300;
+            const MAX_HEIGHT = 300;
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            } else {
+              if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          };
+          img.onerror = (error) => reject(error);
+          img.src = event.target.result;
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('booking-date');
+      const manualDateInput = document.getElementById('manual-booking-date');
+      const filterSingleInput = document.getElementById('filter-single-date');
+      if(dateInput) dateInput.setAttribute('min', today);
+      if(manualDateInput) {
+        manualDateInput.setAttribute('min', today);
+        manualDateInput.value = today;
+      }
+      if(filterSingleInput) filterSingleInput.value = today;
+      renderScheduleInputs();
+      renderDateExceptionsList([]);
+
+      if (targetMerchantId) {
+        showClientScreen();
+        loadClientData();
+      } else {
+        showLandingScreen();
+      }
+    });
+
+    function renderScheduleInputs(savedSchedule = null) {
+      const container = document.getElementById('schedule-config-container');
+      if (!container) return;
+      container.innerHTML = '';
+      if (savedSchedule) weeklySchedule = savedSchedule;
+
+      for (let day = 0; day <= 6; day++) {
+        const config = weeklySchedule[day] || { active: false, open: "08:00", close: "18:00" };
+        container.innerHTML += `
+          <div class="p-2 bg-white border border-slate-200 rounded-xl space-y-1">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-800 flex items-center gap-1.5">
+                <input type="checkbox" id="day-active-${day}" ${config.active ? 'checked' : ''} onchange="toggleDayInputs(${day})" class="rounded text-indigo-600">
+                ${dayNames[day]}
+              </label>
+              <span id="day-status-${day}" class="text-[9px] font-bold px-2 py-0.5 rounded-full ${config.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">${config.active ? 'Aberto' : 'Fechado'}</span>
+            </div>
+            <div id="day-times-${day}" class="grid grid-cols-2 gap-2 ${config.active ? '' : 'hidden'}">
+              <input type="time" id="day-open-${day}" value="${config.open}" class="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px]">
+              <input type="time" id="day-close-${day}" value="${config.close}" class="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px]">
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.toggleDayInputs = function(day) {
+      const isActive = document.getElementById(`day-active-${day}`).checked;
+      const timesDiv = document.getElementById(`day-times-${day}`);
+      const statusSpan = document.getElementById(`day-status-${day}`);
+      if (isActive) {
+        timesDiv.classList.remove('hidden');
+        statusSpan.innerText = "Aberto";
+        statusSpan.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+      } else {
+        timesDiv.classList.add('hidden');
+        statusSpan.innerText = "Fechado";
+        statusSpan.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600";
+      }
+    };
+
+    function updateMerchantShareLink(salonId, slug = '', storeName = '') {
+      const cleanSlug = normalizeSlug(slug);
+      const paramValue = cleanSlug || salonId;
+      const fullSalonLink = `${window.location.origin}${window.location.pathname}?salao=${paramValue}`;
+      document.getElementById('merchant-link-display').innerHTML = `Link do salão: <a href="${fullSalonLink}" target="_blank" class="text-indigo-600 underline">${fullSalonLink}</a>`;
+      window.generatedMerchantLink = fullSalonLink;
+      const activeStoreName = storeName || document.getElementById('store-name-input').value || "nosso salão";
+      renderShareKit(fullSalonLink, activeStoreName);
+    }
+
+    function renderTrialBanner(settingsData) {
+      const banner = document.getElementById('trial-status-banner');
+      const textEl = document.getElementById('trial-status-text');
+      if (!banner || !textEl) return;
+
+      const status = settingsData?.planoStatus || 'trial';
+      if (status === 'ativo') {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const endDate = settingsData?.dataFimTrial?.toDate ? settingsData.dataFimTrial.toDate() : null;
+      if (!endDate) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const now = new Date();
+      const diffMs = endDate.getTime() - now.getTime();
+      const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const formattedEnd = endDate.toLocaleDateString('pt-BR');
+
+      banner.classList.remove('hidden');
+      if (daysLeft > 0) {
+        textEl.innerText = `Teste gratuito ativo até ${formattedEnd} (${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}).`;
+      } else {
+        textEl.innerText = `Período gratuito encerrado em ${formattedEnd}. Ative sua assinatura mensal de R$ 50 para manter o painel.`;
+      }
+    }
+
+    function renderShareKit(linkUrl, storeName) {
+      const qrBox = document.getElementById('salon-qrcode-box');
+      if (qrBox && typeof QRCode !== 'undefined') {
+        qrBox.innerHTML = '';
+        new QRCode(qrBox, {
+          text: linkUrl,
+          width: 128,
+          height: 128
+        });
+      }
+      const bioInput = document.getElementById('promo-bio-text');
+      const wppInput = document.getElementById('promo-wpp-text');
+      if (bioInput) {
+        bioInput.value = `Agende seu horário no ${storeName} sem fila:\n${linkUrl}`;
+      }
+      if (wppInput) {
+        wppInput.value = `Olá! Agora você pode agendar seu horário no *${storeName}* a qualquer hora pelo nosso link:\n${linkUrl}`;
+      }
+    }
+
+    window.copyPromoText = function(elementId) {
+      const el = document.getElementById(elementId);
+      if (!el || !el.value) return;
+      navigator.clipboard.writeText(el.value);
+      alert("Texto copiado!");
+    };
+
+    async function resolveSalonIdFromRef(refValue) {
+      const cleanRef = (refValue || '').trim();
+      if (!cleanRef) return null;
+      const slugSnap = await db.collection('settings').where('slug', '==', normalizeSlug(cleanRef)).limit(1).get();
+      if (!slugSnap.empty) return slugSnap.docs[0].id;
+      return cleanRef;
+    }
+
+    async function setupStaffRestrictedSession(user) {
+      loggedStaffProfile = null;
+      const refInputVal = document.getElementById('login-salon-ref').value.trim();
+      let salonId = await resolveSalonIdFromRef(refInputVal || targetMerchantId);
+
+      if (!salonId) {
+        const staffByEmail = await db.collection('staff').where('email', '==', user.email.toLowerCase()).limit(1).get();
+        if (!staffByEmail.empty) {
+          salonId = staffByEmail.docs[0].data().merchantId;
+        }
+      }
+
+      if (!salonId) {
+        alert("Informe o ID ou Slug do salão para acessar a sua agenda profissional.");
+        await auth.signOut();
+        return;
+      }
+
+      const staffSnap = await db.collection('staff')
+        .where('merchantId', '==', salonId)
+        .where('email', '==', user.email.toLowerCase())
+        .limit(1)
+        .get();
+
+      if (staffSnap.empty || staffSnap.docs[0].data().active === false) {
+        alert("Este e-mail não está mais ativo neste salão. O acesso foi encerrado.");
+        await auth.signOut();
+        return;
+      }
+
+      const sDoc = staffSnap.docs[0];
+      loggedStaffProfile = { id: sDoc.id, ...sDoc.data() };
+
+      if (!loggedStaffProfile.firstAccessCompleted) {
+        await db.collection('staff').doc(loggedStaffProfile.id).set({
+          firstAccessCompleted: true,
+          firstAccessAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        loggedStaffProfile.firstAccessCompleted = true;
+      }
+
+      let storeNameForShare = "nosso salão";
+      let slugForShare = "";
+      const settingsDoc = await db.collection('settings').doc(salonId).get();
+      if (settingsDoc.exists) {
+        const sData = settingsDoc.data();
+        if (sData.weeklySchedule) window.salonSchedule = sData.weeklySchedule;
+        if (sData.address) salonAddress = sData.address;
+        storeNameForShare = sData.storeName || storeNameForShare;
+        slugForShare = sData.slug || "";
+      }
+
+      document.getElementById('admin-auth-screen').classList.add('hidden');
+      document.getElementById('admin-dashboard').classList.remove('hidden');
+      document.getElementById('trial-status-banner').classList.add('hidden');
+      document.getElementById('share-link-controls').classList.remove('hidden');
+      document.getElementById('btn-owner-share-kit').classList.add('hidden');
+      document.getElementById('btn-delete-owner-account').classList.add('hidden');
+      document.getElementById('owner-full-panel').classList.add('hidden');
+      document.getElementById('staff-restricted-panel').classList.remove('hidden');
+
+      document.getElementById('dashboard-role-title').innerText = `Agenda de ${loggedStaffProfile.name} (${loggedStaffProfile.role})`;
+      document.getElementById('merchant-email-display').innerText = `Acesso Profissional: ${user.email}`;
+      updateMerchantShareLink(salonId, slugForShare, storeNameForShare);
+
+      renderStaffOwnExceptionsList(loggedStaffProfile);
+
+      if (bookingsListener) bookingsListener();
+      bookingsListener = db.collection('bookings')
+        .where('merchantId', '==', salonId)
+        .where('staffName', '==', loggedStaffProfile.name)
+        .onSnapshot(snapshot => {
+          const ownBookings = [];
+          staffBookingsCache = {};
+          snapshot.forEach(doc => {
+            const item = { id: doc.id, ...doc.data() };
+            ownBookings.push(item);
+            staffBookingsCache[doc.id] = item;
+          });
+          ownBookings.sort((a, b) => {
+            if (a.date !== b.date) return (b.date || '').localeCompare(a.date || '');
+            return (a.time || '').localeCompare(b.time || '');
+          });
+
+          const listEl = document.getElementById('staff-own-bookings-list');
+          if (!listEl) return;
+          listEl.innerHTML = '';
+          if (ownBookings.length === 0) {
+            listEl.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado para você.</p>';
+            return;
+          }
+          ownBookings.forEach(d => {
+            const gcalHref = (d.date && d.time)
+              ? buildGoogleCalendarUrl(
+                  `${d.serviceName} - ${d.clientName} (${storeNameForShare})`,
+                  d.date,
+                  d.time,
+                  d.duration || 30,
+                  `Cliente: ${d.clientName} (${d.clientPhone}) | Serviço: ${d.serviceName}`,
+                  salonAddress
+                )
+              : '#';
+
+            listEl.innerHTML += `
+              <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-2 border border-slate-200">
+                <div class="flex justify-between">
+                  <b>${d.clientName} (${d.clientPhone})</b>
+                  <span class="text-emerald-600 font-bold">${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time}</span>
+                </div>
+                <p class="text-slate-600">Serviço(s): <b>${d.serviceName}</b> | Cabelo: ${d.hairSpecs || 'N/A'}</p>
+                <div class="flex flex-wrap gap-2 pt-1.5 border-t border-slate-200/80">
+                  <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg flex items-center gap-1">
+                    <i class="fa-brands fa-google"></i> Google Agenda
+                  </a>
+                  <button type="button" onclick="window.downloadStaffBookingIcsById('${d.id}')" class="px-2.5 py-1 bg-slate-200/80 hover:bg-slate-200 text-slate-800 font-bold rounded-lg cursor-pointer flex items-center gap-1">
+                    <i class="fa-solid fa-calendar-day text-indigo-600"></i> Agenda Celular (.ics)
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+        });
+    }
+
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+      if (user) {
+        if (isStaffLoginMode) {
+          await setupStaffRestrictedSession(user);
+          return;
+        }
+
+        loggedStaffProfile = null;
+        document.getElementById('staff-restricted-panel').classList.add('hidden');
+        document.getElementById('owner-full-panel').classList.remove('hidden');
+        document.getElementById('share-link-controls').classList.remove('hidden');
+        document.getElementById('btn-owner-share-kit').classList.remove('hidden');
+        document.getElementById('btn-delete-owner-account').classList.remove('hidden');
+        document.getElementById('dashboard-role-title').innerText = "Painel Administrativo (Dono)";
+
+        document.getElementById('admin-auth-screen').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('merchant-email-display').innerText = `E-mail: ${user.email}`;
+
+        const docRef = db.collection('settings').doc(user.uid);
+        const snap = await docRef.get();
+        if (!snap.exists) {
+          const now = new Date();
+          const trialEnd = new Date();
+          trialEnd.setDate(now.getDate() + 7);
+          await docRef.set({
+            email: user.email,
+            planoStatus: 'trial',
+            dataInicioTrial: firebase.firestore.Timestamp.fromDate(now),
+            dataFimTrial: firebase.firestore.Timestamp.fromDate(trialEnd),
+            weeklySchedule
+          }, { merge: true });
+        }
+
+        updateMerchantShareLink(user.uid, snap.exists ? (snap.data().slug || '') : '');
+        loadAdminData();
+      } else {
+        loggedStaffProfile = null;
+        if (bookingsListener) { bookingsListener(); bookingsListener = null; }
+        document.getElementById('admin-auth-screen').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+      }
+
+      if (targetMerchantId) {
+        showClientScreen();
+        loadClientData();
+      }
+    });
+
+    window.copyMerchantLink = function() {
+      if (window.generatedMerchantLink) {
+        navigator.clipboard.writeText(window.generatedMerchantLink);
+        alert("Link do salão copiado para a área de transferência!");
+      }
+    };
+
+    window.shareOnWhatsApp = function() {
+      if (window.generatedMerchantLink) {
+        const storeName = document.getElementById('store-name-input').value || document.getElementById('header-store-name').innerText || "nosso salão";
+        const text = encodeURIComponent(`Olá! Agende seu horário no *${storeName}* através do link exclusivo abaixo:\n${window.generatedMerchantLink}`);
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+      }
+    };
+
+    window.sendClientReminderWhatsApp = function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const digits = cleanPhoneDigits(booking.clientPhone);
+      if (!digits) {
+        alert("Este agendamento não possui número de WhatsApp válido.");
+        return;
+      }
+      const formattedPhone = digits.startsWith('55') ? digits : `55${digits}`;
+      const storeName = document.getElementById('store-name-input').value || document.getElementById('header-store-name').innerText || "nosso salão";
+      const dateFormatted = booking.date ? booking.date.split('-').reverse().join('/') : 'hoje';
+      const msg = `Olá, ${booking.clientName}! Passando para confirmar seu agendamento no *${storeName}*:\n• Serviço(s): ${booking.serviceName}\n• Profissional: ${booking.staffName}\n• Data: ${dateFormatted} às ${booking.time}`;
+      window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.handleStaffFirstAccess = async function() {
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
+      const password = document.getElementById('auth-password').value;
+      const confirmPass = document.getElementById('auth-password-confirm').value;
+
+      if (!email || !password || !confirmPass) {
+        alert("Preencha o e-mail, a senha e a confirmação de senha para o primeiro acesso.");
+        return;
+      }
+      if (password.length < 6) {
+        alert("A senha deve ter pelo menos 6 caracteres.");
+        return;
+      }
+      if (password !== confirmPass) {
+        alert("As senhas digitadas não conferem. Digite a mesma senha nos dois campos.");
+        return;
+      }
+
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert("Senha confirmada e primeiro acesso concluído!");
+      } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+          alert("Este e-mail já possui senha cadastrada. Digite a senha e toque em 'Entrar' ou use 'Esqueceu sua senha?'.");
+        } else {
+          alert(`Não foi possível concluir o primeiro acesso (${error.code || 'erro'}).`);
+        }
+      }
+    };
+
+    window.handleAuth = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
+      const password = document.getElementById('auth-password').value;
+      const confirmPass = document.getElementById('auth-password-confirm').value;
+
+      if (isStaffLoginMode && confirmPass && password !== confirmPass) {
+        alert("As senhas digitadas não conferem. Digite a mesma senha nos dois campos.");
+        return;
+      }
+
+      try {
+        if (isRegisterMode) {
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          const now = new Date();
+          const trialEnd = new Date();
+          trialEnd.setDate(now.getDate() + 7);
+          await db.collection('settings').doc(cred.user.uid).set({
+            email,
+            planoStatus: 'trial',
+            dataInicioTrial: firebase.firestore.Timestamp.fromDate(now),
+            dataFimTrial: firebase.firestore.Timestamp.fromDate(trialEnd),
+            weeklySchedule
+          }, { merge: true });
+          alert("Conta criada com 7 dias grátis! Configure o perfil e o slug do seu salão.");
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+      } catch (error) {
+        if (isStaffLoginMode && (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found')) {
+          alert("E-mail ou senha incorretos. Se for o primeiro acesso, preencha e confirme a senha e toque em 'Primeiro acesso (Criar minha senha)'. Se já criou antes, use 'Esqueceu sua senha?'.");
+        } else {
+          alert(`Erro na autenticação (${error.code || 'verifique os dados'}). Verifique seu e-mail e senha ou tente novamente.`);
+        }
+      }
+    };
+
+    window.logoutMerchant = function() {
+      isStaffLoginMode = false;
+      loggedStaffProfile = null;
+      auth.signOut();
+    };
+
+    window.deleteAccount = async function() {
+      if (!currentUser || loggedStaffProfile) return;
+      if (confirm("Tem certeza que deseja excluir sua conta e todos os dados associados? Esta ação é irreversível.")) {
+        try {
+          const uid = currentUser.uid;
+          const services = await db.collection('services').where('merchantId', '==', uid).get();
+          const staff = await db.collection('staff').where('merchantId', '==', uid).get();
+          const bookings = await db.collection('bookings').where('merchantId', '==', uid).get();
+
+          const deletes = [
+            ...services.docs.map(doc => doc.ref.delete()),
+            ...staff.docs.map(doc => doc.ref.delete()),
+            ...bookings.docs.map(doc => doc.ref.delete()),
+            db.collection('settings').doc(uid).delete()
+          ];
+
+          await Promise.all(deletes);
+          await currentUser.delete();
+          alert("Conta e dados da loja excluídos com sucesso.");
+          window.location.href = window.location.pathname;
+        } catch (error) {
+          if (error.code === 'auth/requires-recent-login') {
+            alert("Por segurança, faça login novamente antes de excluir a conta.");
+            auth.signOut();
+          } else {
+            alert("Conexão instável, tente novamente em instantes.");
+          }
+        }
+      }
+    };
+
+    window.saveStoreSettings = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const name = document.getElementById('store-name-input').value;
+        const slug = normalizeSlug(document.getElementById('store-slug-input').value);
+        if (document.getElementById('store-slug-input')) {
+          document.getElementById('store-slug-input').value = slug;
+        }
+        const address = document.getElementById('store-address-input').value;
+        const whatsapp = document.getElementById('store-whatsapp-input').value;
+        const social = document.getElementById('store-social-input').value;
+        const facebook = document.getElementById('store-facebook-input').value;
+        const paymentLink = document.getElementById('store-payment-input').value;
+        const logoFile = document.getElementById('store-logo-file').files[0];
+        
+        let logoUrl = null;
+        if (logoFile) logoUrl = await convertImageToBase64(logoFile);
+
+        let newSchedule = {};
+        for (let day = 0; day <= 6; day++) {
+          const active = document.getElementById(`day-active-${day}`).checked;
+          const open = document.getElementById(`day-open-${day}`).value;
+          const close = document.getElementById(`day-close-${day}`).value;
+          newSchedule[day] = { active, open, close };
+        }
+
+        const updateData = { storeName: name, slug, address, whatsapp, socialLink: social, facebookLink: facebook, paymentLink, weeklySchedule: newSchedule };
+        if (logoUrl) updateData.logoUrl = logoUrl;
+
+        await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
+        updateMerchantShareLink(currentUser.uid, slug, name);
+        alert("Perfil, Slug, Endereço e Link de Pagamento salvos!");
+        loadAdminData();
+      } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
+    };
+
+    window.editStaff = function(staffId) {
+      const staff = allStaffRaw.find(s => s.id === staffId);
+      if (!staff) return;
+
+      document.getElementById('editing-staff-id').value = staff.id;
+      document.getElementById('staff-name').value = staff.name || '';
+      document.getElementById('staff-role').value = staff.role || '';
+      document.getElementById('staff-email').value = staff.email || '';
+      document.getElementById('staff-whatsapp').value = staff.whatsapp || '';
+      document.getElementById('staff-photo-file').value = '';
+
+      document.getElementById('staff-form-title').innerText = "Editar Profissional";
+      document.getElementById('staff-form-header-title').innerText = "Cadastrar e Editar Profissionais (Editando)";
+      document.getElementById('btn-save-staff').innerText = "Salvar Alterações do Profissional";
+      document.getElementById('btn-cancel-edit-staff').classList.remove('hidden');
+
+      document.getElementById('section-staff').classList.remove('hidden');
+      document.getElementById('icon-section-staff').className = "fa-solid fa-chevron-up";
+      window.scrollTo({ top: document.getElementById('section-staff').offsetTop - 70, behavior: 'smooth' });
+    };
+
+    window.cancelEditStaff = function() {
+      document.getElementById('editing-staff-id').value = '';
+      document.getElementById('staff-name').value = '';
+      document.getElementById('staff-role').value = '';
+      document.getElementById('staff-email').value = '';
+      document.getElementById('staff-whatsapp').value = '';
+      document.getElementById('staff-photo-file').value = '';
+
+      document.getElementById('staff-form-title').innerText = "Novo Profissional";
+      document.getElementById('staff-form-header-title').innerText = "Cadastrar e Editar Profissionais (Manicure, Cabeleireiro e Login Individual)";
+      document.getElementById('btn-save-staff').innerText = "+ Adicionar Profissional";
+      document.getElementById('btn-cancel-edit-staff').classList.add('hidden');
+    };
+
+    window.saveStaff = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const editingId = document.getElementById('editing-staff-id').value;
+        const name = document.getElementById('staff-name').value.trim();
+        const role = document.getElementById('staff-role').value.trim();
+        const email = document.getElementById('staff-email').value.trim().toLowerCase();
+        const whatsapp = document.getElementById('staff-whatsapp').value.trim();
+        const photoFile = document.getElementById('staff-photo-file').files[0];
+        
+        let photoData = null;
+        if (photoFile) photoData = await convertImageToBase64(photoFile);
+
+        if (editingId) {
+          const previousStaff = allStaffRaw.find(s => s.id === editingId);
+          const payload = { name, role, email, whatsapp };
+          if (photoData) payload.photo = photoData;
+          await db.collection('staff').doc(editingId).update(payload);
+
+          if (previousStaff && previousStaff.name && previousStaff.name !== name) {
+            const linkedServices = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+            const serviceUpdates = [];
+            linkedServices.forEach(doc => {
+              const sData = doc.data();
+              if (Array.isArray(sData.assignedStaff) && sData.assignedStaff.includes(previousStaff.name)) {
+                const updatedAssigned = sData.assignedStaff.map(n => (n === previousStaff.name ? name : n));
+                serviceUpdates.push(doc.ref.update({ assignedStaff: updatedAssigned }));
+              }
+            });
+            await Promise.all(serviceUpdates);
+          }
+
+          window.cancelEditStaff();
+          loadAdminData();
+          alert("Profissional atualizado com sucesso!");
+        } else {
+          await db.collection('staff').add({
+            merchantId: currentUser.uid,
+            name,
+            role,
+            email,
+            whatsapp,
+            photo: photoData || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+            active: true,
+            firstAccessCompleted: false,
+            dateExceptions: {},
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          window.cancelEditStaff();
+          loadAdminData();
+          alert("Profissional cadastrado com sucesso!");
+        }
+      } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
+    };
+
+    window.saveService = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const serviceId = document.getElementById('editing-service-id').value;
+        const category = document.getElementById('service-category').value.trim() || "Geral";
+        const name = document.getElementById('service-name').value;
+        const order = parseInt(document.getElementById('service-order').value) || 0;
+        const interval = parseInt(document.getElementById('service-interval').value) || 0;
+        
+        const checkboxes = document.querySelectorAll('.staff-checkbox:checked');
+        let assignedStaff = [];
+        checkboxes.forEach(cb => assignedStaff.push(cb.value));
+
+        const rawPrice = document.getElementById('service-price').value;
+        const price = rawPrice ? parseFloat(rawPrice) : 0;
+        const duration = parseInt(document.getElementById('service-duration').value);
+        const photoFile = document.getElementById('service-photo-file').files[0];
+        
+        let photoData = null;
+        if (photoFile) photoData = await convertImageToBase64(photoFile);
+
+        const servicePayload = { merchantId: currentUser.uid, category, name, order, interval, assignedStaff, price, duration };
+        if (photoData) servicePayload.photo = photoData;
+
+        if (serviceId) {
+          await db.collection('services').doc(serviceId).update(servicePayload);
+          alert("Serviço atualizado com sucesso!");
+        } else {
+          servicePayload.photo = photoData || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150";
+          servicePayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('services').add(servicePayload);
+          alert("Serviço cadastrado com sucesso!");
+        }
+
+        window.cancelEditService();
+        loadAdminData();
+      } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
+    };
+
+    window.editManualBooking = async function(bookingId) {
+      const booking = allBookingsCache.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      document.getElementById('editing-manual-booking-id').value = booking.id;
+      document.getElementById('manual-client-name').value = booking.clientName || '';
+      document.getElementById('manual-client-phone').value = booking.clientPhone || '';
+      document.getElementById('manual-staff-select').value = booking.staffName || '';
+      if (booking.date) {
+        document.getElementById('manual-booking-date').value = booking.date;
+      }
+
+      const selectedNames = (booking.serviceName || '').split(' + ').map(s => s.trim());
+      document.querySelectorAll('.manual-service-checkbox').forEach(cb => {
+        try {
+          const parsed = JSON.parse(cb.value);
+          cb.checked = selectedNames.includes(parsed.name);
+        } catch(e) {
+          cb.checked = false;
+        }
+      });
+
+      manualSelectedTime = booking.time || null;
+
+      document.getElementById('manual-booking-form-title').innerText = "Editar Agendamento Manual";
+      document.getElementById('manual-booking-header-title').innerText = "Novo Agendamento Manual (Editando Registro)";
+      document.getElementById('btn-save-manual-booking').innerText = "Salvar Alterações do Agendamento";
+      document.getElementById('btn-cancel-edit-manual').classList.remove('hidden');
+
+      document.getElementById('section-manual-booking').classList.remove('hidden');
+      document.getElementById('icon-section-manual-booking').className = "fa-solid fa-chevron-up";
+
+      await window.renderManualTimeSlots(booking.id);
+
+      if (manualSelectedTime) {
+        const slotsContainer = document.getElementById('manual-time-slots-container');
+        let matched = false;
+        slotsContainer.querySelectorAll('.manual-time-btn').forEach(btn => {
+          if (btn.innerText === manualSelectedTime) {
+            btn.classList.add('bg-indigo-600', 'text-white');
+            matched = true;
+          }
+        });
+        if (!matched) {
+          slotsContainer.innerHTML = `<button type="button" onclick="window.selectManualTime('${manualSelectedTime}', this)" class="manual-time-btn py-1.5 px-1 text-[11px] font-bold rounded-xl border border-indigo-600 bg-indigo-600 text-white cursor-pointer">${manualSelectedTime}</button>` + slotsContainer.innerHTML;
+        }
+      }
+
+      window.scrollTo({ top: document.getElementById('section-manual-booking').offsetTop - 70, behavior: 'smooth' });
+    };
+
+    window.cancelEditManualBooking = function() {
+      document.getElementById('editing-manual-booking-id').value = '';
+      document.getElementById('manual-client-name').value = '';
+      document.getElementById('manual-client-phone').value = '';
+      document.getElementById('manual-staff-select').value = '';
+      document.getElementById('manual-booking-date').value = new Date().toISOString().split('T')[0];
+      document.querySelectorAll('.manual-service-checkbox').forEach(cb => cb.checked = false);
+      manualSelectedTime = null;
+      document.getElementById('manual-time-slots-container').innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>';
+
+      document.getElementById('manual-booking-form-title').innerText = "Novo Agendamento Manual";
+      document.getElementById('manual-booking-header-title').innerText = "Novo Agendamento Manual (Qualquer Serviço Até o Fechamento)";
+      document.getElementById('btn-save-manual-booking').innerText = "Salvar Agendamento Manual";
+      document.getElementById('btn-cancel-edit-manual').classList.add('hidden');
+    };
+
+    window.renderManualTimeSlots = async function(ignoreBookingId = null) {
+      if (!currentUser) return;
+      const editingId = typeof ignoreBookingId === 'string'
+        ? ignoreBookingId
+        : document.getElementById('editing-manual-booking-id').value;
+      const dateVal = document.getElementById('manual-booking-date').value;
+      const staffName = document.getElementById('manual-staff-select').value;
+      const checkboxes = document.querySelectorAll('.manual-service-checkbox:checked');
+
+      const slotsContainer = document.getElementById('manual-time-slots-container');
+      if (!dateVal || checkboxes.length === 0 || !staffName) {
+        slotsContainer.innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>';
+        return;
+      }
+
+      slotsContainer.innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Calculando horários...</p>';
+
+      const dayConfig = getScheduleForStaffAndDate(staffName, dateVal, window.salonSchedule || weeklySchedule);
+
+      if (!dayConfig || !dayConfig.active) {
+        slotsContainer.innerHTML = '<p class="text-[10px] text-rose-500 col-span-3 text-center py-2 font-bold">Profissional sem atendimento nesta data.</p>';
+        return;
+      }
+
+      const [openH, openM] = dayConfig.open.split(':').map(Number);
+      const [closeH, closeM] = dayConfig.close.split(':').map(Number);
+      const openTotalMins = openH * 60 + openM;
+      const closeTotalMins = closeH * 60 + closeM;
+
+      let bookedRanges = [];
+      try {
+        let query = db.collection('bookings').where('merchantId', '==', currentUser.uid).where('date', '==', dateVal);
+        if (staffName) query = query.where('staffName', '==', staffName);
+        const snapshot = await query.get();
+        snapshot.forEach(doc => {
+          if (editingId && doc.id === editingId) return;
+          const d = doc.data();
+          const [h, m] = d.time.split(':').map(Number);
+          const startMins = h * 60 + m;
+          const dur = d.duration || 30;
+          const inter = d.interval || 0;
+          const ranges = getBusyRanges(startMins, dur, inter);
+          bookedRanges.push(...ranges);
+        });
+      } catch (e) { console.error(e); }
+
+      let totalServiceDuration = 0;
+      let totalServiceInterval = 0;
+      checkboxes.forEach(cb => {
+        try {
+          const s = JSON.parse(cb.value);
+          totalServiceDuration += (s.duration || 30);
+          totalServiceInterval += (s.interval || 0);
+        } catch(e) {}
+      });
+      if (totalServiceDuration === 0) totalServiceDuration = 30;
+
+      const todayDateStr = new Date().toISOString().split('T')[0];
+      let currentHourNow = -1;
+      let currentMinNow = -1;
+      if (dateVal === todayDateStr) {
+        const now = new Date();
+        currentHourNow = now.getHours();
+        currentMinNow = now.getMinutes();
+      }
+
+      slotsContainer.innerHTML = '';
+      let count = 0;
+
+      for (let currentMins = openTotalMins; currentMins <= closeTotalMins; currentMins += 5) {
+        const slotHour = Math.floor(currentMins / 60);
+        const slotMin = currentMins % 60;
+
+        if (dateVal === todayDateStr) {
+          if (slotHour < currentHourNow || (slotHour === currentHourNow && slotMin <= currentMinNow)) {
+            continue;
+          }
+        }
+
+        const newBookingRanges = getBusyRanges(currentMins, totalServiceDuration, totalServiceInterval);
+
+        let isConflict = false;
+        for (let newR of newBookingRanges) {
+          for (let existingR of bookedRanges) {
+            if (newR.start < existingR.end && newR.end > existingR.start) {
+              isConflict = true;
+              break;
+            }
+          }
+          if (isConflict) break;
+        }
+
+        if (isConflict) continue;
+
+        const hourStr = slotHour.toString().padStart(2, '0');
+        const minStr = slotMin.toString().padStart(2, '0');
+        const timeString = `${hourStr}:${minStr}`;
+        const activeBtnClass = manualSelectedTime === timeString ? 'bg-indigo-600 text-white' : 'bg-slate-50 hover:bg-indigo-600 hover:text-white';
+
+        count++;
+        slotsContainer.innerHTML += `<button type="button" onclick="window.selectManualTime('${timeString}', this)" class="manual-time-btn py-1.5 px-1 text-[11px] font-bold rounded-xl border border-slate-200 ${activeBtnClass} cursor-pointer">${timeString}</button>`;
+      }
+
+      if (count === 0) slotsContainer.innerHTML = '<p class="text-[10px] text-rose-500 col-span-3 text-center py-2">Nenhum horário disponível.</p>';
+    };
+
+    window.selectManualTime = function(time, element) {
+      document.querySelectorAll('.manual-time-btn').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+      element.classList.add('bg-indigo-600', 'text-white');
+      manualSelectedTime = time;
+    };
+
+    window.saveManualBooking = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      try {
+        const editingId = document.getElementById('editing-manual-booking-id').value;
+        const clientName = document.getElementById('manual-client-name').value.trim();
+        const clientPhone = document.getElementById('manual-client-phone').value.trim();
+        const staffName = document.getElementById('manual-staff-select').value;
+        const date = document.getElementById('manual-booking-date').value;
+
+        const checkboxes = document.querySelectorAll('.manual-service-checkbox:checked');
+
+        if (!clientName || checkboxes.length === 0 || !staffName || !date || !manualSelectedTime) {
+          alert("Preencha o nome, selecione os serviços, o profissional, a data e clique em um horário disponível!");
+          return;
+        }
+
+        let selectedManualServices = [];
+        checkboxes.forEach(cb => {
+          try { selectedManualServices.push(JSON.parse(cb.value)); } catch(e) {}
+        });
+
+        let totalDuration = 0;
+        let totalInterval = 0;
+        let totalPrice = 0;
+        let serviceNamesArray = [];
+
+        selectedManualServices.forEach(s => {
+          totalDuration += (s.duration || 30);
+          totalInterval += (s.interval || 0);
+          totalPrice += (s.price || 0);
+          serviceNamesArray.push(s.name);
+        });
+
+        const servicesCombinedName = serviceNamesArray.join(' + ');
+
+        const hasConflict = await checkSlotConflict(currentUser.uid, staffName, date, manualSelectedTime, totalDuration, totalInterval, editingId || null);
+        if (hasConflict) {
+          alert("Esse horário acabou de ser ocupado. Escolha outro horário disponível.");
+          await window.renderManualTimeSlots(editingId || null);
+          return;
+        }
+
+        const payload = {
+          merchantId: currentUser.uid,
+          serviceName: servicesCombinedName,
+          staffName,
+          hairSpecs: 'Agendamento Manual Sincronizado',
+          price: totalPrice,
+          duration: totalDuration,
+          interval: totalInterval,
+          date,
+          time: manualSelectedTime,
+          clientName,
+          clientPhone: clientPhone || 'Não informado',
+          isManual: true
+        };
+
+        if (editingId) {
+          await db.collection('bookings').doc(editingId).update(payload);
+          alert("Agendamento manual atualizado com sucesso!");
+        } else {
+          payload.rating = 0;
+          payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('bookings').add(payload);
+          alert("Agendamento manual realizado e horários sincronizados com sucesso!");
+        }
+
+        window.cancelEditManualBooking();
+        loadAdminData();
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.editService = async function(id, name, category, price, duration, order, interval, assignedStaffJson) {
+      document.getElementById('editing-service-id').value = id;
+      document.getElementById('service-category').value = category;
+      document.getElementById('service-name').value = name;
+      document.getElementById('service-price').value = price > 0 ? price : '';
+      document.getElementById('service-duration').value = duration;
+      document.getElementById('service-order').value = order || 0;
+      document.getElementById('service-interval').value = interval || 0;
+
+      let assignedArray = [];
+      try { assignedArray = JSON.parse(assignedStaffJson || '[]'); } catch(err) { assignedArray = []; }
+      
+      document.querySelectorAll('.staff-checkbox').forEach(cb => {
+        cb.checked = assignedArray.includes(cb.value);
+      });
+
+      document.getElementById('service-form-title').innerText = "Editar Serviço";
+      document.getElementById('service-form-header-title').innerText = "Gerenciar e Cadastrar Serviços (Editando)";
+      document.getElementById('btn-save-service').innerText = "Salvar Alterações";
+      document.getElementById('btn-cancel-edit').classList.remove('hidden');
+      
+      document.getElementById('section-service').classList.remove('hidden');
+      document.getElementById('icon-section-service').className = "fa-solid fa-chevron-up";
+      window.scrollTo({ top: document.getElementById('section-service').offsetTop, behavior: 'smooth' });
+    };
+
+    window.cancelEditService = function() {
+      document.getElementById('editing-service-id').value = '';
+      document.getElementById('service-category').value = '';
+      document.getElementById('service-name').value = '';
+      document.getElementById('service-price').value = '';
+      document.getElementById('service-duration').value = '';
+      document.getElementById('service-order').value = '0';
+      document.getElementById('service-interval').value = '0';
+      document.getElementById('service-photo-file').value = '';
+      document.querySelectorAll('.staff-checkbox').forEach(cb => cb.checked = false);
+
+      document.getElementById('service-form-title').innerText = "Novo Serviço";
+      document.getElementById('service-form-header-title').innerText = "Gerenciar e Cadastrar Serviços por Categoria";
+      document.getElementById('btn-save-service').innerText = "+ Adicionar Serviço";
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
+    };
+
+    async function loadAdminData() {
+      if (!currentUser) return;
+      const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+      let currentStoreName = "nosso salão";
+      let currentSlug = "";
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        if (data.storeName) {
+          document.getElementById('store-name-input').value = data.storeName;
+          currentStoreName = data.storeName;
+        }
+        if (data.slug) {
+          document.getElementById('store-slug-input').value = data.slug;
+          currentSlug = data.slug;
+        }
+        if (data.address) {
+          salonAddress = data.address;
+          document.getElementById('store-address-input').value = data.address;
+        }
+        if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
+        if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
+        if (data.facebookLink) document.getElementById('store-facebook-input').value = data.facebookLink;
+        if (data.paymentLink) document.getElementById('store-payment-input').value = data.paymentLink;
+        if (data.weeklySchedule) {
+          window.salonSchedule = data.weeklySchedule;
+          renderScheduleInputs(data.weeklySchedule);
+        }
+        renderTrialBanner(data);
+        updateMerchantShareLink(currentUser.uid, currentSlug, currentStoreName);
+      }
+
+      const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
+      const staffContainer = document.getElementById('admin-staff-list');
+      const staffCheckboxesDiv = document.getElementById('service-staff-checkboxes');
+      const manualStaffSelect = document.getElementById('manual-staff-select');
+      const excStaffSelect = document.getElementById('exception-staff-select');
+      
+      staffContainer.innerHTML = '';
+      staffCheckboxesDiv.innerHTML = '';
+      if (manualStaffSelect) manualStaffSelect.innerHTML = '<option value="">Selecione o Profissional...</option>';
+      if (excStaffSelect) excStaffSelect.innerHTML = '<option value="">Selecione o Profissional...</option>';
+      
+      window.staffWhatsAppMap = {};
+      allStaffRaw = [];
+      if (staffSnap.empty) {
+        staffCheckboxesDiv.innerHTML = '<p class="text-[10px] text-slate-400">Cadastre profissionais primeiro.</p>';
+      } else {
+        staffSnap.forEach(doc => {
+          const data = doc.data();
+          if (data.active === false) return;
+          const item = { id: doc.id, ...data };
+          allStaffRaw.push(item);
+          
+          if (data.name && data.whatsapp) {
+            window.staffWhatsAppMap[data.name] = data.whatsapp;
+          }
+
+          const emailInfo = data.email ? ` • Login: ${data.email}` : '';
+          staffContainer.innerHTML += `
+            <div class="flex justify-between items-center gap-2 p-2.5 bg-slate-50 rounded-xl text-xs">
+              <span><b>${data.name}</b> (${data.role}) - Wpp: ${data.whatsapp}${emailInfo}</span>
+              <div class="flex gap-1.5 shrink-0">
+                <button type="button" onclick="window.editStaff('${doc.id}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+                <button type="button" onclick="window.deleteStaff('${doc.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
+              </div>
+            </div>`;
+          
+          staffCheckboxesDiv.innerHTML += `
+            <label class="flex items-center gap-2 text-xs cursor-pointer text-slate-700">
+              <input type="checkbox" value="${data.name}" class="staff-checkbox rounded text-indigo-600">
+              ${data.name} (${data.role})
+            </label>
+          `;
+
+          if (manualStaffSelect) {
+            manualStaffSelect.innerHTML += `<option value="${data.name}">${data.name} (${data.role})</option>`;
+          }
+          if (excStaffSelect) {
+            excStaffSelect.innerHTML += `<option value="${data.id}">${data.name} (${data.role})</option>`;
+          }
+        });
+      }
+
+      renderDateExceptionsList(allStaffRaw);
+
+      let servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
+      if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
+
+      let servicesArray = [];
+      servicesSnap.forEach(doc => {
+        servicesArray.push({ id: doc.id, ...doc.data() });
+      });
+
+      servicesArray.sort((a, b) => (a.order || 0) - (b.order || 0));
+      allServicesRaw = servicesArray;
+
+      const manualServicesDiv = document.getElementById('manual-services-checkboxes');
+      if (manualServicesDiv) {
+        manualServicesDiv.innerHTML = '';
+        if (servicesArray.length === 0) {
+          manualServicesDiv.innerHTML = '<p class="text-[10px] text-slate-400">Nenhum serviço cadastrado.</p>';
+        } else {
+          const groupedManual = {};
+          servicesArray.forEach(s => {
+            const cat = s.category || 'Geral';
+            if (!groupedManual[cat]) groupedManual[cat] = [];
+            groupedManual[cat].push(s);
+          });
+
+          for (const cat in groupedManual) {
+            let catHtml = `<div class="space-y-1 pb-2 border-b border-slate-200 last:border-0">
+              <span class="font-extrabold text-indigo-700 text-[11px] uppercase tracking-wider block py-1">📂 ${cat}</span>
+              <div class="space-y-1">`;
+
+            groupedManual[cat].forEach(s => {
+              const priceText = s.price > 0 ? `R$ ${s.price.toFixed(2)}` : 'Sob Consulta';
+              const sData = JSON.stringify({ 
+                id: s.id, 
+                name: s.name, 
+                price: s.price || 0, 
+                duration: s.duration || 30, 
+                interval: s.interval || 0, 
+                category: s.category || '' 
+              }).replace(/"/g, '&quot;');
+
+              catHtml += `
+                <label class="flex items-center justify-between text-xs cursor-pointer text-slate-700 p-1.5 hover:bg-slate-100 rounded">
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" value='${sData}' onchange="window.renderManualTimeSlots()" class="manual-service-checkbox rounded text-indigo-600">
+                    <span><b>${s.name}</b> (${formatDuration(s.duration)})</span>
+                  </div>
+                  <span class="font-bold text-indigo-600">${priceText}</span>
+                </label>
+              `;
+            });
+            catHtml += `</div></div>`;
+            manualServicesDiv.innerHTML += catHtml;
+          }
+        }
+      }
+
+      const servicesContainer = document.getElementById('admin-services-list');
+      servicesContainer.innerHTML = '';
+      
+      if (servicesArray.length === 0) {
+        servicesContainer.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum serviço cadastrado.</p>';
+      } else {
+        const grouped = {};
+        servicesArray.forEach(s => {
+          const cat = s.category || 'Geral';
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(s);
+        });
+
+        for (const cat in grouped) {
+          let catHtml = `<div class="space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/50">
+            <h5 class="font-extrabold text-indigo-700 text-xs uppercase tracking-wider pb-1 border-b border-slate-200">📂 Categoria: ${cat}</h5>
+            <div class="space-y-2 pt-1">`;
+
+          grouped[cat].forEach(data => {
+            const priceText = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+            const staffListStr = JSON.stringify(data.assignedStaff || []).replace(/"/g, '&quot;');
+            const assignedNames = (data.assignedStaff && data.assignedStaff.length > 0) ? data.assignedStaff.join(', ') : 'Qualquer profissional';
+            const durText = formatDuration(data.duration);
+            const intervalText = data.interval > 0 ? ` | Intervalo: ${data.interval} min` : '';
+
+            catHtml += `
+              <div class="flex justify-between items-center p-2.5 bg-white rounded-xl text-xs border border-slate-100 shadow-xs">
+                <div class="space-y-0.5">
+                  <p><b>[Ordem: ${data.order || 0}] ${data.name}</b></p>
+                  <p class="text-slate-400">${durText}${intervalText} • ${priceText}</p>
+                  <p class="text-emerald-600 font-bold">Prof: ${assignedNames}</p>
+                </div>
+                <div class="flex gap-1.5">
+                  <button onclick="window.editService('${data.id}', '${data.name}', '${data.category}', ${data.price || 0}, ${data.duration}, ${data.order || 0}, ${data.interval || 0}, '${staffListStr}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg cursor-pointer">Editar</button>
+                  <button onclick="window.deleteService('${data.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Excluir</button>
+                </div>
+              </div>
+            `;
+          });
+          catHtml += `</div></div>`;
+          servicesContainer.innerHTML += catHtml;
+        }
+      }
+
+      if (bookingsListener) bookingsListener();
+      bookingsListener = db.collection('bookings').where('merchantId', '==', currentUser.uid).onSnapshot(snapshot => {
+        allBookingsCache = [];
+        snapshot.forEach(doc => {
+          allBookingsCache.push({ id: doc.id, ...doc.data() });
+        });
+        renderAdminBookingsList(allBookingsCache, "Agendamentos Recentes");
+      });
+    }
+
     function renderAdminBookingsList(bookingsArray, title) {
       const bookingsContainer = document.getElementById('admin-bookings-list');
       const titleEl = document.getElementById('admin-bookings-title');
@@ -61,16 +2466,733 @@
       });
     }
 
-    window.downloadAdminBookingIcsById = function(bookingId) {
-      const booking = allBookingsCache.find(b => b.id === bookingId);
-      if (!booking || !booking.date || !booking.time) return;
-      const storeName = document.getElementById('store-name-input')?.value || document.getElementById('header-store-name')?.innerText || "Salão";
-      triggerIcsDownload({
-        title: `${booking.serviceName} - ${booking.clientName} (${storeName})`,
-        date: booking.date,
-        time: booking.time,
-        duration: booking.duration || 30,
-        details: `Cliente: ${booking.clientName} (${booking.clientPhone}) | Profissional: ${booking.staffName}`,
-        location: salonAddress
-      });
+    window.filterBookings = function(type) {
+      document.getElementById('filter-single-box').classList.add('hidden');
+      document.getElementById('filter-period-box').classList.add('hidden');
+      document.getElementById('filter-monthly-box').classList.add('hidden');
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (type === 'today') {
+        const todayBookings = allBookingsCache.filter(b => b.date === todayStr);
+        renderAdminBookingsList(todayBookings, `Agendamentos de Hoje (${todayStr.split('-').reverse().join('/')})`);
+      } else if (type === 'single') {
+        document.getElementById('filter-single-box').classList.remove('hidden');
+      } else if (type === 'period') {
+        document.getElementById('filter-period-box').classList.remove('hidden');
+      } else if (type === 'monthly') {
+        document.getElementById('filter-monthly-box').classList.remove('hidden');
+      }
     };
+
+    window.applySingleDateFilter = function() {
+      const singleDate = document.getElementById('filter-single-date').value;
+      if (!singleDate) {
+        alert("Selecione uma data.");
+        return;
+      }
+      const filtered = allBookingsCache.filter(b => b.date === singleDate);
+      renderAdminBookingsList(filtered, `Agendamentos do dia ${singleDate.split('-').reverse().join('/')}`);
+    };
+
+    window.applyPeriodFilter = function() {
+      const start = document.getElementById('filter-start-date').value;
+      const end = document.getElementById('filter-end-date').value;
+      if (!start || !end) {
+        alert("Selecione a data inicial e final.");
+        return;
+      }
+      const filtered = allBookingsCache.filter(b => b.date >= start && b.date <= end);
+      renderAdminBookingsList(filtered, `Período: ${start.split('-').reverse().join('/')} até ${end.split('-').reverse().join('/')}`);
+    };
+
+    window.applyMonthlyClosing = function() {
+      const monthVal = document.getElementById('filter-month-input').value;
+      if (!monthVal) {
+        alert("Selecione o mês e o ano.");
+        return;
+      }
+      const filtered = allBookingsCache.filter(b => (b.date || '').startsWith(monthVal));
+      let totalRevenue = 0;
+      filtered.forEach(b => { totalRevenue += (b.price || 0); });
+
+      const summaryDiv = document.getElementById('monthly-summary-result');
+      summaryDiv.innerHTML = `
+        <div class="p-3 bg-white border border-emerald-200 rounded-xl space-y-1">
+          <p>Total de Atendimentos: <b>${filtered.length}</b></p>
+          <p class="text-sm font-extrabold text-emerald-700">Faturamento Total: R$ ${totalRevenue.toFixed(2)}</p>
+        </div>
+      `;
+      renderAdminBookingsList(filtered, `Fechamento do Mês (${monthVal.split('-').reverse().join('/')})`);
+    };
+
+    window.adminSearchClientHistory = async function() {
+      const searchName = document.getElementById('admin-search-client-name').value.trim().toLowerCase();
+      const container = document.getElementById('admin-client-history-result');
+      container.innerHTML = '<p class="text-xs text-slate-400">Buscando histórico...</p>';
+      if (!searchName) { container.innerHTML = '<p class="text-xs text-rose-500">Digite o nome do cliente.</p>'; return; }
+
+      try {
+        const snap = await db.collection('bookings').where('merchantId', '==', currentUser.uid).get();
+        container.innerHTML = '';
+        
+        let totalAtendimentos = 0;
+        let htmlList = '';
+        
+        snap.forEach(doc => {
+          const d = doc.data();
+          const clientNameMatch = (d.clientName || '').toLowerCase();
+          
+          if (clientNameMatch.includes(searchName)) {
+            totalAtendimentos++;
+            htmlList += `<div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-0.5">
+              <b>Cliente: ${d.clientName} (${d.clientPhone})</b><br>
+              <span>Serviço(s): <b>${d.serviceName}</b> com ${d.staffName}</span><br>
+              <span class="text-slate-500">Data: ${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time} | Cabelo: ${d.hairSpecs}</span>
+            </div>`;
+          }
+        });
+
+        if (totalAtendimentos === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-400">Nenhum histórico encontrado com este nome.</p>';
+        } else {
+          container.innerHTML = `<p class="text-xs font-bold text-slate-700 mb-2">Total de atendimentos encontrados: ${totalAtendimentos}</p>` + htmlList;
+        }
+      } catch (e) { container.innerHTML = '<p class="text-xs text-rose-500">Conexão instável, tente novamente em instantes.</p>'; }
+    };
+
+    window.deleteStaff = async function(id) {
+      if (document.getElementById('editing-staff-id').value === id) {
+        window.cancelEditStaff();
+      }
+      await db.collection('staff').doc(id).delete();
+      loadAdminData();
+    };
+    window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
+
+    async function loadClientData() {
+      if (!targetMerchantId) return;
+
+      let salonId = targetMerchantId;
+      const slugSnap = await db.collection('settings').where('slug', '==', normalizeSlug(salonId)).limit(1).get();
+      if (!slugSnap.empty) {
+        salonId = slugSnap.docs[0].id;
+      }
+
+      window.currentSalonId = salonId;
+      showClientScreen();
+      window.switchTab('home');
+
+      const settingsDoc = await db.collection('settings').doc(salonId).get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        const storeName = data.storeName || "Salão";
+        
+        document.title = `${storeName} - Sistema de Agendamento`;
+
+        document.getElementById('header-store-name').innerText = storeName;
+        document.getElementById('home-store-name').innerText = storeName;
+        if (data.address) {
+          salonAddress = data.address;
+          document.getElementById('home-store-address').innerText = data.address;
+        }
+        if (data.whatsapp) merchantWhatsapp = data.whatsapp;
+        if (data.paymentLink) {
+          merchantPaymentLink = data.paymentLink;
+          document.getElementById('client-payment-link').href = data.paymentLink;
+          document.getElementById('client-payment-btn-container').classList.remove('hidden');
+        } else {
+          document.getElementById('client-payment-btn-container').classList.add('hidden');
+        }
+
+        if (data.logoUrl) {
+          const logoImg = document.getElementById('home-logo-img');
+          logoImg.src = data.logoUrl;
+          logoImg.classList.remove('hidden');
+        }
+        
+        if (data.socialLink) {
+          const instaBtn = document.getElementById('home-instagram-btn');
+          instaBtn.href = data.socialLink;
+          document.getElementById('home-instagram-container').classList.remove('hidden');
+        } else {
+          document.getElementById('home-instagram-container').classList.add('hidden');
+        }
+
+        if (data.facebookLink) {
+          const fbBtn = document.getElementById('home-facebook-btn');
+          fbBtn.href = data.facebookLink;
+          document.getElementById('home-facebook-container').classList.remove('hidden');
+        } else {
+          document.getElementById('home-facebook-container').classList.add('hidden');
+        }
+
+        if (data.weeklySchedule) window.salonSchedule = data.weeklySchedule;
+      }
+
+      const servicesSnap = await db.collection('services').where('merchantId', '==', salonId).get();
+      allServicesRaw = [];
+      const categoriesSet = new Set();
+      servicesSnap.forEach(doc => {
+        allServicesRaw.push({ id: doc.id, ...doc.data() });
+      });
+
+      allServicesRaw.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      allServicesRaw.forEach(data => {
+        categoriesSet.add(data.category || 'Geral');
+      });
+
+      const catContainer = document.getElementById('category-filters');
+      catContainer.innerHTML = '';
+      
+      const categoriesArray = Array.from(categoriesSet);
+      if (categoriesArray.length > 0 && !currentCategoryFilter) {
+        currentCategoryFilter = categoriesArray[0];
+      }
+
+      categoriesArray.forEach(cat => {
+        const activeClass = cat === currentCategoryFilter ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200';
+        catContainer.innerHTML += `<button onclick="window.filterCategory('${cat}')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer ${activeClass}">${cat}</button>`;
+      });
+
+      renderServicesList();
+
+      const staffSnap = await db.collection('staff').where('merchantId', '==', salonId).get();
+      window.staffWhatsAppMap = {};
+      allStaffRaw = [];
+      const staffContainer = document.getElementById('client-staff-list');
+      staffContainer.innerHTML = '';
+      if (staffSnap.empty) {
+        staffContainer.innerHTML = '<p class="text-xs text-slate-400 col-span-3">Nenhum profissional cadastrado.</p>';
+      } else {
+        staffSnap.forEach(doc => {
+          const data = doc.data();
+          if (data.active === false) return;
+          allStaffRaw.push({ id: doc.id, ...data });
+
+          if (data.name && data.whatsapp) {
+            window.staffWhatsAppMap[data.name] = data.whatsapp;
+          }
+
+          const staffData = JSON.stringify({ name: data.name, whatsapp: data.whatsapp }).replace(/"/g, '&quot;');
+          staffContainer.innerHTML += `
+            <div onclick="window.selectStaff(${staffData}, this)" class="staff-card card-hover p-3 rounded-2xl border border-slate-200 bg-white cursor-pointer text-center shadow-xs opacity-30 pointer-events-none" data-staff-name="${data.name}">
+              <img src="${data.photo}" class="w-12 h-12 rounded-full object-cover mx-auto mb-1.5 shadow-xs">
+              <h4 class="font-bold text-slate-800 text-xs truncate">${data.name}</h4>
+              <p class="text-[9px] text-slate-400 uppercase">${data.role}</p>
+            </div>
+          `;
+        });
+      }
+    }
+
+    window.filterCategory = function(cat) {
+      currentCategoryFilter = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if(btn.innerText === cat) {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer bg-slate-900 text-white";
+        } else {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-bold shrink-0 transition cursor-pointer bg-white text-slate-700 border border-slate-200";
+        }
+      });
+      renderServicesList();
+    };
+
+    function renderServicesList() {
+      const container = document.getElementById('client-services-list');
+      container.innerHTML = '';
+      const filtered = allServicesRaw.filter(s => (s.category || 'Geral') === currentCategoryFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum serviço nesta categoria.</p>';
+        return;
+      }
+
+      filtered.forEach(data => {
+        const priceDisplay = data.price > 0 ? `R$ ${data.price.toFixed(2)}` : 'Sob Consulta';
+        const isSelected = selectedServices.some(s => s.id === data.id);
+        const cardClass = isSelected ? 'service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs selected-card' : 'service-card card-hover p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer flex justify-between items-center shadow-xs';
+        const durFormatted = formatDuration(data.duration);
+
+        const serviceData = JSON.stringify({ 
+          id: data.id, 
+          name: data.name, 
+          price: data.price, 
+          duration: data.duration,
+          interval: data.interval || 0,
+          merchantId: data.merchantId,
+          category: data.category || '',
+          assignedStaff: data.assignedStaff || []
+        }).replace(/"/g, '&quot;');
+
+        container.innerHTML += `
+          <div onclick="window.toggleServiceSelection(${serviceData}, this)" class="${cardClass}" data-service-id="${data.id}">
+            <div class="flex items-center gap-3">
+              <img src="${data.photo}" class="w-12 h-12 rounded-xl object-cover">
+              <div>
+                <h4 class="font-bold text-slate-800 text-xs sm:text-sm">${data.name}</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1 text-indigo-600"></i>${durFormatted}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="font-extrabold text-indigo-600 text-xs sm:text-sm bg-indigo-50 px-3 py-1.5 rounded-xl block">${priceDisplay}</span>
+              <span class="text-[10px] text-slate-400 mt-1 block">${isSelected ? '✓ Selecionado' : 'Clique para selecionar'}</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    window.updateHairSpecs = function() {
+      const length = document.getElementById('hair-length').value;
+      const type = document.getElementById('hair-type').value;
+      document.getElementById('summary-hair').innerText = `${length} | ${type}`;
+    };
+
+    function updateStaffAvailability() {
+      const staffCards = document.querySelectorAll('.staff-card');
+      if (selectedServices.length === 0) {
+        staffCards.forEach(card => {
+          card.style.opacity = '0.3';
+          card.style.pointerEvents = 'none';
+          card.classList.remove('selected-card');
+        });
+        selectedStaffObj = null;
+        document.getElementById('summary-staff').innerText = 'Nenhum';
+        return;
+      }
+
+      staffCards.forEach(card => {
+        const staffName = card.getAttribute('data-staff-name');
+        let canPerformAll = true;
+
+        selectedServices.forEach(s => {
+          const assigned = s.assignedStaff || [];
+          if (assigned.length > 0 && !assigned.includes(staffName)) {
+            canPerformAll = false;
+          }
+        });
+
+        if (canPerformAll) {
+          card.style.opacity = '1';
+          card.style.pointerEvents = 'auto';
+        } else {
+          card.style.opacity = '0.3';
+          card.style.pointerEvents = 'none';
+          if (selectedStaffObj && selectedStaffObj.name === staffName) {
+            card.classList.remove('selected-card');
+            selectedStaffObj = null;
+            document.getElementById('summary-staff').innerText = 'Nenhum';
+          }
+        }
+      });
+    }
+
+    window.toggleServiceSelection = function(service, element) {
+      const index = selectedServices.findIndex(s => s.id === service.id);
+      const hairSection = document.getElementById('hair-specs-section');
+      const hairSummaryContainer = document.getElementById('summary-hair-container');
+
+      if (index > -1) {
+        selectedServices.splice(index, 1);
+        element.classList.remove('selected-card');
+        element.querySelector('span.text-\\[10px\\]').innerText = 'Clique para selecionar';
+      } else {
+        selectedServices.push(service);
+        element.classList.add('selected-card');
+        element.querySelector('span.text-\\[10px\\]').innerText = '✓ Selecionado';
+      }
+
+      updateStaffAvailability();
+      updateSummaryEndTime();
+
+      const summaryContainer = document.getElementById('summary-services-container');
+      let totalPrice = 0;
+      let hasHairService = false;
+
+      if (selectedServices.length === 0) {
+        summaryContainer.innerHTML = '<span class="text-slate-400 italic font-normal">Nenhum serviço selecionado</span>';
+        document.getElementById('summary-price').innerText = 'R$ 0,00';
+      } else {
+        let html = '';
+        selectedServices.forEach(s => {
+          totalPrice += (s.price || 0);
+          html += `<div>• ${s.name} (${s.price > 0 ? 'R$ ' + s.price.toFixed(2) : 'Sob Consulta'})</div>`;
+          
+          if (isHairRelated(s.category, s.name)) {
+            hasHairService = true;
+          }
+        });
+        summaryContainer.innerHTML = html;
+        document.getElementById('summary-price').innerText = totalPrice > 0 ? `R$ ${totalPrice.toFixed(2)}` : 'Sob Consulta';
+      }
+
+      if (hasHairService) {
+        hairSection.classList.remove('hidden');
+        hairSummaryContainer.classList.remove('hidden');
+      } else {
+        hairSection.classList.add('hidden');
+        hairSummaryContainer.classList.add('hidden');
+        document.getElementById('hair-length').value = 'Não informado';
+        document.getElementById('hair-type').value = 'Não informado';
+      }
+
+      if (document.getElementById('booking-date').value && selectedStaffObj) window.renderTimeSlots();
+    };
+
+    window.selectStaff = function(staff, element) {
+      document.querySelectorAll('.staff-card').forEach(card => card.classList.remove('selected-card'));
+      element.classList.add('selected-card');
+
+      selectedStaffObj = staff;
+      document.getElementById('summary-staff').innerText = staff.name;
+      if (document.getElementById('booking-date').value) window.renderTimeSlots();
+    };
+
+    function getBusyRanges(startMins, dur, inter) {
+      if (!inter || inter <= 0 || dur <= 30) {
+        return [{ start: startMins, end: startMins + dur }];
+      }
+      const firstBlockEnd = startMins + 30;
+      const secondBlockStart = startMins + 30 + inter;
+      const secondBlockEnd = startMins + dur + inter;
+      return [
+        { start: startMins, end: firstBlockEnd },
+        { start: secondBlockStart, end: secondBlockEnd }
+      ];
+    }
+
+    async function checkSlotConflict(merchantId, staffName, dateVal, timeVal, durationMins, intervalMins, ignoreDocId = null) {
+      const [h, m] = timeVal.split(':').map(Number);
+      const startMins = h * 60 + m;
+      const newRanges = getBusyRanges(startMins, durationMins || 30, intervalMins || 0);
+
+      const snapshot = await db.collection('bookings')
+        .where('merchantId', '==', merchantId)
+        .where('date', '==', dateVal)
+        .where('staffName', '==', staffName)
+        .get();
+
+      for (const doc of snapshot.docs) {
+        if (ignoreDocId && doc.id === ignoreDocId) continue;
+        const d = doc.data();
+        if (!d.time) continue;
+        const [eh, em] = d.time.split(':').map(Number);
+        const existingRanges = getBusyRanges(eh * 60 + em, d.duration || 30, d.interval || 0);
+        for (const nr of newRanges) {
+          for (const er of existingRanges) {
+            if (nr.start < er.end && nr.end > er.start) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    window.renderTimeSlots = async function() {
+      const dateVal = document.getElementById('booking-date').value;
+      selectedTime = null;
+      updateSummaryEndTime();
+
+      if (!dateVal || selectedServices.length === 0 || !selectedStaffObj) {
+        document.getElementById('time-slots-container').innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Selecione serviços, profissional e data.</p>';
+        return;
+      }
+      document.getElementById('summary-datetime').innerText = `${dateVal.split('-').reverse().join('/')}`;
+
+      const slotsContainer = document.getElementById('time-slots-container');
+      slotsContainer.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Calculando horários...</p>';
+
+      const dayConfig = getScheduleForStaffAndDate(selectedStaffObj.name, dateVal, window.salonSchedule || {});
+
+      if (!dayConfig || !dayConfig.active) {
+        slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center font-bold">Profissional sem atendimento neste dia.</p>';
+        return;
+      }
+
+      const [openH, openM] = dayConfig.open.split(':').map(Number);
+      const [closeH, closeM] = dayConfig.close.split(':').map(Number);
+      const openTotalMins = openH * 60 + openM;
+      const closeTotalMins = closeH * 60 + closeM;
+
+      let bookedRanges = [];
+      try {
+        let query = db.collection('bookings').where('merchantId', '==', window.currentSalonId).where('date', '==', dateVal);
+        if (selectedStaffObj) query = query.where('staffName', '==', selectedStaffObj.name);
+        const snapshot = await query.get();
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const [h, m] = d.time.split(':').map(Number);
+          const startMins = h * 60 + m;
+          const dur = d.duration || 30;
+          const inter = d.interval || 0;
+          const ranges = getBusyRanges(startMins, dur, inter);
+          bookedRanges.push(...ranges);
+        });
+      } catch (e) { console.error(e); }
+
+      let totalServiceDuration = 0;
+      let totalServiceInterval = 0;
+      selectedServices.forEach(s => {
+        totalServiceDuration += (s.duration || 30);
+        totalServiceInterval += (s.interval || 0);
+      });
+      if (totalServiceDuration === 0) totalServiceDuration = 30;
+
+      const totalSpan = totalServiceDuration + totalServiceInterval;
+
+      const todayDateStr = new Date().toISOString().split('T')[0];
+      let currentHourNow = -1;
+      let currentMinNow = -1;
+      if (dateVal === todayDateStr) {
+        const now = new Date();
+        currentHourNow = now.getHours();
+        currentMinNow = now.getMinutes();
+      }
+
+      slotsContainer.innerHTML = '';
+      let count = 0;
+
+      for (let currentMins = openTotalMins; currentMins + totalSpan <= closeTotalMins; currentMins += 5) {
+        const slotHour = Math.floor(currentMins / 60);
+        const slotMin = currentMins % 60;
+
+        if (dateVal === todayDateStr) {
+          if (slotHour < currentHourNow || (slotHour === currentHourNow && slotMin <= currentMinNow)) {
+            continue;
+          }
+        }
+
+        const newBookingRanges = getBusyRanges(currentMins, totalServiceDuration, totalServiceInterval);
+
+        let isConflict = false;
+        for (let newR of newBookingRanges) {
+          for (let existingR of bookedRanges) {
+            if (newR.start < existingR.end && newR.end > existingR.start) {
+              isConflict = true;
+              break;
+            }
+          }
+          if (isConflict) break;
+        }
+
+        if (isConflict) continue;
+
+        const hourStr = slotHour.toString().padStart(2, '0');
+        const minStr = slotMin.toString().padStart(2, '0');
+        const timeString = `${hourStr}:${minStr}`;
+
+        count++;
+        slotsContainer.innerHTML += `<button type="button" onclick="window.selectTime('${timeString}', this)" class="time-btn py-2 px-1 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-600 hover:text-white cursor-pointer">${timeString}</button>`;
+      }
+
+      if (count === 0) slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center">Nenhum horário disponível para esta duração.</p>';
+    };
+
+    window.selectTime = function(time, element) {
+      document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+      element.classList.add('bg-indigo-600', 'text-white');
+
+      selectedTime = time;
+      const dateVal = document.getElementById('booking-date').value.split('-').reverse().join('/');
+      document.getElementById('summary-datetime').innerText = `${dateVal} às ${time}`;
+      updateSummaryEndTime();
+    };
+
+    window.confirmBooking = async function() {
+      if (isSubmittingBooking) return;
+
+      const name = document.getElementById('client-name-input').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
+      const date = document.getElementById('booking-date').value;
+
+      if (!name || !phone) {
+        alert("ATENÇÃO: O preenchimento do NOME COMPLETO e do WHATSAPP é obrigatório para agendar!");
+        document.getElementById('client-name-input').focus();
+        return;
+      }
+
+      if (selectedServices.length === 0 || !selectedTime || !date || !selectedStaffObj) {
+        alert("Selecione os serviços, o profissional, a data e o horário.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-confirm-booking');
+      const btnText = btn ? btn.querySelector('span') : null;
+      isSubmittingBooking = true;
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.innerText = "Confirmando horário...";
+
+      let totalDuration = 0;
+      let totalInterval = 0;
+      let totalPrice = 0;
+      let serviceNamesArray = [];
+
+      selectedServices.forEach(s => {
+        totalDuration += (s.duration || 30);
+        totalInterval += (s.interval || 0);
+        totalPrice += (s.price || 0);
+        serviceNamesArray.push(s.name);
+      });
+
+      const servicesCombinedName = serviceNamesArray.join(' + ');
+      const staffName = selectedStaffObj.name;
+      const mId = selectedServices[0].merchantId || window.currentSalonId;
+
+      let hairSpecs = 'Não aplicável';
+      const hasHair = selectedServices.some(s => isHairRelated(s.category, s.name));
+      if (hasHair) {
+        const hairLength = document.getElementById('hair-length').value;
+        const hairType = document.getElementById('hair-type').value;
+        hairSpecs = `${hairLength} / ${hairType}`;
+      }
+
+      try {
+        const conflict = await checkSlotConflict(mId, staffName, date, selectedTime, totalDuration, totalInterval);
+        if (conflict) {
+          alert("Esse horário acabou de ser preenchido. Atualizamos os horários disponíveis para você escolher.");
+          await window.renderTimeSlots();
+          return;
+        }
+
+        await db.collection('bookings').add({
+          merchantId: mId,
+          serviceName: servicesCombinedName,
+          staffName,
+          hairSpecs,
+          price: totalPrice,
+          duration: totalDuration,
+          interval: totalInterval,
+          date,
+          time: selectedTime,
+          clientName: name,
+          clientPhone: phone,
+          rating: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const storeName = document.getElementById('header-store-name').innerText || "Salão";
+        const calendarTitle = `${servicesCombinedName} - ${storeName}`;
+        const calendarDetails = `Profissional: ${staffName} | Cliente: ${name} (${phone})`;
+
+        window.lastBookingCalendarData = {
+          title: calendarTitle,
+          date,
+          time: selectedTime,
+          duration: totalDuration,
+          details: calendarDetails,
+          location: salonAddress
+        };
+
+        const gcalUrl = buildGoogleCalendarUrl(
+          calendarTitle,
+          date,
+          selectedTime,
+          totalDuration,
+          calendarDetails,
+          salonAddress
+        );
+        const gcalBtn = document.getElementById('google-calendar-link');
+        const postBox = document.getElementById('post-booking-actions');
+        if (gcalBtn && postBox) {
+          gcalBtn.href = gcalUrl;
+          postBox.classList.remove('hidden');
+        }
+
+        let targetWhatsapp = merchantWhatsapp;
+        if (window.staffWhatsAppMap && window.staffWhatsAppMap[staffName]) {
+          targetWhatsapp = window.staffWhatsAppMap[staffName];
+        }
+
+        const staffGcalUrl = buildGoogleCalendarUrl(
+          `${servicesCombinedName} - ${name}`,
+          date,
+          selectedTime,
+          totalDuration,
+          `Cliente: ${name} (${phone}) | Serviço: ${servicesCombinedName}`,
+          salonAddress
+        );
+
+        const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}\n• Adicionar na sua agenda: ${staffGcalUrl}\n\nPrecisando desmarcar ou remarcar, avise com antecedência pela aba Reservas.`;
+        const msg = encodeURIComponent(msgText);
+        window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
+        
+        alert("Agendamento realizado com sucesso! Você pode salvar o lembrete na agenda do celular.");
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      } finally {
+        isSubmittingBooking = false;
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = "Confirmar Agendamento";
+      }
+    };
+
+    window.searchClientBookings = async function() {
+      const phone = document.getElementById('search-phone').value.trim();
+      const container = document.getElementById('client-bookings-result');
+      container.innerHTML = '<p class="text-xs text-slate-400">Buscando...</p>';
+      if (!phone) { container.innerHTML = '<p class="text-xs text-rose-500">Informe o WhatsApp.</p>'; return; }
+
+      try {
+        const snap = await db.collection('bookings').where('clientPhone', '==', phone).get();
+        container.innerHTML = '';
+        clientBookingsCache = {};
+        if (snap.empty) { container.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado.</p>'; return; }
+        
+        snap.forEach(doc => {
+          const d = doc.data();
+          clientBookingsCache[doc.id] = d;
+          const storeName = document.getElementById('header-store-name').innerText || "Salão";
+          const gcalHref = (d.date && d.time)
+            ? buildGoogleCalendarUrl(`${d.serviceName} - ${storeName}`, d.date, d.time, d.duration || 30, `Profissional: ${d.staffName}`, salonAddress)
+            : '#';
+
+          container.innerHTML += `
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-2">
+              <div class="flex justify-between items-center">
+                <b>${d.serviceName}</b>
+                <span class="text-emerald-600 font-bold">${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time}</span>
+              </div>
+              <p class="text-slate-500">Profissional: ${d.staffName} | Cabelo: ${d.hairSpecs}</p>
+              
+              <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-200">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <div class="flex gap-1 text-amber-500 text-sm cursor-pointer mr-1" onclick="window.rateBooking('${doc.id}', 5)">
+                    <span>${d.rating ? '★'.repeat(d.rating) : '☆☆☆☆☆ Avaliar'}</span>
+                  </div>
+                  <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg">Google Agenda</a>
+                  <button type="button" onclick="window.downloadClientBookingIcsById('${doc.id}')" class="px-2.5 py-1 bg-slate-200/80 hover:bg-slate-200 text-slate-800 font-bold rounded-lg cursor-pointer">Agenda Celular (.ics)</button>
+                </div>
+                <button onclick="window.cancelBooking('${doc.id}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 font-bold rounded-lg cursor-pointer">Cancelar Horário</button>
+              </div>
+            </div>`;
+        });
+      } catch(e) { container.innerHTML = '<p class="text-xs text-rose-500">Conexão instável, tente novamente em instantes.</p>'; }
+    };
+
+    window.cancelBooking = async function(bookingId) {
+      if (confirm("Deseja realmente cancelar este agendamento?")) {
+        try {
+          await db.collection('bookings').doc(bookingId).delete();
+          alert("Agendamento cancelado com sucesso.");
+          window.searchClientBookings();
+        } catch (e) {
+          alert("Conexão instável, tente novamente em instantes.");
+        }
+      }
+    };
+
+    window.rateBooking = async function(bookingId, stars) {
+      try {
+        await db.collection('bookings').doc(bookingId).update({ rating: stars });
+        alert("Obrigado pela sua avaliação!");
+        window.searchClientBookings();
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+  </script>
+</body>
+</html>
