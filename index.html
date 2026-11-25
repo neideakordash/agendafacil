@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v66 - Ibi Agenda com Link de Divulgação Disponível para Profissionais na Agenda Restrita -->
+<!-- v67 - Ibi Agenda com Primeiro Acesso de Senha e Bloqueio Imediato ao Remover Profissional -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -296,6 +296,10 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Senha</label>
             <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
           </div>
+          <div id="staff-confirm-password-box" class="hidden">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Confirme a Senha (Primeiro Acesso)</label>
+            <input type="password" id="auth-password-confirm" minlength="6" placeholder="Digite a senha novamente para confirmar" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
 
           <div class="flex flex-wrap justify-between items-center gap-2">
             <button type="button" id="btn-toggle-staff-login" onclick="window.toggleStaffLoginMode()" class="text-[11px] text-violet-700 hover:underline font-bold cursor-pointer">Sou profissional (ver só minha agenda)</button>
@@ -546,7 +550,7 @@
               <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
                 <input type="text" id="staff-name" placeholder="Nome do Profissional" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-role" placeholder="Cargo/Especialidade (ex: Manicure, Cabeleireiro)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="email" id="staff-email" placeholder="E-mail de Login do Profissional (opcional para agenda própria)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="email" id="staff-email" placeholder="E-mail de Login do Profissional (para agenda própria)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto do Profissional (55DD9XXXXXXXX)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
                 <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
@@ -1105,8 +1109,8 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista / Equipe";
         content.innerHTML = `
-          <p><b>1. Link de Divulgação para a Equipe:</b> Profissionais também têm acesso ao link do salão para copiar e compartilhar no WhatsApp/Instagram.</p>
-          <p><b>2. Login Separado:</b> O dono vê todos os agendamentos e gerencia o salão; profissionais com e-mail cadastrado entram e veem apenas os próprios agendamentos.</p>
+          <p><b>1. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional define/confirma sua senha. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
+          <p><b>2. Link de Divulgação:</b> Profissionais e donos podem copiar e compartilhar o link do salão.</p>
           <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
         `;
       } else {
@@ -1158,17 +1162,20 @@
       isStaffLoginMode = !isStaffLoginMode;
       isRegisterMode = false;
       const salonBox = document.getElementById('staff-salon-id-box');
+      const confirmPassBox = document.getElementById('staff-confirm-password-box');
       const salonInput = document.getElementById('login-salon-ref');
       if (isStaffLoginMode) {
         salonBox.classList.remove('hidden');
+        confirmPassBox.classList.remove('hidden');
         if (salonInput && !salonInput.value && targetMerchantId) {
           salonInput.value = targetMerchantId;
         }
         document.getElementById('auth-title').innerText = "Acesso do Profissional";
-        document.getElementById('auth-subtitle').innerText = "Veja apenas os seus agendamentos e gerencie suas exceções de data.";
+        document.getElementById('auth-subtitle').innerText = "Primeiro acesso: confirme sua senha. Se removido do salão, o acesso é bloqueado.";
         document.getElementById('btn-toggle-staff-login').innerText = "Voltar para login do Dono do Salão";
       } else {
         salonBox.classList.add('hidden');
+        confirmPassBox.classList.add('hidden');
         document.getElementById('auth-title').innerText = "Painel do Lojista / Equipe";
         document.getElementById('auth-subtitle').innerText = "Dono vê todos os agendamentos; profissionais veem apenas os seus.";
         document.getElementById('btn-toggle-staff-login').innerText = "Sou profissional (ver só minha agenda)";
@@ -1181,6 +1188,7 @@
       isRegisterMode = !isRegisterMode;
       isStaffLoginMode = false;
       document.getElementById('staff-salon-id-box').classList.add('hidden');
+      document.getElementById('staff-confirm-password-box').classList.add('hidden');
       document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta do Salão (7 Dias Grátis)" : "Painel do Lojista / Equipe";
       document.getElementById('auth-subtitle').innerText = isRegisterMode
         ? "Comece seu teste gratuito de 7 dias agora mesmo."
@@ -1193,6 +1201,7 @@
       isRegisterMode = true;
       isStaffLoginMode = false;
       document.getElementById('staff-salon-id-box').classList.add('hidden');
+      document.getElementById('staff-confirm-password-box').classList.add('hidden');
       document.getElementById('auth-title').innerText = "Criar Conta do Salão (7 Dias Grátis)";
       document.getElementById('auth-subtitle').innerText = "Comece seu teste gratuito de 7 dias agora mesmo.";
       document.getElementById('btn-auth-submit').innerText = "Criar Conta Grátis (7 Dias)";
@@ -1412,14 +1421,22 @@
         .limit(1)
         .get();
 
-      if (staffSnap.empty) {
-        alert("⚠️ Este e-mail não está vinculado a um profissional deste salão.");
+      if (staffSnap.empty || staffSnap.docs[0].data().active === false) {
+        alert("⚠️ Este e-mail não está mais ativo neste salão. O acesso foi encerrado.");
         await auth.signOut();
         return;
       }
 
       const sDoc = staffSnap.docs[0];
       loggedStaffProfile = { id: sDoc.id, ...sDoc.data() };
+
+      if (!loggedStaffProfile.firstAccessCompleted) {
+        await db.collection('staff').doc(loggedStaffProfile.id).set({
+          firstAccessCompleted: true,
+          firstAccessAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        loggedStaffProfile.firstAccessCompleted = true;
+      }
 
       let storeNameForShare = "nosso salão";
       let slugForShare = "";
@@ -1564,6 +1581,13 @@
       event.preventDefault();
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
+      const confirmPass = document.getElementById('auth-password-confirm').value;
+
+      if (isStaffLoginMode && confirmPass && password !== confirmPass) {
+        alert("⚠️ As senhas digitadas não conferem. Digite a mesma senha nos dois campos.");
+        return;
+      }
+
       try {
         if (isRegisterMode) {
           const cred = await auth.createUserWithEmailAndPassword(email, password);
@@ -1578,6 +1602,21 @@
             weeklySchedule
           }, { merge: true });
           alert("🎉 Conta criada com 7 dias grátis! Configure o perfil e o slug do seu salão.");
+        } else if (isStaffLoginMode) {
+          try {
+            await auth.signInWithEmailAndPassword(email, password);
+          } catch (signInErr) {
+            if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
+              if (!confirmPass) {
+                alert("⚠️ Primeiro acesso: confirme a sua senha no campo de confirmação para criar seu acesso.");
+                return;
+              }
+              await auth.createUserWithEmailAndPassword(email, password);
+              alert("✅ Senha confirmada e primeiro acesso concluído!");
+            } else {
+              throw signInErr;
+            }
+          }
         } else {
           await auth.signInWithEmailAndPassword(email, password);
         }
@@ -1680,6 +1719,8 @@
           email,
           whatsapp,
           photo,
+          active: true,
+          firstAccessCompleted: false,
           dateExceptions: {},
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -2075,6 +2116,7 @@
       } else {
         staffSnap.forEach(doc => {
           const data = doc.data();
+          if (data.active === false) return;
           const item = { id: doc.id, ...data };
           allStaffRaw.push(item);
           
@@ -2350,7 +2392,10 @@
       } catch (e) { container.innerHTML = '<p class="text-xs text-rose-500">Conexão instável, tente novamente em instantes.</p>'; }
     };
 
-    window.deleteStaff = async function(id) { await db.collection('staff').doc(id).delete(); loadAdminData(); };
+    window.deleteStaff = async function(id) {
+      await db.collection('staff').doc(id).delete();
+      loadAdminData();
+    };
     window.deleteService = async function(id) { await db.collection('services').doc(id).delete(); loadAdminData(); };
 
     async function loadClientData() {
@@ -2451,6 +2496,7 @@
       } else {
         staffSnap.forEach(doc => {
           const data = doc.data();
+          if (data.active === false) return;
           allStaffRaw.push({ id: doc.id, ...data });
 
           if (data.name && data.whatsapp) {
