@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v71 - Ibi Agenda com Código Real do Erro de Autenticação e Acesso da Equipe -->
+<!-- v72 - Ibi Agenda com Botão Explícito de Primeiro Acesso para Profissionais -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -304,6 +304,7 @@
           </div>
 
           <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Entrar</button>
+          <button type="button" id="btn-staff-first-access" onclick="window.handleStaffFirstAccess()" class="hidden w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Primeiro acesso (Criar minha senha)</button>
         </form>
 
         <div class="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
@@ -1111,7 +1112,7 @@
       if (type === 'merchant') {
         title.innerHTML = "Manual do Lojista / Equipe";
         content.innerHTML = `
-          <p><b>1. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional define/confirma sua senha. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
+          <p><b>1. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional cria/confirma sua senha pelo botão de primeiro acesso. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
           <p><b>2. Link de Divulgação:</b> Profissionais e donos podem copiar e compartilhar o link do salão.</p>
           <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
         `;
@@ -1165,19 +1166,22 @@
       isRegisterMode = false;
       const salonBox = document.getElementById('staff-salon-id-box');
       const confirmPassBox = document.getElementById('staff-confirm-password-box');
+      const firstAccessBtn = document.getElementById('btn-staff-first-access');
       const salonInput = document.getElementById('login-salon-ref');
       if (isStaffLoginMode) {
         salonBox.classList.remove('hidden');
         confirmPassBox.classList.remove('hidden');
+        firstAccessBtn.classList.remove('hidden');
         if (salonInput && !salonInput.value && targetMerchantId) {
           salonInput.value = targetMerchantId;
         }
         document.getElementById('auth-title').innerText = "Acesso do Profissional";
-        document.getElementById('auth-subtitle').innerText = "Primeiro acesso: confirme sua senha. Se removido do salão, o acesso é bloqueado.";
+        document.getElementById('auth-subtitle').innerText = "Já tem senha? Toque em Entrar. Primeiro acesso? Confirme a senha e toque em Primeiro acesso.";
         document.getElementById('btn-toggle-staff-login').innerText = "Voltar para login do Dono do Salão";
       } else {
         salonBox.classList.add('hidden');
         confirmPassBox.classList.add('hidden');
+        firstAccessBtn.classList.add('hidden');
         document.getElementById('auth-title').innerText = "Painel do Lojista / Equipe";
         document.getElementById('auth-subtitle').innerText = "Dono vê todos os agendamentos; profissionais veem apenas os seus.";
         document.getElementById('btn-toggle-staff-login').innerText = "Sou profissional (ver só minha agenda)";
@@ -1191,6 +1195,7 @@
       isStaffLoginMode = false;
       document.getElementById('staff-salon-id-box').classList.add('hidden');
       document.getElementById('staff-confirm-password-box').classList.add('hidden');
+      document.getElementById('btn-staff-first-access').classList.add('hidden');
       document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta do Salão (7 Dias Grátis)" : "Painel do Lojista / Equipe";
       document.getElementById('auth-subtitle').innerText = isRegisterMode
         ? "Comece seu teste gratuito de 7 dias agora mesmo."
@@ -1204,6 +1209,7 @@
       isStaffLoginMode = false;
       document.getElementById('staff-salon-id-box').classList.add('hidden');
       document.getElementById('staff-confirm-password-box').classList.add('hidden');
+      document.getElementById('btn-staff-first-access').classList.add('hidden');
       document.getElementById('auth-title').innerText = "Criar Conta do Salão (7 Dias Grátis)";
       document.getElementById('auth-subtitle').innerText = "Comece seu teste gratuito de 7 dias agora mesmo.";
       document.getElementById('btn-auth-submit').innerText = "Criar Conta Grátis (7 Dias)";
@@ -1579,6 +1585,36 @@
       window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
+    window.handleStaffFirstAccess = async function() {
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
+      const password = document.getElementById('auth-password').value;
+      const confirmPass = document.getElementById('auth-password-confirm').value;
+
+      if (!email || !password || !confirmPass) {
+        alert("Preencha o e-mail, a senha e a confirmação de senha para o primeiro acesso.");
+        return;
+      }
+      if (password.length < 6) {
+        alert("A senha deve ter pelo menos 6 caracteres.");
+        return;
+      }
+      if (password !== confirmPass) {
+        alert("As senhas digitadas não conferem. Digite a mesma senha nos dois campos.");
+        return;
+      }
+
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert("Senha confirmada e primeiro acesso concluído!");
+      } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+          alert("Este e-mail já possui senha cadastrada. Digite a senha e toque em 'Entrar' ou use 'Esqueceu sua senha?'.");
+        } else {
+          alert(`Não foi possível concluir o primeiro acesso (${error.code || 'erro'}).`);
+        }
+      }
+    };
+
     window.handleAuth = async function(event) {
       event.preventDefault();
       const email = document.getElementById('auth-email').value.trim().toLowerCase();
@@ -1604,44 +1640,12 @@
             weeklySchedule
           }, { merge: true });
           alert("Conta criada com 7 dias grátis! Configure o perfil e o slug do seu salão.");
-        } else if (isStaffLoginMode) {
-          try {
-            await auth.signInWithEmailAndPassword(email, password);
-          } catch (signInErr) {
-            if (signInErr.code === 'auth/user-not-found') {
-              if (!confirmPass) {
-                alert("Primeiro acesso: confirme a sua senha no campo de confirmação para criar seu acesso.");
-                return;
-              }
-              await auth.createUserWithEmailAndPassword(email, password);
-              alert("Senha confirmada e primeiro acesso concluído!");
-            } else if (signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/invalid-credential') {
-              if (confirmPass) {
-                try {
-                  await auth.createUserWithEmailAndPassword(email, password);
-                  alert("Senha confirmada e primeiro acesso concluído!");
-                  return;
-                } catch (createErr) {
-                  if (createErr.code === 'auth/email-already-in-use') {
-                    alert("Este e-mail já tem conta criada no sistema. Use a senha já cadastrada ou toque em 'Esqueceu sua senha?'.");
-                    return;
-                  }
-                  throw createErr;
-                }
-              }
-              alert("E-mail ou senha incorretos. Se for o primeiro acesso, confirme a nova senha ou toque em 'Esqueceu sua senha?'.");
-            } else {
-              throw signInErr;
-            }
-          }
         } else {
           await auth.signInWithEmailAndPassword(email, password);
         }
       } catch (error) {
-        if (error.code === 'auth/weak-password') {
-          alert("A senha deve ter pelo menos 6 caracteres.");
-        } else if (error.code === 'auth/email-already-in-use') {
-          alert("Este e-mail já tem conta criada no sistema. Use a senha já cadastrada ou toque em 'Esqueceu sua senha?'.");
+        if (isStaffLoginMode && (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found')) {
+          alert("E-mail ou senha incorretos. Se for o primeiro acesso, preencha e confirme a senha e toque em 'Primeiro acesso (Criar minha senha)'. Se já criou antes, use 'Esqueceu sua senha?'.");
         } else {
           alert(`Erro na autenticação (${error.code || 'verifique os dados'}). Verifique seu e-mail e senha ou tente novamente.`);
         }
