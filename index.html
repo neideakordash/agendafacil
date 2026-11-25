@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v63 - Ibi Agenda com Encaixe Manual Liberado Até o Último Horário de Fechamento -->
+<!-- v65 - Ibi Agenda com Exceção de Data por Profissional e Login Separado (Dono vs Profissional) -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -50,7 +50,7 @@
         <h1 class="font-bold text-slate-900 text-base tracking-tight" id="header-store-name">Ibi Agenda</h1>
       </div>
       <button onclick="window.toggleAdminView()" class="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl cursor-pointer">
-        Área do Lojista
+        Área do Lojista / Equipe
       </button>
     </div>
   </header>
@@ -69,7 +69,7 @@
             Seu salão organizado com hora marcada, sem depender só do WhatsApp
           </h2>
           <p class="text-xs sm:text-sm text-slate-500">
-            Clientes escolhem serviço, profissional, data e horário livre sozinhos. Você controla encaixes, folgas e atendimentos no painel.
+            Clientes escolhem serviço, profissional, data e horário livre sozinhos. Você controla encaixes, folgas, exceções por profissional e atendimentos no painel.
           </p>
         </div>
 
@@ -80,7 +80,7 @@
           </div>
           <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
             <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-clock mr-1"></i> Grade Inteligente</div>
-            <p class="text-[11px] text-slate-500">Evita choque de horários, respeita intervalos e organiza a agenda do dia.</p>
+            <p class="text-[11px] text-slate-500">Evita choque de horários, respeita intervalos e aplica exceções por profissional.</p>
           </div>
           <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
             <div class="text-indigo-600 font-extrabold text-xs"><i class="fa-solid fa-gift mr-1"></i> 7 Dias Grátis</div>
@@ -265,25 +265,29 @@
       <div id="tab-mais" class="client-tab hidden space-y-4">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 divide-y divide-slate-100 text-xs font-bold text-slate-700">
           <div onclick="window.switchTab('reservas')" class="py-3.5 flex justify-between items-center cursor-pointer"><span>Consultar Reservas</span><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
-          <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista (Entrar)</span><i class="fa-solid fa-store"></i></div>
+          <div onclick="window.toggleAdminView()" class="py-3.5 flex justify-between items-center text-indigo-600 cursor-pointer"><span>Área do Lojista / Equipe</span><i class="fa-solid fa-store"></i></div>
           <div onclick="window.openRegisterMode()" class="py-3.5 flex justify-between items-center text-emerald-600 cursor-pointer"><span>Cadastrar meu Salão (7 dias grátis)</span><i class="fa-solid fa-rocket"></i></div>
         </div>
       </div>
 
     </div>
 
-    <!-- PAINEL DO LOJISTA -->
+    <!-- PAINEL DO LOJISTA / PROFISSIONAL -->
     <div id="admin-view" class="hidden space-y-6">
       <div id="admin-auth-screen" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-100 my-8 space-y-6">
         <div class="text-center">
           <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-lg">
             <i class="fa-solid fa-store"></i>
           </div>
-          <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista</h2>
-          <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Gerencie seu estabelecimento (7 dias grátis para novos salões).</p>
+          <h2 class="text-xl font-bold text-slate-900" id="auth-title">Painel do Lojista / Equipe</h2>
+          <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Dono vê todos os agendamentos; profissionais veem apenas os seus.</p>
         </div>
 
         <form id="auth-form" onsubmit="window.handleAuth(event)" class="space-y-4">
+          <div id="staff-salon-id-box" class="hidden">
+            <label class="block text-xs font-bold text-slate-700 mb-1">ID ou Slug do Salão (para login de profissional)</label>
+            <input type="text" id="login-salon-ref" placeholder="Ex: raicabeleireiros ou UID do salão" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+          </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">E-mail</label>
             <input type="email" id="auth-email" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
@@ -293,8 +297,11 @@
             <input type="password" id="auth-password" required minlength="6" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
           </div>
 
-          <div class="flex justify-between items-center">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <button type="button" id="btn-toggle-staff-login" onclick="window.toggleStaffLoginMode()" class="text-[11px] text-violet-700 hover:underline font-bold cursor-pointer">Sou profissional (ver só minha agenda)</button>
             <button type="button" id="btn-toggle-auth-mode" onclick="window.toggleAuthMode()" class="text-[11px] text-emerald-600 hover:underline font-bold cursor-pointer">Criar conta grátis (7 dias)</button>
+          </div>
+          <div class="text-right">
             <button type="button" onclick="window.forgotPassword()" class="text-[11px] text-indigo-600 hover:underline font-semibold cursor-pointer">Esqueceu sua senha?</button>
           </div>
 
@@ -312,7 +319,7 @@
       </div>
 
       <div id="admin-dashboard" class="hidden space-y-6">
-        <!-- BANNER DE 7 DIAS DE TESTE -->
+        <!-- BANNER DE 7 DIAS DE TESTE (APENAS PARA DONO) -->
         <div id="trial-status-banner" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div id="trial-status-text" class="font-bold"></div>
           <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold text-[11px]">Mensalidade: R$ 50/mês</span>
@@ -320,9 +327,9 @@
 
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-3">
           <div>
-            <h2 class="font-extrabold text-slate-900 text-base">Painel Administrativo</h2>
+            <h2 class="font-extrabold text-slate-900 text-base" id="dashboard-role-title">Painel Administrativo</h2>
             <p class="text-xs text-slate-500" id="merchant-email-display"></p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
+            <div id="owner-link-controls" class="mt-2 flex flex-wrap items-center gap-2">
               <span class="text-[11px] text-indigo-600 font-bold" id="merchant-link-display">Link do salão: Carregando...</span>
               <button onclick="window.copyMerchantLink()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
                 <i class="fa-solid fa-copy"></i> Copiar Link
@@ -336,14 +343,54 @@
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="window.openTutorial('merchant')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-xl cursor-pointer">Manual Lojista</button>
+            <button onclick="window.openTutorial('merchant')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-xl cursor-pointer">Manual</button>
             <button onclick="window.toggleAdminView()" class="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl cursor-pointer">Ver Cliente</button>
             <button onclick="window.logoutMerchant()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl cursor-pointer">Sair</button>
-            <button onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded-xl cursor-pointer">Excluir</button>
+            <button id="btn-delete-owner-account" onclick="window.deleteAccount()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded-xl cursor-pointer">Excluir</button>
           </div>
         </div>
 
-        <div class="space-y-4">
+        <!-- PAINEL EXCLUSIVO DO PROFISSIONAL LOGADO (SOMENTE SUA AGENDA E SUAS EXCEÇÕES DE DATA) -->
+        <div id="staff-restricted-panel" class="hidden space-y-4">
+          <div class="bg-white rounded-2xl border border-violet-100 shadow-sm p-5 space-y-3 text-xs">
+            <h3 class="font-bold text-violet-900 text-sm"><i class="fa-solid fa-calendar-day mr-1.5 text-violet-600"></i> Minhas Exceções de Horário por Data</h3>
+            <p class="text-[11px] text-slate-500">Defina exceções apenas para a sua agenda (ex.: dia 26 atendendo só à tarde) sem afetar o restante da equipe.</p>
+            <form onsubmit="window.saveStaffOwnException(event)" class="p-3 bg-violet-50/50 border border-violet-100 rounded-xl space-y-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Data *</label>
+                  <input type="date" id="staff-own-exc-date" required class="w-full px-2.5 py-1.5 bg-white border border-violet-200 rounded-lg">
+                </div>
+                <div class="flex items-end pb-1">
+                  <label class="font-bold text-slate-800 flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="staff-own-exc-active" checked onchange="window.toggleStaffOwnExcTimes()" class="rounded text-indigo-600">
+                    Atendo nesta data
+                  </label>
+                </div>
+              </div>
+              <div id="staff-own-exc-times" class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">Início</label>
+                  <input type="time" id="staff-own-exc-open" value="13:00" class="w-full px-2 py-1 bg-white border border-violet-200 rounded-lg text-[11px]">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">Fim</label>
+                  <input type="time" id="staff-own-exc-close" value="18:00" class="w-full px-2 py-1 bg-white border border-violet-200 rounded-lg text-[11px]">
+                </div>
+              </div>
+              <button type="submit" class="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl cursor-pointer">+ Salvar Minha Exceção</button>
+            </form>
+            <div id="staff-own-exc-list" class="space-y-1.5"></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-3 text-xs">
+            <h3 class="font-bold text-slate-900 text-sm">Meus Agendamentos</h3>
+            <div id="staff-own-bookings-list" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- PAINEL COMPLETO DO DONO DO SALÃO -->
+        <div id="owner-full-panel" class="space-y-4">
           <!-- KIT DE DIVULGAÇÃO (QR CODE + TEXTOS PRONTOS) -->
           <div class="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-share-kit')" class="w-full p-4 flex justify-between items-center bg-violet-50/50 hover:bg-violet-50 font-bold text-xs text-violet-900 cursor-pointer">
@@ -440,25 +487,66 @@
                 <input type="file" id="store-logo-file" accept="image/*" class="w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700">
                 
                 <div class="pt-2 border-t border-slate-100 space-y-2">
-                  <span class="font-bold text-indigo-600">Horários por Dia da Semana</span>
+                  <span class="font-bold text-indigo-600">Horários Padrão por Dia da Semana</span>
                   <div id="schedule-config-container" class="space-y-2"></div>
                 </div>
 
                 <button type="submit" class="w-full py-2 bg-slate-900 text-white font-bold rounded-xl cursor-pointer">Salvar Perfil</button>
               </form>
+
+              <!-- EXCEÇÕES DE HORÁRIO POR DATA E POR PROFISSIONAL -->
+              <div class="pt-4 border-t border-slate-200 space-y-3">
+                <div>
+                  <h4 class="font-bold text-amber-800 text-xs">Exceções de Horário por Data e Profissional</h4>
+                  <p class="text-[11px] text-slate-500">Ex.: manicure ou cabeleireiro atendendo só à tarde no dia 26, sem alterar outros dias ou colegas.</p>
+                </div>
+                <form onsubmit="window.saveDateException(event)" class="p-3 bg-amber-50/60 border border-amber-200 rounded-xl space-y-2 text-xs">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Profissional *</label>
+                      <select id="exception-staff-select" required class="w-full px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg">
+                        <option value="">Selecione...</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Data da Exceção *</label>
+                      <input type="date" id="exception-date-input" required class="w-full px-2.5 py-1.5 bg-white border border-amber-200 rounded-lg">
+                    </div>
+                    <div class="flex items-end pb-1">
+                      <label class="font-bold text-slate-800 flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" id="exception-active-input" checked onchange="window.toggleExceptionTimeInputs()" class="rounded text-indigo-600">
+                        Atende nesta data
+                      </label>
+                    </div>
+                  </div>
+                  <div id="exception-times-box" class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] text-slate-600 mb-0.5">Início</label>
+                      <input type="time" id="exception-open-input" value="13:00" class="w-full px-2 py-1 bg-white border border-amber-200 rounded-lg text-[11px]">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] text-slate-600 mb-0.5">Fim</label>
+                      <input type="time" id="exception-close-input" value="18:00" class="w-full px-2 py-1 bg-white border border-amber-200 rounded-lg text-[11px]">
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl cursor-pointer">+ Salvar Exceção do Profissional</button>
+                </form>
+                <div id="date-exceptions-list" class="space-y-1.5"></div>
+              </div>
             </div>
           </div>
 
-          <!-- BLOCO 2: PROFISSIONAIS -->
+          <!-- BLOCO 2: PROFISSIONAIS (COM E-MAIL PARA LOGIN INDIVIDUAL) -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-staff')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais (Manicure, Cabeleireiro, etc.)</span>
+              <span><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i> Cadastrar Profissionais (Manicure, Cabeleireiro e Login Individual)</span>
               <i id="icon-section-staff" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-staff" class="p-5 hidden space-y-4">
               <form onsubmit="window.saveStaff(event)" class="space-y-3 text-xs">
                 <input type="text" id="staff-name" placeholder="Nome do Profissional" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-role" placeholder="Cargo/Especialidade (ex: Manicure, Cabeleireiro)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="email" id="staff-email" placeholder="E-mail de Login do Profissional (opcional para agenda própria)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="text" id="staff-whatsapp" placeholder="WhatsApp Direto do Profissional (55DD9XXXXXXXX)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                 <input type="file" id="staff-photo-file" accept="image/*" class="w-full text-slate-500">
                 <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer">+ Adicionar Profissional</button>
@@ -523,7 +611,7 @@
           <!-- BLOCO 4: HISTÓRICO DE AGENDAMENTOS E DATA ÚNICA -->
           <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-bookings')" class="w-full p-4 flex justify-between items-center bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-800 cursor-pointer">
-              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Gestão de Agendamentos (Data Única, Período e Fechamento)</span>
+              <span><i class="fa-solid fa-calendar-check mr-2 text-indigo-600"></i> Gestão de Agendamentos (Todos os Profissionais, Data Única e Fechamento)</span>
               <i id="icon-section-bookings" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-bookings" class="p-5 hidden space-y-4 text-xs">
@@ -573,7 +661,6 @@
               </div>
             </div>
           </div>
-
         </div>
 
       </div>
@@ -631,6 +718,8 @@
 
     let currentUser = null;
     let isRegisterMode = false;
+    let isStaffLoginMode = false;
+    let loggedStaffProfile = null;
     let selectedServices = [];
     let selectedStaffObj = null;
     let selectedTime = null;
@@ -660,6 +749,172 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     let targetMerchantId = urlParams.get('salao');
+
+    function getStaffByName(staffName) {
+      return allStaffRaw.find(st => st.name === staffName) || null;
+    }
+
+    function getScheduleForStaffAndDate(staffName, dateVal, scheduleMap = null) {
+      const activeSchedule = scheduleMap || window.salonSchedule || weeklySchedule;
+      const staffObj = getStaffByName(staffName);
+      if (dateVal && staffObj && staffObj.dateExceptions && staffObj.dateExceptions[dateVal]) {
+        return staffObj.dateExceptions[dateVal];
+      }
+      if (!dateVal) return null;
+      const parts = dateVal.split('-');
+      const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = selectedObjDate.getDay();
+      return activeSchedule[dayOfWeek] || null;
+    }
+
+    function renderDateExceptionsList(staffList = []) {
+      const container = document.getElementById('date-exceptions-list');
+      if (!container) return;
+
+      const items = [];
+      staffList.forEach(st => {
+        const excMap = st.dateExceptions || {};
+        Object.entries(excMap).forEach(([dateStr, cfg]) => {
+          items.push({ staffId: st.id, staffName: st.name, dateStr, cfg });
+        });
+      });
+
+      items.sort((a, b) => a.dateStr.localeCompare(b.dateStr) || a.staffName.localeCompare(b.staffName));
+
+      if (items.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-400">Nenhuma exceção por profissional cadastrada.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      items.forEach(({ staffId, staffName, dateStr, cfg }) => {
+        const dateBr = dateStr.split('-').reverse().join('/');
+        const desc = cfg.active
+          ? `Atende das <b>${cfg.open}</b> às <b>${cfg.close}</b>`
+          : `<b>Não atende</b> nesta data`;
+        container.innerHTML += `
+          <div class="flex justify-between items-center p-2.5 bg-white border border-amber-200 rounded-xl text-[11px]">
+            <div>
+              <span class="font-bold text-amber-900">${staffName}</span> • <span class="font-bold text-slate-800">${dateBr}</span> — <span>${desc}</span>
+            </div>
+            <button type="button" onclick="window.deleteStaffDateException('${staffId}', '${dateStr}')" class="text-rose-600 font-bold cursor-pointer">Remover</button>
+          </div>
+        `;
+      });
+    }
+
+    window.toggleExceptionTimeInputs = function() {
+      const active = document.getElementById('exception-active-input').checked;
+      const box = document.getElementById('exception-times-box');
+      if (!box) return;
+      if (active) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    };
+
+    window.saveDateException = async function(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      const staffId = document.getElementById('exception-staff-select').value;
+      const dateVal = document.getElementById('exception-date-input').value;
+      if (!staffId || !dateVal) {
+        alert("Selecione o profissional e a data da exceção.");
+        return;
+      }
+      const active = document.getElementById('exception-active-input').checked;
+      const open = document.getElementById('exception-open-input').value || "08:00";
+      const close = document.getElementById('exception-close-input').value || "18:00";
+
+      try {
+        const staffObj = allStaffRaw.find(s => s.id === staffId);
+        const currentMap = { ...(staffObj?.dateExceptions || {}) };
+        currentMap[dateVal] = { active, open, close };
+        await db.collection('staff').doc(staffId).set({ dateExceptions: currentMap }, { merge: true });
+        document.getElementById('exception-date-input').value = '';
+        alert("✅ Exceção salva para o profissional selecionado!");
+        loadAdminData();
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.deleteStaffDateException = async function(staffId, dateStr) {
+      if (!currentUser) return;
+      try {
+        const staffObj = allStaffRaw.find(s => s.id === staffId);
+        const currentMap = { ...(staffObj?.dateExceptions || {}) };
+        delete currentMap[dateStr];
+        await db.collection('staff').doc(staffId).set({ dateExceptions: currentMap }, { merge: true });
+        alert("Exceção removida.");
+        loadAdminData();
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.toggleStaffOwnExcTimes = function() {
+      const active = document.getElementById('staff-own-exc-active').checked;
+      const box = document.getElementById('staff-own-exc-times');
+      if (!box) return;
+      if (active) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    };
+
+    function renderStaffOwnExceptionsList(staffObj) {
+      const container = document.getElementById('staff-own-exc-list');
+      if (!container || !staffObj) return;
+      const entries = Object.entries(staffObj.dateExceptions || {}).sort((a, b) => a[0].localeCompare(b[0]));
+      if (entries.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-400">Nenhuma exceção cadastrada na sua agenda.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      entries.forEach(([dateStr, cfg]) => {
+        const dateBr = dateStr.split('-').reverse().join('/');
+        const desc = cfg.active ? `Das <b>${cfg.open}</b> às <b>${cfg.close}</b>` : `<b>Não atende</b>`;
+        container.innerHTML += `
+          <div class="flex justify-between items-center p-2 bg-white border border-violet-200 rounded-xl text-[11px]">
+            <span><b>${dateBr}</b> — ${desc}</span>
+            <button type="button" onclick="window.deleteStaffOwnException('${dateStr}')" class="text-rose-600 font-bold cursor-pointer">Remover</button>
+          </div>
+        `;
+      });
+    }
+
+    window.saveStaffOwnException = async function(event) {
+      event.preventDefault();
+      if (!loggedStaffProfile) return;
+      const dateVal = document.getElementById('staff-own-exc-date').value;
+      if (!dateVal) return;
+      const active = document.getElementById('staff-own-exc-active').checked;
+      const open = document.getElementById('staff-own-exc-open').value || "13:00";
+      const close = document.getElementById('staff-own-exc-close').value || "18:00";
+
+      try {
+        const currentMap = { ...(loggedStaffProfile.dateExceptions || {}) };
+        currentMap[dateVal] = { active, open, close };
+        await db.collection('staff').doc(loggedStaffProfile.id).set({ dateExceptions: currentMap }, { merge: true });
+        loggedStaffProfile.dateExceptions = currentMap;
+        renderStaffOwnExceptionsList(loggedStaffProfile);
+        document.getElementById('staff-own-exc-date').value = '';
+        alert("✅ Sua exceção de horário foi salva!");
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
+
+    window.deleteStaffOwnException = async function(dateStr) {
+      if (!loggedStaffProfile) return;
+      try {
+        const currentMap = { ...(loggedStaffProfile.dateExceptions || {}) };
+        delete currentMap[dateStr];
+        await db.collection('staff').doc(loggedStaffProfile.id).set({ dateExceptions: currentMap }, { merge: true });
+        loggedStaffProfile.dateExceptions = currentMap;
+        renderStaffOwnExceptionsList(loggedStaffProfile);
+        alert("Exceção removida.");
+      } catch (e) {
+        alert("Conexão instável, tente novamente em instantes.");
+      }
+    };
 
     function normalizeSlug(text) {
       return (text || '')
@@ -848,11 +1103,11 @@
       const content = document.getElementById('tutorial-modal-content');
 
       if (type === 'merchant') {
-        title.innerHTML = "📖 Manual do Lojista (Como Usar)";
+        title.innerHTML = "📖 Manual do Lojista / Equipe";
         content.innerHTML = `
-          <p><b>1. Encaixe Até o Fechamento:</b> No agendamento manual, qualquer serviço pode ser marcado até o horário final de expediente para fechar a agenda do dia.</p>
-          <p><b>2. Link Curto / Slug:</b> Defina o link curto do seu salão no perfil para compartilhar facilmente (ex: <code>?salao=raicabeleireiros</code>).</p>
-          <p><b>3. Lembrete e Edição Manual:</b> Use o botão de lembrar no WhatsApp e edite agendamentos manuais sem duplicar registros.</p>
+          <p><b>1. Login Separado:</b> O dono vê todos os agendamentos e gerencia o salão; profissionais com e-mail cadastrado entram e veem apenas os próprios agendamentos.</p>
+          <p><b>2. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
+          <p><b>3. Encaixe Até o Fechamento:</b> No agendamento manual, qualquer serviço pode ser marcado até o horário final de expediente.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
@@ -899,18 +1154,45 @@
       }
     };
 
+    window.toggleStaffLoginMode = function() {
+      isStaffLoginMode = !isStaffLoginMode;
+      isRegisterMode = false;
+      const salonBox = document.getElementById('staff-salon-id-box');
+      const salonInput = document.getElementById('login-salon-ref');
+      if (isStaffLoginMode) {
+        salonBox.classList.remove('hidden');
+        if (salonInput && !salonInput.value && targetMerchantId) {
+          salonInput.value = targetMerchantId;
+        }
+        document.getElementById('auth-title').innerText = "Acesso do Profissional";
+        document.getElementById('auth-subtitle').innerText = "Veja apenas os seus agendamentos e gerencie suas exceções de data.";
+        document.getElementById('btn-toggle-staff-login').innerText = "Voltar para login do Dono do Salão";
+      } else {
+        salonBox.classList.add('hidden');
+        document.getElementById('auth-title').innerText = "Painel do Lojista / Equipe";
+        document.getElementById('auth-subtitle').innerText = "Dono vê todos os agendamentos; profissionais veem apenas os seus.";
+        document.getElementById('btn-toggle-staff-login').innerText = "Sou profissional (ver só minha agenda)";
+      }
+      document.getElementById('btn-auth-submit').innerText = "Entrar";
+      document.getElementById('btn-toggle-auth-mode').innerText = "Criar conta grátis (7 dias)";
+    };
+
     window.toggleAuthMode = function() {
       isRegisterMode = !isRegisterMode;
-      document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta do Salão (7 Dias Grátis)" : "Painel do Lojista";
+      isStaffLoginMode = false;
+      document.getElementById('staff-salon-id-box').classList.add('hidden');
+      document.getElementById('auth-title').innerText = isRegisterMode ? "Criar Conta do Salão (7 Dias Grátis)" : "Painel do Lojista / Equipe";
       document.getElementById('auth-subtitle').innerText = isRegisterMode
         ? "Comece seu teste gratuito de 7 dias agora mesmo."
-        : "Gerencie seu estabelecimento.";
+        : "Dono vê todos os agendamentos; profissionais veem apenas os seus.";
       document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Criar Conta Grátis (7 Dias)" : "Entrar";
       document.getElementById('btn-toggle-auth-mode').innerText = isRegisterMode ? "Já tenho conta (Entrar)" : "Criar conta grátis (7 dias)";
     };
 
     window.openRegisterMode = function() {
       isRegisterMode = true;
+      isStaffLoginMode = false;
+      document.getElementById('staff-salon-id-box').classList.add('hidden');
       document.getElementById('auth-title').innerText = "Criar Conta do Salão (7 Dias Grátis)";
       document.getElementById('auth-subtitle').innerText = "Comece seu teste gratuito de 7 dias agora mesmo.";
       document.getElementById('btn-auth-submit').innerText = "Criar Conta Grátis (7 Dias)";
@@ -980,6 +1262,7 @@
       }
       if(filterSingleInput) filterSingleInput.value = today;
       renderScheduleInputs();
+      renderDateExceptionsList([]);
 
       if (targetMerchantId) {
         showClientScreen();
@@ -1096,9 +1379,113 @@
       alert("📋 Texto copiado!");
     };
 
+    async function resolveSalonIdFromRef(refValue) {
+      const cleanRef = (refValue || '').trim();
+      if (!cleanRef) return null;
+      const slugSnap = await db.collection('settings').where('slug', '==', normalizeSlug(cleanRef)).limit(1).get();
+      if (!slugSnap.empty) return slugSnap.docs[0].id;
+      return cleanRef;
+    }
+
+    async function setupStaffRestrictedSession(user) {
+      loggedStaffProfile = null;
+      const refInputVal = document.getElementById('login-salon-ref').value.trim();
+      let salonId = await resolveSalonIdFromRef(refInputVal || targetMerchantId);
+
+      if (!salonId) {
+        const staffByEmail = await db.collection('staff').where('email', '==', user.email).limit(1).get();
+        if (!staffByEmail.empty) {
+          salonId = staffByEmail.docs[0].data().merchantId;
+        }
+      }
+
+      if (!salonId) {
+        alert("⚠️ Informe o ID ou Slug do salão para acessar a sua agenda profissional.");
+        await auth.signOut();
+        return;
+      }
+
+      const staffSnap = await db.collection('staff')
+        .where('merchantId', '==', salonId)
+        .where('email', '==', user.email)
+        .limit(1)
+        .get();
+
+      if (staffSnap.empty) {
+        alert("⚠️ Este e-mail não está vinculado a um profissional deste salão.");
+        await auth.signOut();
+        return;
+      }
+
+      const sDoc = staffSnap.docs[0];
+      loggedStaffProfile = { id: sDoc.id, ...sDoc.data() };
+
+      const settingsDoc = await db.collection('settings').doc(salonId).get();
+      if (settingsDoc.exists && settingsDoc.data().weeklySchedule) {
+        window.salonSchedule = settingsDoc.data().weeklySchedule;
+      }
+
+      document.getElementById('admin-auth-screen').classList.add('hidden');
+      document.getElementById('admin-dashboard').classList.remove('hidden');
+      document.getElementById('trial-status-banner').classList.add('hidden');
+      document.getElementById('owner-link-controls').classList.add('hidden');
+      document.getElementById('btn-delete-owner-account').classList.add('hidden');
+      document.getElementById('owner-full-panel').classList.add('hidden');
+      document.getElementById('staff-restricted-panel').classList.remove('hidden');
+
+      document.getElementById('dashboard-role-title').innerText = `Agenda de ${loggedStaffProfile.name} (${loggedStaffProfile.role})`;
+      document.getElementById('merchant-email-display').innerText = `Acesso Profissional: ${user.email}`;
+
+      renderStaffOwnExceptionsList(loggedStaffProfile);
+
+      if (bookingsListener) bookingsListener();
+      bookingsListener = db.collection('bookings')
+        .where('merchantId', '==', salonId)
+        .where('staffName', '==', loggedStaffProfile.name)
+        .onSnapshot(snapshot => {
+          const ownBookings = [];
+          snapshot.forEach(doc => ownBookings.push({ id: doc.id, ...doc.data() }));
+          ownBookings.sort((a, b) => {
+            if (a.date !== b.date) return (b.date || '').localeCompare(a.date || '');
+            return (a.time || '').localeCompare(b.time || '');
+          });
+
+          const listEl = document.getElementById('staff-own-bookings-list');
+          if (!listEl) return;
+          listEl.innerHTML = '';
+          if (ownBookings.length === 0) {
+            listEl.innerHTML = '<p class="text-xs text-slate-400">Nenhum agendamento encontrado para você.</p>';
+            return;
+          }
+          ownBookings.forEach(d => {
+            listEl.innerHTML += `
+              <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
+                <div class="flex justify-between">
+                  <b>${d.clientName} (${d.clientPhone})</b>
+                  <span class="text-emerald-600 font-bold">${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time}</span>
+                </div>
+                <p class="text-slate-600">Serviço(s): <b>${d.serviceName}</b> | Cabelo: ${d.hairSpecs || 'N/A'}</p>
+              </div>
+            `;
+          });
+        });
+    }
+
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       if (user) {
+        if (isStaffLoginMode) {
+          await setupStaffRestrictedSession(user);
+          return;
+        }
+
+        loggedStaffProfile = null;
+        document.getElementById('staff-restricted-panel').classList.add('hidden');
+        document.getElementById('owner-full-panel').classList.remove('hidden');
+        document.getElementById('owner-link-controls').classList.remove('hidden');
+        document.getElementById('btn-delete-owner-account').classList.remove('hidden');
+        document.getElementById('dashboard-role-title').innerText = "Painel Administrativo (Dono)";
+
         document.getElementById('admin-auth-screen').classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('merchant-email-display').innerText = `E-mail: ${user.email}`;
@@ -1121,6 +1508,7 @@
         updateMerchantShareLink(user.uid, snap.exists ? (snap.data().slug || '') : '');
         loadAdminData();
       } else {
+        loggedStaffProfile = null;
         if (bookingsListener) { bookingsListener(); bookingsListener = null; }
         document.getElementById('admin-auth-screen').classList.remove('hidden');
         document.getElementById('admin-dashboard').classList.add('hidden');
@@ -1189,10 +1577,14 @@
       }
     };
 
-    window.logoutMerchant = function() { auth.signOut(); };
+    window.logoutMerchant = function() {
+      isStaffLoginMode = false;
+      loggedStaffProfile = null;
+      auth.signOut();
+    };
 
     window.deleteAccount = async function() {
-      if (!currentUser) return;
+      if (!currentUser || loggedStaffProfile) return;
       if (confirm("Tem certeza que deseja excluir sua conta e todos os dados associados? Esta ação é irreversível.")) {
         try {
           const uid = currentUser.uid;
@@ -1263,20 +1655,31 @@
       event.preventDefault();
       if (!currentUser) return;
       try {
-        const name = document.getElementById('staff-name').value;
-        const role = document.getElementById('staff-role').value;
-        const whatsapp = document.getElementById('staff-whatsapp').value;
+        const name = document.getElementById('staff-name').value.trim();
+        const role = document.getElementById('staff-role').value.trim();
+        const email = document.getElementById('staff-email').value.trim().toLowerCase();
+        const whatsapp = document.getElementById('staff-whatsapp').value.trim();
         const photoFile = document.getElementById('staff-photo-file').files[0];
         
         let photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
         if (photoFile) photo = await convertImageToBase64(photoFile);
 
-        await db.collection('staff').add({ merchantId: currentUser.uid, name, role, whatsapp, photo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await db.collection('staff').add({
+          merchantId: currentUser.uid,
+          name,
+          role,
+          email,
+          whatsapp,
+          photo,
+          dateExceptions: {},
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         document.getElementById('staff-name').value = '';
         document.getElementById('staff-role').value = '';
+        document.getElementById('staff-email').value = '';
         document.getElementById('staff-whatsapp').value = '';
         loadAdminData();
-        alert("Profissional e WhatsApp direto cadastrados com sucesso!");
+        alert("Profissional cadastrado com sucesso!");
       } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
     };
 
@@ -1387,7 +1790,6 @@
       document.getElementById('btn-cancel-edit-manual').classList.add('hidden');
     };
 
-    // RENDERIZAR HORÁRIOS DISPONÍVEIS NO AGENDAMENTO MANUAL (PERMITINDO QUALQUER SERVIÇO ATÉ O FECHAMENTO)
     window.renderManualTimeSlots = async function(ignoreBookingId = null) {
       if (!currentUser) return;
       const editingId = typeof ignoreBookingId === 'string'
@@ -1405,14 +1807,10 @@
 
       slotsContainer.innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Calculando horários...</p>';
 
-      const parts = dateVal.split('-');
-      const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
-      const dayOfWeek = selectedObjDate.getDay();
-      const schedule = window.salonSchedule || weeklySchedule;
-      const dayConfig = schedule[dayOfWeek];
+      const dayConfig = getScheduleForStaffAndDate(staffName, dateVal, window.salonSchedule || weeklySchedule);
 
       if (!dayConfig || !dayConfig.active) {
-        slotsContainer.innerHTML = '<p class="text-[10px] text-rose-500 col-span-3 text-center py-2 font-bold">Fechado neste dia.</p>';
+        slotsContainer.innerHTML = '<p class="text-[10px] text-rose-500 col-span-3 text-center py-2 font-bold">Profissional sem atendimento nesta data.</p>';
         return;
       }
 
@@ -1461,7 +1859,6 @@
       slotsContainer.innerHTML = '';
       let count = 0;
 
-      // No agendamento manual, qualquer serviço pode ser encaixado até o próprio horário de fechamento (closeTotalMins)
       for (let currentMins = openTotalMins; currentMins <= closeTotalMins; currentMins += 5) {
         const slotHour = Math.floor(currentMins / 60);
         const slotMin = currentMins % 60;
@@ -1647,10 +2044,12 @@
       const staffContainer = document.getElementById('admin-staff-list');
       const staffCheckboxesDiv = document.getElementById('service-staff-checkboxes');
       const manualStaffSelect = document.getElementById('manual-staff-select');
+      const excStaffSelect = document.getElementById('exception-staff-select');
       
       staffContainer.innerHTML = '';
       staffCheckboxesDiv.innerHTML = '';
       if (manualStaffSelect) manualStaffSelect.innerHTML = '<option value="">Selecione o Profissional...</option>';
+      if (excStaffSelect) excStaffSelect.innerHTML = '<option value="">Selecione o Profissional...</option>';
       
       window.staffWhatsAppMap = {};
       allStaffRaw = [];
@@ -1659,13 +2058,15 @@
       } else {
         staffSnap.forEach(doc => {
           const data = doc.data();
-          allStaffRaw.push({ id: doc.id, ...data });
+          const item = { id: doc.id, ...data };
+          allStaffRaw.push(item);
           
           if (data.name && data.whatsapp) {
             window.staffWhatsAppMap[data.name] = data.whatsapp;
           }
 
-          staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role}) - Wpp: ${data.whatsapp}</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
+          const emailInfo = data.email ? ` • Login: ${data.email}` : '';
+          staffContainer.innerHTML += `<div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl text-xs"><span><b>${data.name}</b> (${data.role}) - Wpp: ${data.whatsapp}${emailInfo}</span><button onclick="window.deleteStaff('${doc.id}')" class="text-rose-500 font-bold cursor-pointer">Excluir</button></div>`;
           
           staffCheckboxesDiv.innerHTML += `
             <label class="flex items-center gap-2 text-xs cursor-pointer text-slate-700">
@@ -1677,8 +2078,13 @@
           if (manualStaffSelect) {
             manualStaffSelect.innerHTML += `<option value="${data.name}">${data.name} (${data.role})</option>`;
           }
+          if (excStaffSelect) {
+            excStaffSelect.innerHTML += `<option value="${data.id}">${data.name} (${data.role})</option>`;
+          }
         });
       }
+
+      renderDateExceptionsList(allStaffRaw);
 
       let servicesSnap = await db.collection('services').where('merchantId', '==', currentUser.uid).get();
       if (servicesSnap.empty) { servicesSnap = await db.collection('services').get(); }
@@ -2264,14 +2670,10 @@
       const slotsContainer = document.getElementById('time-slots-container');
       slotsContainer.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 py-2 text-center">Calculando horários...</p>';
 
-      const parts = dateVal.split('-');
-      const selectedObjDate = new Date(parts[0], parts[1] - 1, parts[2]);
-      const dayOfWeek = selectedObjDate.getDay();
-      const schedule = window.salonSchedule || {};
-      const dayConfig = schedule[dayOfWeek];
+      const dayConfig = getScheduleForStaffAndDate(selectedStaffObj.name, dateVal, window.salonSchedule || {});
 
       if (!dayConfig || !dayConfig.active) {
-        slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center font-bold">Fechado neste dia.</p>';
+        slotsContainer.innerHTML = '<p class="text-[11px] text-rose-500 col-span-3 py-2 text-center font-bold">Profissional sem atendimento neste dia.</p>';
         return;
       }
 
