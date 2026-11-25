@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v65 - Ibi Agenda com Exceção de Data por Profissional e Login Separado (Dono vs Profissional) -->
+<!-- v66 - Ibi Agenda com Link de Divulgação Disponível para Profissionais na Agenda Restrita -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -329,7 +329,7 @@
           <div>
             <h2 class="font-extrabold text-slate-900 text-base" id="dashboard-role-title">Painel Administrativo</h2>
             <p class="text-xs text-slate-500" id="merchant-email-display"></p>
-            <div id="owner-link-controls" class="mt-2 flex flex-wrap items-center gap-2">
+            <div id="share-link-controls" class="mt-2 flex flex-wrap items-center gap-2">
               <span class="text-[11px] text-indigo-600 font-bold" id="merchant-link-display">Link do salão: Carregando...</span>
               <button onclick="window.copyMerchantLink()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
                 <i class="fa-solid fa-copy"></i> Copiar Link
@@ -337,7 +337,7 @@
               <button onclick="window.shareOnWhatsApp()" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
                 <i class="fa-brands fa-whatsapp"></i> Compartilhar WhatsApp
               </button>
-              <button onclick="window.toggleSection('section-share-kit')" class="px-2.5 py-1 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
+              <button id="btn-owner-share-kit" onclick="window.toggleSection('section-share-kit')" class="px-2.5 py-1 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-[10px] font-bold cursor-pointer flex items-center gap-1">
                 <i class="fa-solid fa-qrcode"></i> Kit de Divulgação
               </button>
             </div>
@@ -1105,9 +1105,9 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista / Equipe";
         content.innerHTML = `
-          <p><b>1. Login Separado:</b> O dono vê todos os agendamentos e gerencia o salão; profissionais com e-mail cadastrado entram e veem apenas os próprios agendamentos.</p>
-          <p><b>2. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
-          <p><b>3. Encaixe Até o Fechamento:</b> No agendamento manual, qualquer serviço pode ser marcado até o horário final de expediente.</p>
+          <p><b>1. Link de Divulgação para a Equipe:</b> Profissionais também têm acesso ao link do salão para copiar e compartilhar no WhatsApp/Instagram.</p>
+          <p><b>2. Login Separado:</b> O dono vê todos os agendamentos e gerencia o salão; profissionais com e-mail cadastrado entram e veem apenas os próprios agendamentos.</p>
+          <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
         `;
       } else {
         title.innerHTML = "📖 Manual do Cliente (Como Agendar)";
@@ -1313,13 +1313,14 @@
       }
     };
 
-    function updateMerchantShareLink(uid, slug = '') {
+    function updateMerchantShareLink(salonId, slug = '', storeName = '') {
       const cleanSlug = normalizeSlug(slug);
-      const paramValue = cleanSlug || uid;
+      const paramValue = cleanSlug || salonId;
       const fullSalonLink = `${window.location.origin}${window.location.pathname}?salao=${paramValue}`;
       document.getElementById('merchant-link-display').innerHTML = `Link do salão: <a href="${fullSalonLink}" target="_blank" class="text-indigo-600 underline">${fullSalonLink}</a>`;
       window.generatedMerchantLink = fullSalonLink;
-      renderShareKit(fullSalonLink, document.getElementById('store-name-input').value || "nosso salão");
+      const activeStoreName = storeName || document.getElementById('store-name-input').value || "nosso salão";
+      renderShareKit(fullSalonLink, activeStoreName);
     }
 
     function renderTrialBanner(settingsData) {
@@ -1393,7 +1394,7 @@
       let salonId = await resolveSalonIdFromRef(refInputVal || targetMerchantId);
 
       if (!salonId) {
-        const staffByEmail = await db.collection('staff').where('email', '==', user.email).limit(1).get();
+        const staffByEmail = await db.collection('staff').where('email', '==', user.email.toLowerCase()).limit(1).get();
         if (!staffByEmail.empty) {
           salonId = staffByEmail.docs[0].data().merchantId;
         }
@@ -1407,7 +1408,7 @@
 
       const staffSnap = await db.collection('staff')
         .where('merchantId', '==', salonId)
-        .where('email', '==', user.email)
+        .where('email', '==', user.email.toLowerCase())
         .limit(1)
         .get();
 
@@ -1420,21 +1421,28 @@
       const sDoc = staffSnap.docs[0];
       loggedStaffProfile = { id: sDoc.id, ...sDoc.data() };
 
+      let storeNameForShare = "nosso salão";
+      let slugForShare = "";
       const settingsDoc = await db.collection('settings').doc(salonId).get();
-      if (settingsDoc.exists && settingsDoc.data().weeklySchedule) {
-        window.salonSchedule = settingsDoc.data().weeklySchedule;
+      if (settingsDoc.exists) {
+        const sData = settingsDoc.data();
+        if (sData.weeklySchedule) window.salonSchedule = sData.weeklySchedule;
+        storeNameForShare = sData.storeName || storeNameForShare;
+        slugForShare = sData.slug || "";
       }
 
       document.getElementById('admin-auth-screen').classList.add('hidden');
       document.getElementById('admin-dashboard').classList.remove('hidden');
       document.getElementById('trial-status-banner').classList.add('hidden');
-      document.getElementById('owner-link-controls').classList.add('hidden');
+      document.getElementById('share-link-controls').classList.remove('hidden');
+      document.getElementById('btn-owner-share-kit').classList.add('hidden');
       document.getElementById('btn-delete-owner-account').classList.add('hidden');
       document.getElementById('owner-full-panel').classList.add('hidden');
       document.getElementById('staff-restricted-panel').classList.remove('hidden');
 
       document.getElementById('dashboard-role-title').innerText = `Agenda de ${loggedStaffProfile.name} (${loggedStaffProfile.role})`;
       document.getElementById('merchant-email-display').innerText = `Acesso Profissional: ${user.email}`;
+      updateMerchantShareLink(salonId, slugForShare, storeNameForShare);
 
       renderStaffOwnExceptionsList(loggedStaffProfile);
 
@@ -1482,7 +1490,8 @@
         loggedStaffProfile = null;
         document.getElementById('staff-restricted-panel').classList.add('hidden');
         document.getElementById('owner-full-panel').classList.remove('hidden');
-        document.getElementById('owner-link-controls').classList.remove('hidden');
+        document.getElementById('share-link-controls').classList.remove('hidden');
+        document.getElementById('btn-owner-share-kit').classList.remove('hidden');
         document.getElementById('btn-delete-owner-account').classList.remove('hidden');
         document.getElementById('dashboard-role-title').innerText = "Painel Administrativo (Dono)";
 
@@ -1529,7 +1538,7 @@
 
     window.shareOnWhatsApp = function() {
       if (window.generatedMerchantLink) {
-        const storeName = document.getElementById('store-name-input').value || "nosso salão";
+        const storeName = document.getElementById('store-name-input').value || document.getElementById('header-store-name').innerText || "nosso salão";
         const text = encodeURIComponent(`Olá! Agende seu horário no *${storeName}* através do link exclusivo abaixo:\n${window.generatedMerchantLink}`);
         window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
       }
@@ -1645,7 +1654,7 @@
         if (logoUrl) updateData.logoUrl = logoUrl;
 
         await db.collection('settings').doc(currentUser.uid).set(updateData, { merge: true });
-        updateMerchantShareLink(currentUser.uid, slug);
+        updateMerchantShareLink(currentUser.uid, slug, name);
         alert("Perfil, Slug, Endereço e Link de Pagamento salvos!");
         loadAdminData();
       } catch (e) { alert("Conexão instável, tente novamente em instantes."); }
@@ -2023,10 +2032,18 @@
     async function loadAdminData() {
       if (!currentUser) return;
       const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+      let currentStoreName = "nosso salão";
+      let currentSlug = "";
       if (settingsDoc.exists) {
         const data = settingsDoc.data();
-        if (data.storeName) document.getElementById('store-name-input').value = data.storeName;
-        if (data.slug) document.getElementById('store-slug-input').value = data.slug;
+        if (data.storeName) {
+          document.getElementById('store-name-input').value = data.storeName;
+          currentStoreName = data.storeName;
+        }
+        if (data.slug) {
+          document.getElementById('store-slug-input').value = data.slug;
+          currentSlug = data.slug;
+        }
         if (data.address) document.getElementById('store-address-input').value = data.address;
         if (data.whatsapp) document.getElementById('store-whatsapp-input').value = data.whatsapp;
         if (data.socialLink) document.getElementById('store-social-input').value = data.socialLink;
@@ -2037,7 +2054,7 @@
           renderScheduleInputs(data.weeklySchedule);
         }
         renderTrialBanner(data);
-        updateMerchantShareLink(currentUser.uid, data.slug || '');
+        updateMerchantShareLink(currentUser.uid, currentSlug, currentStoreName);
       }
 
       const staffSnap = await db.collection('staff').where('merchantId', '==', currentUser.uid).get();
