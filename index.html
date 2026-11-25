@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v72 - Ibi Agenda com Botão Explícito de Primeiro Acesso para Profissionais -->
+<!-- v73 - Ibi Agenda com Sincronização na Agenda do Celular para Profissionais (WhatsApp + Painel da Equipe) -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -737,6 +737,7 @@
     let allServicesRaw = [];
     let allStaffRaw = [];
     let allBookingsCache = [];
+    let staffBookingsCache = {};
     let clientBookingsCache = {};
     let currentCategoryFilter = '';
     let bookingsListener = null;
@@ -1033,6 +1034,20 @@
       });
     };
 
+    window.downloadStaffBookingIcsById = function(bookingId) {
+      const booking = staffBookingsCache[bookingId];
+      if (!booking) return;
+      const storeName = document.getElementById('header-store-name').innerText || "Salão";
+      triggerIcsDownload({
+        title: `${booking.serviceName} - ${booking.clientName} (${storeName})`,
+        date: booking.date,
+        time: booking.time,
+        duration: booking.duration || 30,
+        details: `Cliente: ${booking.clientName} (${booking.clientPhone}) | Serviço: ${booking.serviceName}`,
+        location: salonAddress
+      });
+    };
+
     function updateSummaryEndTime() {
       const endEl = document.getElementById('summary-end-time');
       if (!endEl) return;
@@ -1112,8 +1127,8 @@
       if (type === 'merchant') {
         title.innerHTML = "Manual do Lojista / Equipe";
         content.innerHTML = `
-          <p><b>1. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional cria/confirma sua senha pelo botão de primeiro acesso. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
-          <p><b>2. Link de Divulgação:</b> Profissionais e donos podem copiar e compartilhar o link do salão.</p>
+          <p><b>1. Agenda no Celular da Equipe:</b> Cada agendamento na agenda da profissional tem botões para adicionar ao Google Agenda ou baixar (.ics), além do link na mensagem do WhatsApp.</p>
+          <p><b>2. Primeiro Acesso e Remoção:</b> No primeiro acesso, a profissional cria/confirma sua senha pelo botão de primeiro acesso. Se for removida do salão, o acesso é bloqueado imediatamente.</p>
           <p><b>3. Exceções por Profissional:</b> Defina exceções em datas específicas (ex.: dia 26 só à tarde) para um profissional sem afetar o restante da equipe.</p>
         `;
       } else {
@@ -1452,6 +1467,7 @@
       if (settingsDoc.exists) {
         const sData = settingsDoc.data();
         if (sData.weeklySchedule) window.salonSchedule = sData.weeklySchedule;
+        if (sData.address) salonAddress = sData.address;
         storeNameForShare = sData.storeName || storeNameForShare;
         slugForShare = sData.slug || "";
       }
@@ -1477,7 +1493,12 @@
         .where('staffName', '==', loggedStaffProfile.name)
         .onSnapshot(snapshot => {
           const ownBookings = [];
-          snapshot.forEach(doc => ownBookings.push({ id: doc.id, ...doc.data() }));
+          staffBookingsCache = {};
+          snapshot.forEach(doc => {
+            const item = { id: doc.id, ...doc.data() };
+            ownBookings.push(item);
+            staffBookingsCache[doc.id] = item;
+          });
           ownBookings.sort((a, b) => {
             if (a.date !== b.date) return (b.date || '').localeCompare(a.date || '');
             return (a.time || '').localeCompare(b.time || '');
@@ -1491,13 +1512,32 @@
             return;
           }
           ownBookings.forEach(d => {
+            const gcalHref = (d.date && d.time)
+              ? buildGoogleCalendarUrl(
+                  `${d.serviceName} - ${d.clientName} (${storeNameForShare})`,
+                  d.date,
+                  d.time,
+                  d.duration || 30,
+                  `Cliente: ${d.clientName} (${d.clientPhone}) | Serviço: ${d.serviceName}`,
+                  salonAddress
+                )
+              : '#';
+
             listEl.innerHTML += `
-              <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
+              <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-2 border border-slate-200">
                 <div class="flex justify-between">
                   <b>${d.clientName} (${d.clientPhone})</b>
                   <span class="text-emerald-600 font-bold">${d.date ? d.date.split('-').reverse().join('/') : ''} às ${d.time}</span>
                 </div>
                 <p class="text-slate-600">Serviço(s): <b>${d.serviceName}</b> | Cabelo: ${d.hairSpecs || 'N/A'}</p>
+                <div class="flex flex-wrap gap-2 pt-1.5 border-t border-slate-200/80">
+                  <a href="${gcalHref}" target="_blank" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg flex items-center gap-1">
+                    <i class="fa-brands fa-google"></i> Google Agenda
+                  </a>
+                  <button type="button" onclick="window.downloadStaffBookingIcsById('${d.id}')" class="px-2.5 py-1 bg-slate-200/80 hover:bg-slate-200 text-slate-800 font-bold rounded-lg cursor-pointer flex items-center gap-1">
+                    <i class="fa-solid fa-calendar-day text-indigo-600"></i> Agenda Celular (.ics)
+                  </button>
+                </div>
               </div>
             `;
           });
@@ -2997,7 +3037,7 @@
 
         const storeName = document.getElementById('header-store-name').innerText || "Salão";
         const calendarTitle = `${servicesCombinedName} - ${storeName}`;
-        const calendarDetails = `Profissional: ${staffName} | Cliente: ${name}`;
+        const calendarDetails = `Profissional: ${staffName} | Cliente: ${name} (${phone})`;
 
         window.lastBookingCalendarData = {
           title: calendarTitle,
@@ -3028,7 +3068,16 @@
           targetWhatsapp = window.staffWhatsAppMap[staffName];
         }
 
-        const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}\n\nPrecisando desmarcar ou remarcar, avise com antecedência pela aba Reservas.`;
+        const staffGcalUrl = buildGoogleCalendarUrl(
+          `${servicesCombinedName} - ${name}`,
+          date,
+          selectedTime,
+          totalDuration,
+          `Cliente: ${name} (${phone}) | Serviço: ${servicesCombinedName}`,
+          salonAddress
+        );
+
+        const msgText = `Olá, ${staffName}! Novo agendamento confirmado:\n• Cliente: ${name}\n• Serviços: ${servicesCombinedName}\n• Cabelo: ${hairSpecs}\n• Data: ${date.split('-').reverse().join('/')} às ${selectedTime}\n• Adicionar na sua agenda: ${staffGcalUrl}\n\nPrecisando desmarcar ou remarcar, avise com antecedência pela aba Reservas.`;
         const msg = encodeURIComponent(msgText);
         window.open(`https://wa.me/${targetWhatsapp}?text=${msg}`, '_blank');
         
