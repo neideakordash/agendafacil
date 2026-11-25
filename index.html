@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v62 - Ibi Agenda com Integração Universal de Calendário (.ics + Google Agenda), Slug Amigável e Trial 7 Dias -->
+<!-- v63 - Ibi Agenda com Encaixe Manual Liberado Até o Último Horário de Fechamento -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -375,7 +375,7 @@
           <!-- BLOCO 0: AGENDAMENTO MANUAL (CRIAR OU EDITAR) -->
           <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
             <button onclick="window.toggleSection('section-manual-booking')" class="w-full p-4 flex justify-between items-center bg-indigo-50/50 hover:bg-indigo-50 font-bold text-xs text-indigo-900 cursor-pointer">
-              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> <span id="manual-booking-header-title">Novo Agendamento Manual (Categorias e Horários Sincronizados)</span></span>
+              <span><i class="fa-solid fa-calendar-plus mr-2 text-indigo-600"></i> <span id="manual-booking-header-title">Novo Agendamento Manual (Qualquer Serviço Até o Fechamento)</span></span>
               <i id="icon-section-manual-booking" class="fa-solid fa-chevron-down"></i>
             </button>
             <div id="section-manual-booking" class="p-5 hidden space-y-4">
@@ -411,7 +411,7 @@
                     <input type="date" id="manual-booking-date" required onchange="window.renderManualTimeSlots()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                   </div>
                   <div>
-                    <label class="block font-bold text-slate-700 mb-1">Horários Disponíveis (Sem Conflitos)</label>
+                    <label class="block font-bold text-slate-700 mb-1">Horários Disponíveis (Até o Fechamento)</label>
                     <div id="manual-time-slots-container" class="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
                       <p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>
                     </div>
@@ -850,8 +850,8 @@
       if (type === 'merchant') {
         title.innerHTML = "📖 Manual do Lojista (Como Usar)";
         content.innerHTML = `
-          <p><b>1. Link Curto / Slug:</b> Defina o link curto do seu salão no perfil para compartilhar facilmente (ex: <code>?salao=raicabeleireiros</code>).</p>
-          <p><b>2. 7 Dias Grátis:</b> Novos salões começam com 7 dias de teste exibidos no topo do painel antes da assinatura de R$ 50/mês.</p>
+          <p><b>1. Encaixe Até o Fechamento:</b> No agendamento manual, qualquer serviço pode ser marcado até o horário final de expediente para fechar a agenda do dia.</p>
+          <p><b>2. Link Curto / Slug:</b> Defina o link curto do seu salão no perfil para compartilhar facilmente (ex: <code>?salao=raicabeleireiros</code>).</p>
           <p><b>3. Lembrete e Edição Manual:</b> Use o botão de lembrar no WhatsApp e edite agendamentos manuais sem duplicar registros.</p>
         `;
       } else {
@@ -1382,11 +1382,12 @@
       document.getElementById('manual-time-slots-container').innerHTML = '<p class="text-[10px] text-slate-400 col-span-3 text-center py-2">Selecione serviços, profissional e data.</p>';
 
       document.getElementById('manual-booking-form-title').innerText = "Novo Agendamento Manual";
-      document.getElementById('manual-booking-header-title').innerText = "Novo Agendamento Manual (Categorias e Horários Sincronizados)";
+      document.getElementById('manual-booking-header-title').innerText = "Novo Agendamento Manual (Qualquer Serviço Até o Fechamento)";
       document.getElementById('btn-save-manual-booking').innerText = "Salvar Agendamento Manual";
       document.getElementById('btn-cancel-edit-manual').classList.add('hidden');
     };
 
+    // RENDERIZAR HORÁRIOS DISPONÍVEIS NO AGENDAMENTO MANUAL (PERMITINDO QUALQUER SERVIÇO ATÉ O FECHAMENTO)
     window.renderManualTimeSlots = async function(ignoreBookingId = null) {
       if (!currentUser) return;
       const editingId = typeof ignoreBookingId === 'string'
@@ -1448,8 +1449,6 @@
       });
       if (totalServiceDuration === 0) totalServiceDuration = 30;
 
-      const totalSpan = totalServiceDuration + totalServiceInterval;
-
       const todayDateStr = new Date().toISOString().split('T')[0];
       let currentHourNow = -1;
       let currentMinNow = -1;
@@ -1462,7 +1461,8 @@
       slotsContainer.innerHTML = '';
       let count = 0;
 
-      for (let currentMins = openTotalMins; currentMins + totalSpan <= closeTotalMins; currentMins += 5) {
+      // No agendamento manual, qualquer serviço pode ser encaixado até o próprio horário de fechamento (closeTotalMins)
+      for (let currentMins = openTotalMins; currentMins <= closeTotalMins; currentMins += 5) {
         const slotHour = Math.floor(currentMins / 60);
         const slotMin = currentMins % 60;
 
